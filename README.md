@@ -1,6 +1,12 @@
 # 267k
 tcp stub
 
+### Commands
+- g++ stub.cpp -o stub
+- x86_64-w64-mingw32-g++ stub_win.cpp -o stub_win.exe -lws2_32
+- server: printf "fart" | ncat -l 4444
+- client: run executable
+
 ### Concepts
 - listener with auto-deploy?
 
