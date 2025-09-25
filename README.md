@@ -36,9 +36,15 @@ stub -> payload (establish persistence) -> full install -> profit?
 - reflective dll injection
 - dll as a payload container
 - com / activeX dll abuse
-- encryption of stub (xor, 
 - hide code in different/unusal sections of the PE
-- payload/stub encryption and c2/network encryption (https and custom tsl wrappers)
+- payload/stub encryption (xor)
+-   AES-GCM (AES in Galois/Counter Mode)
+-   ChaCha20-Poly1305 — faster on devices without AES hardware acceleration
+- c2/network encryption (https and custom tsl wrappers)
+-   TLS 1.3
+-   Mutual TLS
+-   Use HTTP(S) or WebSockets over TLS if you need easy firewall traversal and visibility via HTTP semantics.
+-   Ephemeral key exchange (ECDHE) for Perfect Forward Secrecy (PFS).
 
 # TODO
 - rev https stub (use logic from tcp stub)
