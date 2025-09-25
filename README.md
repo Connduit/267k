@@ -30,3 +30,11 @@ stub -> payload (establish persistence) -> full install -> profit?
 - Forcepoint DLP Endpoint
 - Boldon James File Classifier
 - Cisco Secure Client
+
+  # Counter-Counter Measures
+  - dll side-loading
+  - reflective dll injection
+  - dll as a payload container
+  - com / activeX dll abuse
+  - encryption of stub
+  - hide code in different/unusal sections of the PE
