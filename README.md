@@ -62,3 +62,12 @@ stub -> payload (establish persistence) -> full install -> profit?
 
 # TODO
 - rev https stub (use logic from tcp stub)
+
+# MacOS
+- curl, osascript, launchd
+- workflow:
+-   Delivery → script (AppleScript/Bash/Python)
+-   Download → curl or scripting network
+-   Execution → script or small Mach-O payload
+-   Persistence → launchd agent, cron, login item
+-   Stealth → hide files, mimic system apps, automate via osascript
