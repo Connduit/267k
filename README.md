@@ -23,3 +23,10 @@ stub -> payload (establish persistence) -> full install -> profit?
 - Ivanti Device & Application Control
 - Symantec Endpoint Protection
 - RTNotify?
+
+- Zscaler
+- Secret Double Octopus
+- BeyondTrust Privilege Management / Avecto Privilege Guard Client
+- Forcepoint DLP Endpoint
+- Boldon James File Classifier
+- Cisco Secure Client
