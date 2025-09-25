@@ -36,8 +36,9 @@ stub -> payload (establish persistence) -> full install -> profit?
 - reflective dll injection
 - dll as a payload container
 - com / activeX dll abuse
-- encryption of stub
+- encryption of stub (xor, 
 - hide code in different/unusal sections of the PE
+- payload/stub encryption and c2/network encryption (https and custom tsl wrappers)
 
 # TODO
 - rev https stub (use logic from tcp stub)
