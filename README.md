@@ -38,3 +38,6 @@ stub -> payload (establish persistence) -> full install -> profit?
 - com / activeX dll abuse
 - encryption of stub
 - hide code in different/unusal sections of the PE
+
+# TODO
+- rev https stub
