@@ -58,6 +58,7 @@ stub -> payload (establish persistence) -> full install -> profit?
 -   DoH / DoT / DNS tunneling when environments restrict normal web egress. DNS tunneling tools (Iodine, DNScat2 variants) or DoH (DNS over HTTPS) are used for stealthy beacons and tiny data exfil.
 -   Custom encrypted TCP/UDP channels: AES/ChaCha20 used over raw sockets when stealth beyond TLS is desired.
 -   Abuse of legitimate cloud/web services: GitHub Gists, Google Drive, Slack, Discord, cloud functions, or pastebins as C2 or staging; traffic to these looks normal and is hard to block broadly.
+- metamorphic engine
 
 # TODO
 - rev https stub (use logic from tcp stub)
