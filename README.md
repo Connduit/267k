@@ -40,4 +40,4 @@ stub -> payload (establish persistence) -> full install -> profit?
 - hide code in different/unusal sections of the PE
 
 # TODO
-- rev https stub
+- rev https stub (use logic from tcp stub)
