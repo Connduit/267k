@@ -63,6 +63,15 @@ stub -> payload (establish persistence) -> full install -> profit?
 # TODO
 - rev https stub (use logic from tcp stub)
 
+# Windows
+- workflow
+-   make structure for command parsing on the client to server and retrieve commands sent from the server to the client, as well as parse them and execute the given plugin associated with the command
+-   connect to our server on a given port. collect information about the system and encrpyt it. then send it to our server. establish a foothold thread for communication.
+-   spawn zombie process svchost.exe or dllhost.exe. CreateProcessInternal, CREATE_SUSPENDED, SuspendThread
+-   %appdata\\Microsoft\\453543.dll. rundll32.exe - execute our dll. rundll32.exe as a runkey.
+-   it gets on system. 1. check if it's already running. 2. move to %appdata%. 3. setup persistence.
+-   takes the form of a .dll file
+
 # MacOS
 - curl, osascript, launchd
 - workflow:
