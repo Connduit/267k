@@ -123,8 +123,9 @@ int main() {
 
 
 /*
-// implant.cpp
-#include "implant.h"
+//g++ -o implant.exe main_implant.cpp implant.cpp -lws2_32 -static -std=c++11
+// client.cpp
+#include "client.h"
 
 using namespace std;
 
