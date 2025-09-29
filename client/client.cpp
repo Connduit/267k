@@ -126,8 +126,7 @@ int main() {
 }*/
 
 
-//g++ -o implant.exe main_implant.cpp implant.cpp -lws2_32 -static -std=c++11
-// x86_64-w64-mingw32-g++ -static -o client.exe client.cpp -lws2_32 -lstdc++
+// x86_64-w64-mingw32-g++ -static -o client.exe client.cpp -lws2_32
 // client.cpp
 
 Client::Client() : 
