@@ -37,6 +37,8 @@ public:
     std::string receiveData();
     void sendData(const std::string& data);
     void parse();
+    void getSystemInfo();
+    // TODO: add setsockopt handling function to enable socket options like SO_KEEPALIVE
 private:
     const char* server_ip_; // TODO: should only be recorded to help with reconnection?
     u_short port_; // TODO: should only be recorded to help with reconnection?

