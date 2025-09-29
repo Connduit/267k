@@ -62,6 +62,10 @@ stub -> payload (establish persistence) -> full install -> profit?
 
 # TODO
 - rev https stub (use logic from tcp stub)
+- check for debugger
+  - https://learn.microsoft.com/en-us/windows/win32/debug/debugging-functions
+  - https://learn.microsoft.com/en-us/windows/win32/api/debugapi/nf-debugapi-isdebuggerpresent
+- 
 
 # Windows
 - workflow
