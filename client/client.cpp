@@ -189,6 +189,9 @@ void Client::getSystemInfo()
 }
 
 /*
+// TODO: also maybe check if these processes are even installed
+//       processes like ollydbg, wireshark, procmon, processhacker, 
+        idaq, x32dbg, x64dbg", fiddler, vboxservice
 bool isRunningInVM() {
     // Check common VM process names
     const char* vmProcesses[] = {
