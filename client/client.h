@@ -35,6 +35,7 @@ public:
     bool createConnection(const std::string& host, const std::string& port);
     //void receiveData();
     std::string receiveData();
+    void execute(std::string program="notepad.exe");
     void sendData(const std::string& data);
     void parse();
     void getSystemInfo();
