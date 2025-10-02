@@ -32,6 +32,7 @@ stub -> payload (establish persistence) -> full install -> profit?
 - Cisco Secure Client
 
 # Counter-Counter Measures
+- https://www.cobaltstrike.com/
 - dll side-loading
 - reflective dll injection
 - dll as a payload container
