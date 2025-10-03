@@ -228,7 +228,8 @@ void Client::run(const std::string& host, const std::string& port)
 
 int main()
 {
+    std::cout << "test" << std::endl;
     Client tcpClient;
-    //tcpClient.run("172.18.245.234", "4444");
-    tcpClient.run("10.0.0.86", "4444");
+    tcpClient.run("172.18.245.234", "4444");
+    //tcpClient.run("10.0.0.86", "4444");
 }
