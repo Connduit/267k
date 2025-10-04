@@ -18,13 +18,10 @@ stager will probs have to be an exe cuz i only know how to turn .exe into shell 
 //#include <windows.h>
 //#undef WIN32_LEAN_AND_MEAN
 #include <iostream>
-#include <string>
 
 #include <vector>
-#include <ws2tcpip.h>
 
 
-#include <iostream>
 
 #include <ws2tcpip.h> // needed by getaddrinfo
 // #include <winhttp.h> uncomment when implmenting https c2
