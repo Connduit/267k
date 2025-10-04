@@ -1,104 +1,182 @@
+
+/*
 #include <windows.h>
-
-FARPROC GetProcAddressManual(HMODULE hModule, LPCSTR lpProcName)
+#include <winternl.h> // TODO: needed for PPEB
+HMODULE findModule(const wchar_t* module_name)
 {
+	PPEB PebAddress;
 
+// get PEB
 #if defined(_WIN64)
 	PebAddress = (PPEB) __readgsqword(0x60);
 #else
 	PebAddress = (PPEB) __readfsdword(0x30);
 #endif
 
+	// find kernel32.dll
+	//PPEB_LDR_DATA ldr = PebAddress->Ldr;
+	PLIST_ENTRY list = PebAddress->Ldr->InMemoryOrderModuleList.Flink;
 
-}
-
-// ReactOs: https://github.com/reactos/reactos/blob/master/dll/win32/kernel32/client/loader.c
-/*
- *  * @implemented
- *   */
-FARPROC
-	WINAPI
-GetProcAddress(HMODULE hModule, LPCSTR lpProcName)
-{
-	ANSI_STRING ProcedureName, *ProcNamePtr = NULL;
-	FARPROC fnExp = NULL;
-	NTSTATUS Status;
-	PVOID hMapped;
-	ULONG Ordinal = 0;
-
-	if ((ULONG_PTR)lpProcName > MAXUSHORT)
+	while (list != &PebAddress->Ldr->InMemoryOrderModuleList)
 	{
-		/* Look up by name */
-		RtlInitAnsiString(&ProcedureName, (LPSTR)lpProcName);
-		ProcNamePtr = &ProcedureName;
+		// BaseDllName is at offset 0x58 in x64 Windows 10
+		UNICODE_STRING *base_dll_name = (UNICODE_STRING *)((BYTE *)list + 0x58);
+		PVOID dll_base = *(PVOID *)((BYTE *)list + 0x30);
 
-	}
-	else
-	{
-		/* Look up by ordinal */
-		Ordinal = PtrToUlong(lpProcName);
-
-	}
-
-	/* Map provided handle */
-	hMapped = BasepMapModuleHandle(hModule, FALSE);
-
-	/* Get the proc address */
-	Status = LdrGetProcedureAddress(hMapped,
-			ProcNamePtr,
-			Ordinal,
-			(PVOID*)&fnExp);
-
-	if (!NT_SUCCESS(Status))
-	{
-		BaseSetLastNTError(Status);
-		return NULL;
-
-	}
-
-	/* Check for a special case when returned pointer is
-	 *        the same as image's base address */
-	if (fnExp == hMapped)
-	{
-		/* Set correct error code */
-		if (HIWORD(lpProcName) != 0)
-			BaseSetLastNTError(STATUS_ENTRYPOINT_NOT_FOUND);
-		else
-			BaseSetLastNTError(STATUS_ORDINAL_NOT_FOUND);
-
-		return NULL;
-
-	}
-
-	/* All good, return procedure pointer */
-	return fnExp;
-
-}
-
-// TODO: https://github.com/arbiter34/GetProcAddress/blob/master/GetProcAddress/GetProcAddress.cpp
-
-
-// random dudes online forum
-FARPROC get_proc_addr(HMODULE module, const char* func_name) {
-	PBYTE base = (PBYTE)module;
-	PIMAGE_DOS_HEADER dos = (PIMAGE_DOS_HEADER)base;
-	PIMAGE_NT_HEADERS nt = (PIMAGE_NT_HEADERS)(base + dos->e_lfanew);
-	PIMAGE_EXPORT_DIRECTORY exports = (PIMAGE_EXPORT_DIRECTORY)(
-			base + nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress
-			);
-
-	PDWORD functions = (PDWORD)(base + exports->AddressOfFunctions);
-	PDWORD names = (PDWORD)(base + exports->AddressOfNames);
-	PWORD ordinals = (PWORD)(base + exports->AddressOfNameOrdinals);
-
-	for (DWORD i = 0; i < exports->NumberOfNames; i++) {
-		char* name = (char*)(base + names[i]);
-		if (strcmp(name, func_name) == 0) {
-			return (FARPROC)(base + functions[ordinals[i]]);
-
+		if (base_dll_name->Buffer && _wcsicmp(base_dll_name->Buffer, module_name) == 0)
+		{
+			return (HMODULE)dll_base;
 		}
-
+		list = list->Flink;
 	}
 	return NULL;
-
 }
+
+FARPROC GetProcAddressManual(HMODULE hModule, LPCSTR lpProcName)
+{
+	PPEB PebAddress;
+
+// get PEB
+#if defined(_WIN64)
+	PebAddress = (PPEB) __readgsqword(0x60);
+#else
+	PebAddress = (PPEB) __readfsdword(0x30);
+#endif
+
+	// find kernel32.dll
+}*/
+#ifndef _PAYLOAD_UTIL
+#define _PAYLOAD_UTIL
+
+#include <windows.h>
+#include <winternl.h>
+#include <string.h>
+
+// Redefine PEB structures
+typedef struct _MY_PEB_LDR_DATA {
+  ULONG Length;
+    BOOL Initialized;
+    PVOID SsHandle;
+    LIST_ENTRY InLoadOrderModuleList;
+  LIST_ENTRY InMemoryOrderModuleList;
+    LIST_ENTRY InInitializationOrderModuleList;
+} MY_PEB_LDR_DATA, *PMY_PEB_LDR_DATA;
+
+typedef struct _MY_LDR_DATA_TABLE_ENTRY
+{
+    LIST_ENTRY InLoadOrderLinks;
+    LIST_ENTRY InMemoryOrderLinks;
+    LIST_ENTRY InInitializationOrderLinks;
+    PVOID DllBase;
+    PVOID EntryPoint;
+    ULONG SizeOfImage;
+    UNICODE_STRING FullDllName;
+    UNICODE_STRING BaseDllName;
+} MY_LDR_DATA_TABLE_ENTRY, *PMY_LDR_DATA_TABLE_ENTRY;
+HMODULE GetProcAddressManual( _In_ LPCSTR lpModuleName, _In_ LPCSTR lpProcName )
+{
+    PPEB PebAddress;
+    PMY_PEB_LDR_DATA pLdr;
+    PMY_LDR_DATA_TABLE_ENTRY pDataTableEntry;
+    PVOID pModuleBase;
+    PIMAGE_DOS_HEADER pDosHeader;
+    PIMAGE_NT_HEADERS pNTHeader;
+    DWORD dwExportDirRVA;
+    PIMAGE_EXPORT_DIRECTORY pExportDir;
+    PLIST_ENTRY pNextModule;
+    DWORD dwNumFunctions;
+    USHORT usOrdinalTableIndex;
+    PDWORD pdwFunctionNameBase;
+    PCSTR pFunctionName;
+    UNICODE_STRING BaseDllName;
+    DWORD i;
+
+    // Get PEB
+#if defined(_WIN64)
+    PebAddress = (PPEB) __readgsqword( 0x60 );
+#else
+    PebAddress = (PPEB) __readfsdword( 0x30 );
+#endif
+
+    pLdr = (PMY_PEB_LDR_DATA) PebAddress->Ldr;
+    pNextModule = pLdr->InLoadOrderModuleList.Flink;
+    pDataTableEntry = (PMY_LDR_DATA_TABLE_ENTRY) pNextModule;
+
+    while (pDataTableEntry->DllBase != NULL)
+    {
+        pModuleBase = pDataTableEntry->DllBase;
+        BaseDllName = pDataTableEntry->BaseDllName;
+        
+        // Parse PE headers
+        pDosHeader = (PIMAGE_DOS_HEADER)pModuleBase;
+        if (pDosHeader->e_magic != IMAGE_DOS_SIGNATURE) {
+            pDataTableEntry = (PMY_LDR_DATA_TABLE_ENTRY)pDataTableEntry->InLoadOrderLinks.Flink;
+            continue;
+        }
+        
+        pNTHeader = (PIMAGE_NT_HEADERS)((ULONG_PTR)pModuleBase + pDosHeader->e_lfanew);
+        if (pNTHeader->Signature != IMAGE_NT_SIGNATURE) {
+            pDataTableEntry = (PMY_LDR_DATA_TABLE_ENTRY)pDataTableEntry->InLoadOrderLinks.Flink;
+            continue;
+        }
+        
+        dwExportDirRVA = pNTHeader->OptionalHeader.DataDirectory[0].VirtualAddress;
+
+        // Get the next module
+        pDataTableEntry = (PMY_LDR_DATA_TABLE_ENTRY)pDataTableEntry->InLoadOrderLinks.Flink;
+
+        // Skip modules without exports
+        if (dwExportDirRVA == 0)
+            continue;
+
+        // Check module name
+        BOOL bModuleMatch = TRUE;
+        PCWSTR pModuleNameW = BaseDllName.Buffer;
+        LPCSTR pTargetModule = lpModuleName;
+        
+        for (i = 0; i < BaseDllName.Length / 2; i++)
+        {
+            WCHAR wc = pModuleNameW[i];
+            CHAR c = pTargetModule[i];
+            
+            if (c == 0) break;
+            
+            // Simple case-insensitive compare
+            if (wc >= L'a' && wc <= L'z') wc -= 32;
+            if (c >= 'a' && c <= 'z') c -= 32;
+            
+            if (wc != c)
+            {
+                bModuleMatch = FALSE;
+                break;
+            }
+        }
+
+        // Check if we matched the entire module name
+        if (!bModuleMatch || (i < strlen(lpModuleName)))
+            continue;
+
+        // Parse export directory
+        pExportDir = (PIMAGE_EXPORT_DIRECTORY)((ULONG_PTR)pModuleBase + dwExportDirRVA);
+        dwNumFunctions = pExportDir->NumberOfNames;
+        pdwFunctionNameBase = (PDWORD)((ULONG_PTR)pModuleBase + pExportDir->AddressOfNames);
+
+        for (i = 0; i < dwNumFunctions; i++)
+        {
+            pFunctionName = (PCSTR)((ULONG_PTR)pModuleBase + pdwFunctionNameBase[i]);
+            
+            // Compare function name
+            if (strcmp(pFunctionName, lpProcName) == 0)
+            {
+                PWORD pOrdinals = (PWORD)((ULONG_PTR)pModuleBase + pExportDir->AddressOfNameOrdinals);
+                PDWORD pFunctions = (PDWORD)((ULONG_PTR)pModuleBase + pExportDir->AddressOfFunctions);
+                
+                usOrdinalTableIndex = pOrdinals[i];
+                return (HMODULE)((ULONG_PTR)pModuleBase + pFunctions[usOrdinalTableIndex]);
+            }
+        }
+    }
+
+    return NULL;
+}
+#endif

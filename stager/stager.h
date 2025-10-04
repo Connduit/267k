@@ -6,11 +6,16 @@ if stager isn't in shell code, it should be either an exe or a dll (that runs vi
 stager will probs have to be an exe cuz i only know how to turn .exe into shell code (using metasploit)
 */
 
+#include <winsock2.h> // needed by socket and connect?
+//#include "winsock_util.h"
+//#include "payload_util.h"
+#include "../utils/utils.h"
+#include "../utils/kernel32_util.h"
+
 #include <string> // TODO: done use string later on as it imports a lot of unneeded stuff
 
-#include <winsock2.h>
 //#define WIN32_LEAN_AND_MEAN // reduces stuff imported from header
-#include <windows.h>
+//#include <windows.h>
 //#undef WIN32_LEAN_AND_MEAN
 #include <iostream>
 #include <string>
@@ -22,7 +27,6 @@ stager will probs have to be an exe cuz i only know how to turn .exe into shell 
 #include <iostream>
 
 #include <ws2tcpip.h> // needed by getaddrinfo
-#include <winsock2.h> // needed by socket and connect?
 // #include <winhttp.h> uncomment when implmenting https c2
 
 class Stager

