@@ -12,6 +12,73 @@ FARPROC GetProcAddressManual(HMODULE hModule, LPCSTR lpProcName)
 
 }
 
+// ReactOs: https://github.com/reactos/reactos/blob/master/dll/win32/kernel32/client/loader.c
+/*
+ *  * @implemented
+ *   */
+FARPROC
+	WINAPI
+GetProcAddress(HMODULE hModule, LPCSTR lpProcName)
+{
+	ANSI_STRING ProcedureName, *ProcNamePtr = NULL;
+	FARPROC fnExp = NULL;
+	NTSTATUS Status;
+	PVOID hMapped;
+	ULONG Ordinal = 0;
+
+	if ((ULONG_PTR)lpProcName > MAXUSHORT)
+	{
+		/* Look up by name */
+		RtlInitAnsiString(&ProcedureName, (LPSTR)lpProcName);
+		ProcNamePtr = &ProcedureName;
+
+	}
+	else
+	{
+		/* Look up by ordinal */
+		Ordinal = PtrToUlong(lpProcName);
+
+	}
+
+	/* Map provided handle */
+	hMapped = BasepMapModuleHandle(hModule, FALSE);
+
+	/* Get the proc address */
+	Status = LdrGetProcedureAddress(hMapped,
+			ProcNamePtr,
+			Ordinal,
+			(PVOID*)&fnExp);
+
+	if (!NT_SUCCESS(Status))
+	{
+		BaseSetLastNTError(Status);
+		return NULL;
+
+	}
+
+	/* Check for a special case when returned pointer is
+	 *        the same as image's base address */
+	if (fnExp == hMapped)
+	{
+		/* Set correct error code */
+		if (HIWORD(lpProcName) != 0)
+			BaseSetLastNTError(STATUS_ENTRYPOINT_NOT_FOUND);
+		else
+			BaseSetLastNTError(STATUS_ORDINAL_NOT_FOUND);
+
+		return NULL;
+
+	}
+
+	/* All good, return procedure pointer */
+	return fnExp;
+
+}
+
+// TODO: https://github.com/arbiter34/GetProcAddress/blob/master/GetProcAddress/GetProcAddress.cpp
+
+
+// random dudes online forum
 FARPROC get_proc_addr(HMODULE module, const char* func_name) {
 	PBYTE base = (PBYTE)module;
 	PIMAGE_DOS_HEADER dos = (PIMAGE_DOS_HEADER)base;
