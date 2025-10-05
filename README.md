@@ -4,7 +4,7 @@ tcp stub
 ### Commands
 - g++ stub.cpp -o stub
 - x86_64-w64-mingw32-g++ stub_win.cpp -o stub_win.exe -lws2_32
-- server: printf "fart" | ncat -l 4444
+- server: ncat -lvp 4444 --send-only < payload.bin
 - client: run executable
 
 ### Concepts
@@ -66,7 +66,7 @@ stub -> payload (establish persistence) -> full install -> profit?
 - check for debugger
   - https://learn.microsoft.com/en-us/windows/win32/debug/debugging-functions
   - https://learn.microsoft.com/en-us/windows/win32/api/debugapi/nf-debugapi-isdebuggerpresent
-- 
+- use a combination of manual api resolution and direct system calls (direct system calls are stealthier)
 
 # Windows
 - workflow
