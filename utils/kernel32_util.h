@@ -148,4 +148,10 @@ typedef BOOL (WINAPI *FuncVirtualFree)
   DWORD dwFreeType
 );
 
+typedef DWORD (WINAPI *FuncWaitForSingleObject)
+(
+  HANDLE hHandle,
+  DWORD dwMilliseconds
+);
+
 #endif

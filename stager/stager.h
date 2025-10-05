@@ -6,8 +6,8 @@ if stager isn't in shell code, it should be either an exe or a dll (that runs vi
 stager will probs have to be an exe cuz i only know how to turn .exe into shell code (using metasploit)
 */
 
-#include <winsock2.h> // needed by socket and connect?
-//#include "winsock_util.h"
+//#include <winsock2.h> // needed by socket and connect?
+#include "../utils/winsock_util.h"
 //#include "payload_util.h"
 #include "../utils/utils.h"
 #include "../utils/kernel32_util.h"
@@ -22,7 +22,7 @@ stager will probs have to be an exe cuz i only know how to turn .exe into shell 
 
 
 
-#include <ws2tcpip.h> // needed by getaddrinfo
+//#include <ws2tcpip.h> // needed by getaddrinfo
 // #include <winhttp.h> uncomment when implmenting https c2
 
 /*

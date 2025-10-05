@@ -34,6 +34,17 @@ typedef void (WINAPI *FuncFreeAddrInfo)
   LPADDRINFO pAddrInfo
 );
 
+typedef SOCKET (WINAPI *FuncSocket) (
+	int af,
+	int type,
+	int protocol
+);
+
+typedef int (WINAPI *FuncCloseSocket) (
+	SOCKET s
+);
+
+
 typedef SOCKET (WINAPI *FuncWSASocketA) (
 	int af,
 	int type,

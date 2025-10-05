@@ -45,21 +45,75 @@ FARPROC GetProcAddressManual(HMODULE hModule, LPCSTR lpProcName)
 
 	// find kernel32.dll
 }*/
+
+// TODO: break up GetProcAddressManual into 2 functions so we don't have to recalculate getModule logic everytime
+// meaning we only need to call it once inside stager.c
+
 #ifndef _PAYLOAD_UTIL
 #define _PAYLOAD_UTIL
 
-#include <windows.h>
-#include <winternl.h>
-#include <string.h>
+// TODO: remove these includes
+//#include <windows.h>
+//#include <winternl.h>
+//#include <string.h>
 
+
+// TODO: move this somewhere else?
+// Define own types
+typedef struct _UNICODE_STRING {
+	  USHORT Length;
+	    USHORT MaximumLength;
+		  PWSTR  Buffer;
+		  
+} UNICODE_STRING, *PUNICODE_STRING;
+
+typedef struct _PEB_LDR_DATA {
+	BYTE Reserved1[8];
+	PVOID Reserved2[3];
+	LIST_ENTRY InMemoryOrderModuleList;
+} PEB_LDR_DATA,*PPEB_LDR_DATA;
+
+typedef struct _RTL_USER_PROCESS_PARAMETERS {
+	BYTE Reserved1[16];
+	PVOID Reserved2[10];
+	UNICODE_STRING ImagePathName;
+	UNICODE_STRING CommandLine;
+} RTL_USER_PROCESS_PARAMETERS,*PRTL_USER_PROCESS_PARAMETERS;
+
+typedef VOID (NTAPI *PPS_POST_PROCESS_INIT_ROUTINE)(VOID);
+
+typedef struct _PEB {
+	BYTE Reserved1[2];
+	BYTE BeingDebugged;
+	BYTE Reserved2[1];
+	PVOID Reserved3[2];
+	PPEB_LDR_DATA Ldr;
+	PRTL_USER_PROCESS_PARAMETERS ProcessParameters;
+	PVOID Reserved4[3];
+	PVOID AtlThunkSListPtr;
+	PVOID Reserved5;
+	ULONG Reserved6;
+	PVOID Reserved7;
+	ULONG Reserved8;
+	ULONG AtlThunkSListPtr32;
+	PVOID Reserved9[45];
+	BYTE Reserved10[96];
+	PPS_POST_PROCESS_INIT_ROUTINE PostProcessInitRoutine;
+	BYTE Reserved11[128];
+	PVOID Reserved12[1];
+	ULONG SessionId;
+} PEB,*PPEB;
+
+
+// TODO: use these PEB structures instead not the ones above
 // Redefine PEB structures
 typedef struct _MY_PEB_LDR_DATA {
-  ULONG Length;
-    BOOL Initialized;
-    PVOID SsHandle;
-    LIST_ENTRY InLoadOrderModuleList;
-  LIST_ENTRY InMemoryOrderModuleList;
-    LIST_ENTRY InInitializationOrderModuleList;
+	ULONG Length;
+	BOOL Initialized;
+	PVOID SsHandle;
+	LIST_ENTRY InLoadOrderModuleList;
+	LIST_ENTRY InMemoryOrderModuleList;
+	LIST_ENTRY InInitializationOrderModuleList;
 } MY_PEB_LDR_DATA, *PMY_PEB_LDR_DATA;
 
 typedef struct _MY_LDR_DATA_TABLE_ENTRY
@@ -73,6 +127,22 @@ typedef struct _MY_LDR_DATA_TABLE_ENTRY
     UNICODE_STRING FullDllName;
     UNICODE_STRING BaseDllName;
 } MY_LDR_DATA_TABLE_ENTRY, *PMY_LDR_DATA_TABLE_ENTRY;
+
+// TODO: temp strcmp until i implement hashing
+BOOL strings_equal(const char* a, const char* b) {
+	int i = 0;
+	while (a[i] && b[i] && a[i] == b[i]) i++;
+	return (a[i] == b[i]);  // Both should be null terminator
+}
+
+// TODO: temp strlen
+size_t my_strlen(const char* str) {
+	size_t len = 0;
+	while (str[len]) len++;
+	return len;
+
+}
+
 HMODULE GetProcAddressManual( _In_ LPCSTR lpModuleName, _In_ LPCSTR lpProcName )
 {
     PPEB PebAddress;
@@ -153,7 +223,9 @@ HMODULE GetProcAddressManual( _In_ LPCSTR lpModuleName, _In_ LPCSTR lpProcName )
         }
 
         // Check if we matched the entire module name
-        if (!bModuleMatch || (i < strlen(lpModuleName)))
+        //if (!bModuleMatch || (i < strlen(lpModuleName)))
+		// TODO: 
+        if (!bModuleMatch || (i < my_strlen(lpModuleName)))
             continue;
 
         // Parse export directory
@@ -165,8 +237,9 @@ HMODULE GetProcAddressManual( _In_ LPCSTR lpModuleName, _In_ LPCSTR lpProcName )
         {
             pFunctionName = (PCSTR)((ULONG_PTR)pModuleBase + pdwFunctionNameBase[i]);
             
-            // Compare function name
-            if (strcmp(pFunctionName, lpProcName) == 0)
+            // Compare function name // TODO: replace strcmp with hash comparison
+            //if (strcmp(pFunctionName, lpProcName) == 0)
+            if (strings_equal(pFunctionName, lpProcName) == 0)
             {
                 PWORD pOrdinals = (PWORD)((ULONG_PTR)pModuleBase + pExportDir->AddressOfNameOrdinals);
                 PDWORD pFunctions = (PDWORD)((ULONG_PTR)pModuleBase + pExportDir->AddressOfFunctions);
