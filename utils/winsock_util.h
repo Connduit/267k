@@ -7,11 +7,11 @@ metasploit:
 #define _WINSOCK_UTIL
 
 #define WIN32_LEAN_AND_MEAN
-
 #include <windows.h>
+
 #include <winsock2.h>
-#include <intrin.h>
-#include <ws2tcpip.h>
+//#include <intrin.h>
+#include <ws2tcpip.h> // pulls in winsock2.h which pulls in windows.h
 
 typedef int (WINAPI *FuncWSAStartup)
 (

