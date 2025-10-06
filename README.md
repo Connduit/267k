@@ -7,7 +7,7 @@ tcp stub
 - server: ncat -lvp 4444 --send-only < payload.bin
 - client: run executable
 
-### TODO
+### TODO (client)
 - rev https stub (use logic from tcp stub)
 - check for debugger
   - https://learn.microsoft.com/en-us/windows/win32/debug/debugging-functions
@@ -16,6 +16,10 @@ tcp stub
 
 ### Features (TODO)
 - sleep obfuscation
+
+### TODO (server)
+- logic written in golang
+- gui written in c++ and qt gui ?
 
 ### Workflow
 stub -> payload (establish persistence) -> full install -> profit? 
