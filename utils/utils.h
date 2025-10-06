@@ -13,7 +13,7 @@ typedef struct _LDR_DATA_TABLE_ENTRY {
     LIST_ENTRY InLoadOrderLinks;
     LIST_ENTRY InMemoryOrderLinks;
     LIST_ENTRY InInitializationOrderLinks;
-    PVOID DllBase;
+    PVOID DllBase; // pointer to the base address of where the DLL/module is loaded
     PVOID EntryPoint;
 	ULONG SizeOfImage;
     UNICODE_STRING FullDllName;
@@ -89,6 +89,14 @@ FARPROC GetProcAddressManual(LPCSTR lpModuleName, LPCSTR lpProcName )
 #endif
 	
 	PLIST_ENTRY pList = PebAddress->Ldr->InMemoryOrderModuleList.Flink;
+	PLDR_DATA_TABLE_ENTRY pTableEntry = pList->InLoadOrderLinks;
+	PVOID pModuleBase = pDataTableEntry->DllBase;
+	UNICODE_STRING BaseDllName = pDataTableEntry->BaseDllName;
+	// TODO: 
+	PIMAGE_NT_HEADERS  pNtHeaders = (PIMAGE_NT_HEADERS)(pModuleBase + ((PIMAGE_DOS_HEADER)pModuleBase)->e_lfanew);
+	PIMAGE_DATA_DIRECTORY pDataDirectory = (PIMAGE_DATA_DIRECTORY)&pNtHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
+	PIMAGE_EXPORT_DIRECTORY pExportDirectory = (PIMAGE_EXPORT_DIRECTORY)(pModuleBase + pDataDirectory->VirtualAddress);
+
 
     return NULL;
 }
