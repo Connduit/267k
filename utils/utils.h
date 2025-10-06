@@ -87,7 +87,7 @@ FARPROC GetProcAddressManual(LPCSTR lpModuleName, LPCSTR lpProcName )
 #else
     PebAddress = (PPEB) __readfsdword( 0x30 );
 #endif
-	// PLIST_ENTRY or PLDR_DATA_TABLE_ENTRY or LDR_DATA_TABLE_ENTRY? 
+	
 	PLIST_ENTRY pList = PebAddress->Ldr->InMemoryOrderModuleList.Flink;
 
     return NULL;
