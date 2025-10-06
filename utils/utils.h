@@ -1,3 +1,4 @@
+// DO THIS: otherwise strings will need to be hashed, and then hard coded in
 // https://github.com/HavocFramework/Havoc/blob/main/payloads/Demon/src/core/MiniStd.c#L313
 
 // Walking:
