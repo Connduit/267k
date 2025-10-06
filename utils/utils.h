@@ -1,6 +1,7 @@
 // https://struppigel.github.io/WisdomForHedgehogs/Execution%20Environments/PEB%20Walking%20and%20Export%20Parsing/
 // https://systemweakness.com/inside-the-peb-how-malware-resolves-apis-without-imports-81f7d03bcfc5
 // https://github.com/HavocFramework/Havoc/blob/main/payloads/Shellcode/Source/Win32.c
+// https://github.com/HavocFramework/Havoc/blob/main/payloads/Demon/src/core/Win32.c
 // https://github.com/rapid7/metasploit-payloads/blob/master/c/meterpreter/source/extensions/unhook/refresh.c
 // https://github.com/rapid7/metasploit-framework/blob/master/external/source/exploits/juicypotato/JuicyPotato/ReflectiveLoader.c
 // https://github.com/rapid7/metasploit-framework/blob/master/external/source/exploits/rottenpotato/MSFRottenPotato/ReflectiveLoader.c
