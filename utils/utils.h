@@ -40,6 +40,8 @@ typedef struct _PEB_LDR_DATA {
     //PVOID ShutdownThreadId;
 } PEB_LDR_DATA,*PPEB_LDR_DATA;
 
+// TODO: this struct isn't needed? we only need Ldr anyways
+// If it matters: https://github.com/HavocFramework/Havoc/blob/main/payloads/DllLdr/Include/Native.h#L41
 typedef struct _PEB {
 	BYTE Reserved1[2];
 	BYTE BeingDebugged;
