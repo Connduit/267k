@@ -6,14 +6,18 @@ typedef struct _LIST_ENTRY {
    struct _LIST_ENTRY *Blink; // ptr to LDR_DATA_TABLE_ENTRY
 } LIST_ENTRY, *PLIST_ENTRY, *RESTRICTED_POINTER PRLIST_ENTRY;
 
+// https://github.com/HavocFramework/Havoc/blob/main/payloads/DllLdr/Include/Native.h#L173
+// https://github.com/reactos/reactos/blob/master/sdk/include/ndk/ldrtypes.h#L140
+// https://learn.microsoft.com/en-us/windows/win32/api/winternl/ns-winternl-peb_ldr_data
 typedef struct _LDR_DATA_TABLE_ENTRY {
-    PVOID Reserved1[2];
+    LIST_ENTRY InLoadOrderLinks;
     LIST_ENTRY InMemoryOrderLinks;
-    PVOID Reserved2[2];
+    LIST_ENTRY InInitializationOrderLinks;
     PVOID DllBase;
-    PVOID Reserved3[2];
+    PVOID EntryPoint;
+	ULONG SizeOfImage;
     UNICODE_STRING FullDllName;
-    BYTE Reserved4[8];
+    UNICODE_STRING BaseDllName;
     PVOID Reserved5[3];
     union
     {
@@ -74,8 +78,8 @@ FARPROC GetProcAddressManual(LPCSTR lpModuleName, LPCSTR lpProcName )
 #else
     PebAddress = (PPEB) __readfsdword( 0x30 );
 #endif
-
-	
+	// PLIST_ENTRY or PLDR_DATA_TABLE_ENTRY or LDR_DATA_TABLE_ENTRY? 
+	PLIST_ENTRY pList = PebAddress->Ldr->InMemoryOrderModuleList.Flink;
 
     return NULL;
 }
