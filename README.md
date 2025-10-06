@@ -7,19 +7,26 @@ tcp stub
 - server: ncat -lvp 4444 --send-only < payload.bin
 - client: run executable
 
-### Concepts
-- listener with auto-deploy?
+### TODO
+- rev https stub (use logic from tcp stub)
+- check for debugger
+  - https://learn.microsoft.com/en-us/windows/win32/debug/debugging-functions
+  - https://learn.microsoft.com/en-us/windows/win32/api/debugapi/nf-debugapi-isdebuggerpresent
+- use a combination of manual api resolution and direct system calls (direct system calls are stealthier)
+
+### Features (TODO)
+- sleep obfuscation
 
 ### Workflow
 stub -> payload (establish persistence) -> full install -> profit? 
 
-##### stub
+### stub
 - avoid installation / when stub is being transfer to the victim
 - avoid detection while idle but installed on victim machine
 - avoid detection while stub is executing / alive
 - avoid detection after stub is done... clean up or find somewhere to hide?
 
-# Counter Measures
+### Counter Measures
 - Ivanti Device & Application Control
 - Symantec Endpoint Protection
 - RTNotify?
@@ -31,7 +38,7 @@ stub -> payload (establish persistence) -> full install -> profit?
 - Boldon James File Classifier
 - Cisco Secure Client
 
-# Counter-Counter Measures
+### Counter-Counter Measures
 - https://www.cobaltstrike.com/
 - dll side-loading
 - reflective dll injection
@@ -61,14 +68,7 @@ stub -> payload (establish persistence) -> full install -> profit?
 -   Abuse of legitimate cloud/web services: GitHub Gists, Google Drive, Slack, Discord, cloud functions, or pastebins as C2 or staging; traffic to these looks normal and is hard to block broadly.
 - metamorphic engine
 
-# TODO
-- rev https stub (use logic from tcp stub)
-- check for debugger
-  - https://learn.microsoft.com/en-us/windows/win32/debug/debugging-functions
-  - https://learn.microsoft.com/en-us/windows/win32/api/debugapi/nf-debugapi-isdebuggerpresent
-- use a combination of manual api resolution and direct system calls (direct system calls are stealthier)
-
-# Windows
+### Windows
 - workflow
 -   make structure for command parsing on the client to server and retrieve commands sent from the server to the client, as well as parse them and execute the given plugin associated with the command
 -   connect to our server on a given port. collect information about the system and encrpyt it. then send it to our server. establish a foothold thread for communication. check if system is a vm machine or sandbox, if it is then don't unencrypt/unpack self. also don't establish persistence, it should actually probably delete itself entirely. at this point, nothing should be written to the disk and everything should be running in memory (ram).
@@ -77,7 +77,7 @@ stub -> payload (establish persistence) -> full install -> profit?
 -   it gets on system. 1. check if it's already running. 2. move to %appdata%. 3. setup persistence.
 -   takes the form of a .dll file
 
-# MacOS
+### MacOS
 - curl, osascript, launchd
 - workflow:
 -   Delivery → script (AppleScript/Bash/Python)
