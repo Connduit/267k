@@ -28,9 +28,16 @@ typedef struct _LDR_DATA_TABLE_ENTRY {
 } LDR_DATA_TABLE_ENTRY, *PLDR_DATA_TABLE_ENTRY;
 
 typedef struct _PEB_LDR_DATA {
-	BYTE Reserved1[8];
-	PVOID Reserved2[3];
-	LIST_ENTRY InMemoryOrderModuleList;
+    ULONG Length;
+    BOOLEAN Initialized;
+    PVOID SsHandle;
+    LIST_ENTRY InLoadOrderModuleList;
+    LIST_ENTRY InMemoryOrderModuleList;
+    LIST_ENTRY InInitializationOrderModuleList;
+    //PVOID EntryInProgress;
+	//#if (NTDDI_VERSION >= NTDDI_WIN7)
+    //UCHAR ShutdownInProgress;
+    //PVOID ShutdownThreadId;
 } PEB_LDR_DATA,*PPEB_LDR_DATA;
 
 typedef struct _PEB {
