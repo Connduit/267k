@@ -102,6 +102,71 @@ FARPROC GetProcAddressManual(LPCSTR lpModuleName, LPCSTR lpProcName )
     PebAddress = (PPEB) __readfsdword( 0x30 );
 #endif
 
+	/*
+	NOTE:
+	PLIST_ENTRY pListHead = &PebAddress->Ldr->InMemoryOrderModuleList; 
+	PLIST_ENTRY pListFront = PebAddress->Ldr->InMemoryOrderModuleList.Flink; 
+	PLIST_ENTRY pListBack = PebAddress->Ldr->InMemoryOrderModuleList.Blink; 
+	pListHead == pListFront->Blink == pListBack->Flink
+	
+┌──────────────────────────────────────────────┐
+│ PEB                                          │
+│----------------------------------------------│
+│  Ldr ──────────────────────────────┐         │
+└────────────────────────────────────┘         │
+                                              ▼
+┌──────────────────────────────────────────────┐
+│ PEB_LDR_DATA                                 │
+│----------------------------------------------│
+│  InMemoryOrderModuleList : LIST_ENTRY  ←───┐ │
+│   (This is the **standalone head**)        │ │
+│                                            │ │
+│   Flink ─────► &ntdll!LDR_DATA_TABLE_ENTRY.InMemoryOrderLinks │
+│   Blink ◄──── &user32!LDR_DATA_TABLE_ENTRY.InMemoryOrderLinks │
+└──────────────────────────────────────────────┘
+                ▲                           │
+                │                           │
+                │                           │
+        ┌───────┘                           ▼
+        │
+┌──────────────────────────────────────────────┐
+│ LDR_DATA_TABLE_ENTRY (ntdll.dll)             │
+│----------------------------------------------│
+│  InMemoryOrderLinks : LIST_ENTRY             │
+│     Flink ─────► &kernel32!LDR_DATA_TABLE_ENTRY.InMemoryOrderLinks │
+│     Blink ◄──── &PEB_LDR_DATA.InMemoryOrderModuleList (head)       │
+│  DllBase → 0x7ffb00000000                    │
+│  BaseDllName → "ntdll.dll"                   │
+└──────────────────────────────────────────────┘
+                ▲
+                │
+                │
+                ▼
+┌──────────────────────────────────────────────┐
+│ LDR_DATA_TABLE_ENTRY (kernel32.dll)          │
+│----------------------------------------------│
+│  InMemoryOrderLinks : LIST_ENTRY             │
+│     Flink ─────► &user32!LDR_DATA_TABLE_ENTRY.InMemoryOrderLinks   │
+│     Blink ◄──── &ntdll!LDR_DATA_TABLE_ENTRY.InMemoryOrderLinks     │
+│  DllBase → 0x7ffa00000000                    │
+│  BaseDllName → "kernel32.dll"                │
+└──────────────────────────────────────────────┘
+                ▲
+                │
+                │
+                ▼
+┌──────────────────────────────────────────────┐
+│ LDR_DATA_TABLE_ENTRY (user32.dll)            │
+│----------------------------------------------│
+│  InMemoryOrderLinks : LIST_ENTRY             │
+│     Flink ─────► &PEB_LDR_DATA.InMemoryOrderModuleList (head)      │
+│     Blink ◄──── &kernel32!LDR_DATA_TABLE_ENTRY.InMemoryOrderLinks  │
+│  DllBase → 0x7ff900000000                    │
+│  BaseDllName → "user32.dll"                  │
+└──────────────────────────────────────────────┘
+
+	*/
+
 
 	PLIST_ENTRY pList = PebAddress->Ldr->InMemoryOrderModuleList.Flink; // THIS IS A PTR to a LDR_DATA_TABLE_ENTRY
 	PLDR_DATA_TABLE_ENTRY pTableEntry;
