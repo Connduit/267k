@@ -17,6 +17,7 @@
 //#include "stager.h"
 //#include "../utils/utils.h"
 
+#include <ws2tcpip.h>
 #include <winsock2.h> // needed by socket and connect?
 #include "../utils/winsock_util.h"
 //#include "payload_util.h"

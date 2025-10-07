@@ -1,10 +1,17 @@
 #ifndef _UTIL_H
 #define _UTIL_H
 
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <Winsock2.h>
+#include <intrin.h>
+
+/*
 typedef struct _LIST_ENTRY {
    struct _LIST_ENTRY *Flink; // ptr to LDR_DATA_TABLE_ENTRY
    struct _LIST_ENTRY *Blink; // ptr to LDR_DATA_TABLE_ENTRY
 } LIST_ENTRY, *PLIST_ENTRY, *RESTRICTED_POINTER PRLIST_ENTRY;
+*/
 
 // https://github.com/HavocFramework/Havoc/blob/main/payloads/DllLdr/Include/Native.h#L173
 // https://github.com/reactos/reactos/blob/master/sdk/include/ndk/ldrtypes.h#L140
