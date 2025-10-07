@@ -90,6 +90,8 @@ typedef struct _PEB {
 
 // GetModule() ? // have 
 
+
+// first find the lpModuleName (exe/dll name), then find the lpProcName (proceduce/function name)
 FARPROC GetProcAddressManual(LPCSTR lpModuleName, LPCSTR lpProcName )
 {
     PPEB PebAddress;
@@ -99,15 +101,62 @@ FARPROC GetProcAddressManual(LPCSTR lpModuleName, LPCSTR lpProcName )
 #else
     PebAddress = (PPEB) __readfsdword( 0x30 );
 #endif
+
+
+	PLIST_ENTRY pList = PebAddress->Ldr->InMemoryOrderModuleList.Flink; // THIS IS A PTR to a LDR_DATA_TABLE_ENTRY
+	PLDR_DATA_TABLE_ENTRY pTableEntry;
+	//PLDR_DATA_TABLE_ENTRY pTableEntry = CONTAINING_RECORD(pList, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks); // TODO: might have to make my own version of CONTAINING_RECORD
 	
-	PLIST_ENTRY pList = PebAddress->Ldr->InMemoryOrderModuleList.Flink;
-	PLDR_DATA_TABLE_ENTRY pTableEntry = pList->InLoadOrderLinks;
-	PVOID pModuleBase = pDataTableEntry->DllBase;
-	UNICODE_STRING BaseDllName = pDataTableEntry->BaseDllName;
+	// PLIST_ENTRY pListTail = PebAddress->Ldr->InMemoryOrderModuleList.Blink;
+	// PLDR_DATA_TABLE_ENTRY pTableEntry = pList->InMemoryOrderLinks;
+
+	/*
+	 PPEB pPeb = GetPEB();
+    if (!pPeb || !pPeb->Ldr) return;
+
+    PLIST_ENTRY pListHead = &pPeb->Ldr->InMemoryOrderModuleList;
+    PLIST_ENTRY pList = pListHead->Flink;
+
+    while (pList != pListHead)  // loop until we come back to the head
+    {
+        PLDR_DATA_TABLE_ENTRY pEntry =
+            CONTAINING_RECORD(pList, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks);
+
+        // Print module info
+        wprintf(L"BaseDllName: %wZ\n", &pEntry->BaseDllName);
+        wprintf(L"FullDllName: %wZ\n", &pEntry->FullDllName);
+        wprintf(L"DllBase: %p\n\n", pEntry->DllBase);
+
+        // Move to the next node
+        pList = pList->Flink;
+    }
+}
+	*/
+
+	//TODO
+	PVOID pModuleBase = pTableEntry->DllBase;
+	UNICODE_STRING BaseDllName = pTableEntry->BaseDllName;
+
+	// loop through pDataTableEntry until we find match with pDataTableEntry->BaseDllName
+	do 
+	{
+		pTableEntry = CONTAINING_RECORD(pList, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks);
+		pModuleBase = pTableEntry->DllBase;
+		if (pTableEntry->BaseDllName == lpModuleName)
+		{
+			pModule = pTableEntry->DllBase;
+			break;
+		}
+		pList = pList->Flink;
+	} 
+	while (pList != PebAddress->Ldr->InMemoryOrderModuleList.Flink); // TODO: find out if it is more effient to just save off  PebAddress->Ldr->InMemoryOrderModuleList.Blink
+	
 	// TODO: 
 	PIMAGE_NT_HEADERS  pNtHeaders = (PIMAGE_NT_HEADERS)(pModuleBase + ((PIMAGE_DOS_HEADER)pModuleBase)->e_lfanew);
 	PIMAGE_DATA_DIRECTORY pDataDirectory = (PIMAGE_DATA_DIRECTORY)&pNtHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
 	PIMAGE_EXPORT_DIRECTORY pExportDirectory = (PIMAGE_EXPORT_DIRECTORY)(pModuleBase + pDataDirectory->VirtualAddress);
+
+
 
 
     return NULL;
