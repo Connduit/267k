@@ -198,6 +198,9 @@ FARPROC GetProcAddressManual(LPCSTR lpModuleName, LPCSTR lpProcName )
 }
 	*/
 
+
+// NOTE: direct casting will only work for InLoadOrderModuleList because it is the first field of the struct
+
 	//TODO
 	PVOID pModuleBase = pTableEntry->DllBase;
 	UNICODE_STRING BaseDllName = pTableEntry->BaseDllName;
