@@ -6,6 +6,9 @@
 #include <Winsock2.h>
 #include <intrin.h>
 
+// TODO: Use offsets to reduce the need to define these LDR structs
+// see offsets here: https://struppigel.github.io/WisdomForHedgehogs/Execution%20Environments/PEB%20Walking%20and%20Export%20Parsing/
+
 /*
 typedef struct _LIST_ENTRY {
    struct _LIST_ENTRY *Flink; // ptr to LDR_DATA_TABLE_ENTRY
@@ -17,9 +20,9 @@ typedef struct _LIST_ENTRY {
 // https://github.com/reactos/reactos/blob/master/sdk/include/ndk/ldrtypes.h#L140
 // https://learn.microsoft.com/en-us/windows/win32/api/winternl/ns-winternl-peb_ldr_data
 typedef struct _LDR_DATA_TABLE_ENTRY {
-    LIST_ENTRY InLoadOrderLinks;
+    LIST_ENTRY InLoadOrderLinks; // PVOID Reserved1[2];
     LIST_ENTRY InMemoryOrderLinks;
-    LIST_ENTRY InInitializationOrderLinks;
+    LIST_ENTRY InInitializationOrderLinks; // PVOID Reserved2[2];
     PVOID DllBase; // pointer to the base address of where the DLL/module is loaded
     PVOID EntryPoint;
 	ULONG SizeOfImage;
@@ -84,6 +87,8 @@ typedef struct _PEB {
     ULONG SessionId;
 } PEB;
 */
+
+// GetModule() ? // have 
 
 FARPROC GetProcAddressManual(LPCSTR lpModuleName, LPCSTR lpProcName )
 {
