@@ -104,31 +104,30 @@ FARPROC GetProcAddressManual(LPCSTR lpModuleName, LPCSTR lpProcName)
 	/*
 	Offset Arithmetic (64Bit ONLY):
 		PEB_LDR_DATA ldr = (BYTE *)PebAddress + 0x18;
+
+		// TODO
 		PLIST_ENTRY pListHead = PebAddress + 0x18 + 0x20
-		PBYTE moduleList = ldr + 0x20;
+		PBYTE InMemoryOrderModuleList = ldr + 0x20;
 		PebAddress                   gs:0x60
-+ 0x18 → Ldr (_PEB_LDR_DATA)
-  + 0x20 → InMemoryOrderModuleList (LIST_ENTRY)
-    + 0x00 → Flink pointer → next LIST_ENTRY
-    + 0x20 → DllBase
-    + 0x38 → FullDllName (UNICODE_STRING)
+
+  		+ 0x20 → InMemoryOrderModuleList (LIST_ENTRY)
+    	+ 0x00 → Flink pointer → next LIST_ENTRY
+    	+ 0x20 → DllBase
+    	+ 0x38 → FullDllName (UNICODE_STRING)
         + 0x8 → Buffer pointer
-    + 0x48 → BaseDllName (UNICODE_STRING)
+    	+ 0x48 → BaseDllName (UNICODE_STRING)
         + 0x8 → Buffer pointer
 		PBYTE listHead = PebAddress + 0x18 + 0x20;  // list head
-PBYTE entry = *(PBYTE*)listHead;            // first Flink
+		PBYTE entry = *(PBYTE*)listHead;            // first Flink
 
-while(entry != listHead) {
-    PBYTE dllBase = entry + 0x20;
-    PBYTE fullNameBuffer = *(PBYTE*)(entry + 0x38 + 0x8);
-    PBYTE baseNameBuffer = *(PBYTE*)(entry + 0x48 + 0x8);
+		while(entry != listHead) {
+    		PBYTE dllBase = entry + 0x20;
+    		PBYTE fullNameBuffer = *(PBYTE*)(entry + 0x38 + 0x8);
+    		PBYTE baseNameBuffer = *(PBYTE*)(entry + 0x48 + 0x8);
 
-    // move to next
-    entry = *(PBYTE*)entry;  // Flink
-}
-
-
-		
+    		// move to next
+    		entry = *(PBYTE*)entry;  // Flink
+		}
 	*/
 
 	
