@@ -92,7 +92,7 @@ typedef struct _PEB {
 
 
 // first find the lpModuleName (exe/dll name), then find the lpProcName (proceduce/function name)
-FARPROC GetProcAddressManual(LPCSTR lpModuleName, LPCSTR lpProcName )
+FARPROC GetProcAddressManual(LPCSTR lpModuleName, LPCSTR lpProcName)
 {
     PPEB PebAddress;
     // Get PEB
@@ -102,128 +102,47 @@ FARPROC GetProcAddressManual(LPCSTR lpModuleName, LPCSTR lpProcName )
     PebAddress = (PPEB) __readfsdword( 0x30 );
 #endif
 
-	/*
-	NOTE:
+	// NOTE: direct casting will only work for InLoadOrderModuleList because it is the first field of the struct
 	PLIST_ENTRY pListHead = &PebAddress->Ldr->InMemoryOrderModuleList; 
-	PLIST_ENTRY pListFront = PebAddress->Ldr->InMemoryOrderModuleList.Flink; 
-	PLIST_ENTRY pListBack = PebAddress->Ldr->InMemoryOrderModuleList.Blink; 
-	pListHead == pListFront->Blink == pListBack->Flink
-	
-┌──────────────────────────────────────────────┐
-│ PEB                                          │
-│----------------------------------------------│
-│  Ldr ──────────────────────────────┐         │
-└────────────────────────────────────┘         │
-                                              ▼
-┌──────────────────────────────────────────────┐
-│ PEB_LDR_DATA                                 │
-│----------------------------------------------│
-│  InMemoryOrderModuleList : LIST_ENTRY  ←───┐ │
-│   (This is the **standalone head**)        │ │
-│                                            │ │
-│   Flink ─────► &ntdll!LDR_DATA_TABLE_ENTRY.InMemoryOrderLinks │
-│   Blink ◄──── &user32!LDR_DATA_TABLE_ENTRY.InMemoryOrderLinks │
-└──────────────────────────────────────────────┘
-                ▲                           │
-                │                           │
-                │                           │
-        ┌───────┘                           ▼
-        │
-┌──────────────────────────────────────────────┐
-│ LDR_DATA_TABLE_ENTRY (ntdll.dll)             │
-│----------------------------------------------│
-│  InMemoryOrderLinks : LIST_ENTRY             │
-│     Flink ─────► &kernel32!LDR_DATA_TABLE_ENTRY.InMemoryOrderLinks │
-│     Blink ◄──── &PEB_LDR_DATA.InMemoryOrderModuleList (head)       │
-│  DllBase → 0x7ffb00000000                    │
-│  BaseDllName → "ntdll.dll"                   │
-└──────────────────────────────────────────────┘
-                ▲
-                │
-                │
-                ▼
-┌──────────────────────────────────────────────┐
-│ LDR_DATA_TABLE_ENTRY (kernel32.dll)          │
-│----------------------------------------------│
-│  InMemoryOrderLinks : LIST_ENTRY             │
-│     Flink ─────► &user32!LDR_DATA_TABLE_ENTRY.InMemoryOrderLinks   │
-│     Blink ◄──── &ntdll!LDR_DATA_TABLE_ENTRY.InMemoryOrderLinks     │
-│  DllBase → 0x7ffa00000000                    │
-│  BaseDllName → "kernel32.dll"                │
-└──────────────────────────────────────────────┘
-                ▲
-                │
-                │
-                ▼
-┌──────────────────────────────────────────────┐
-│ LDR_DATA_TABLE_ENTRY (user32.dll)            │
-│----------------------------------------------│
-│  InMemoryOrderLinks : LIST_ENTRY             │
-│     Flink ─────► &PEB_LDR_DATA.InMemoryOrderModuleList (head)      │
-│     Blink ◄──── &kernel32!LDR_DATA_TABLE_ENTRY.InMemoryOrderLinks  │
-│  DllBase → 0x7ff900000000                    │
-│  BaseDllName → "user32.dll"                  │
-└──────────────────────────────────────────────┘
+	PLIST pList = PebAddress->Ldr->InMemoryOrderModuleList.Flink;
+    PVOID pModule; 
+	PLDR_DATA_TABLE_ENTRY pDataTableEntry;
 
-	*/
-
-
-	PLIST_ENTRY pList = PebAddress->Ldr->InMemoryOrderModuleList.Flink; // THIS IS A PTR to a LDR_DATA_TABLE_ENTRY
-	PLDR_DATA_TABLE_ENTRY pTableEntry;
-	//PLDR_DATA_TABLE_ENTRY pTableEntry = CONTAINING_RECORD(pList, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks); // TODO: might have to make my own version of CONTAINING_RECORD
-	
-	// PLIST_ENTRY pListTail = PebAddress->Ldr->InMemoryOrderModuleList.Blink;
-	// PLDR_DATA_TABLE_ENTRY pTableEntry = pList->InMemoryOrderLinks;
-
-	/*
-	 PPEB pPeb = GetPEB();
-    if (!pPeb || !pPeb->Ldr) return;
-
-    PLIST_ENTRY pListHead = &pPeb->Ldr->InMemoryOrderModuleList;
-    PLIST_ENTRY pList = pListHead->Flink;
-
-    while (pList != pListHead)  // loop until we come back to the head
-    {
-        PLDR_DATA_TABLE_ENTRY pEntry =
-            CONTAINING_RECORD(pList, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks);
-
-        // Print module info
-        wprintf(L"BaseDllName: %wZ\n", &pEntry->BaseDllName);
-        wprintf(L"FullDllName: %wZ\n", &pEntry->FullDllName);
-        wprintf(L"DllBase: %p\n\n", pEntry->DllBase);
-
-        // Move to the next node
-        pList = pList->Flink;
-    }
-}
-	*/
-
-
-// NOTE: direct casting will only work for InLoadOrderModuleList because it is the first field of the struct
-
-	//TODO
-	PVOID pModuleBase = pTableEntry->DllBase;
-	UNICODE_STRING BaseDllName = pTableEntry->BaseDllName;
-
-	// loop through pDataTableEntry until we find match with pDataTableEntry->BaseDllName
-	do 
+	while (pList != pListHead)
 	{
-		pTableEntry = CONTAINING_RECORD(pList, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks);
-		pModuleBase = pTableEntry->DllBase;
-		if (pTableEntry->BaseDllName == lpModuleName)
+
+        pDataTableEntry = CONTAINING_RECORD(pList, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks); // TODO: do CONTAINING_RECORD logic manually 
+
+		// will need to do some type conversion
+		if (pDataTableEntry->BaseDllName.Buffer == lpModuleName) // TODO: fix
 		{
-			pModule = pTableEntry->DllBase;
+			pModule = pDataTableEntry->DllBase;
 			break;
 		}
 		pList = pList->Flink;
-	} 
-	while (pList != PebAddress->Ldr->InMemoryOrderModuleList.Flink); // TODO: find out if it is more effient to just save off  PebAddress->Ldr->InMemoryOrderModuleList.Blink
+	}
 	
-	// TODO: 
-	PIMAGE_NT_HEADERS  pNtHeaders = (PIMAGE_NT_HEADERS)(pModuleBase + ((PIMAGE_DOS_HEADER)pModuleBase)->e_lfanew);
-	PIMAGE_DATA_DIRECTORY pDataDirectory = (PIMAGE_DATA_DIRECTORY)&pNtHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
-	PIMAGE_EXPORT_DIRECTORY pExportDirectory = (PIMAGE_EXPORT_DIRECTORY)(pModuleBase + pDataDirectory->VirtualAddress);
 
+	// TODO: 
+	//
+	//PIMAGE_DATA_DIRECTORY pDataDirectory = (PIMAGE_DATA_DIRECTORY)&pNtHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
+	// ntHeaders->OptionalHeader.ImageBase
+	//PIMAGE_EXPORT_DIRECTORY pExportDirectory = (PIMAGE_EXPORT_DIRECTORY)(pModuleBase + pDataDirectory->VirtualAddress);
+	//
+	//
+	//
+	// PIMAGE_NT_HEADERS pNTHeader = (PIMAGE_NT_HEADERS) ((ULONG_PTR) pModuleBase + ((PIMAGE_DOS_HEADER) pModuleBase)->e_lfanew);
+	// dwExportDirRVA = pNTHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
+	// pExportDir = (PIMAGE_EXPORT_DIRECTORY) ((ULONG_PTR) pModuleBase + dwExportDirRVA);
+
+	for (int i = 0; i < pExportDirectory->NumberOfNames; ++i)
+	{
+		// AddressOfNames          = C_PTR( Module + ModuleExportedDirectory->AddressOfNames  );
+		//if (strcmp(lpProcName, (const char*)hModule + addressOfNames[i]) == 0) {
+		if (strcmp(lpProcName, (const char*)hModule + addressOfNames[i]) == 0) {
+			return (FARPROC)((BYTE*)hModule + addressOfFunctions[addressOfNameOrdinals[i]]);
+		}
+	}
 
 
 
