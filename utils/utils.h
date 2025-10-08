@@ -89,8 +89,7 @@ typedef struct _PEB {
 */
 
 
-// HMODULE GetModuleHandleManual(LPCSTR lpModuleName) ? // have 
-
+// HMODULE GetModuleHandleManual(LPCSTR lpModuleName) ? 
 
 // first find the lpModuleName (exe/dll name), then find the lpProcName (proceduce/function name)
 FARPROC GetProcAddressManual(LPCSTR lpModuleName, LPCSTR lpProcName)
@@ -102,10 +101,40 @@ FARPROC GetProcAddressManual(LPCSTR lpModuleName, LPCSTR lpProcName)
 #else
     PebAddress = (PPEB) __readfsdword( 0x30 );
 #endif
+	/*
+	Offset Arithmetic (64Bit ONLY):
+		PEB_LDR_DATA ldr = (BYTE *)PebAddress + 0x18;
+		PLIST_ENTRY pListHead = PebAddress + 0x18 + 0x20
+		PBYTE moduleList = ldr + 0x20;
+		PebAddress                   gs:0x60
++ 0x18 → Ldr (_PEB_LDR_DATA)
+  + 0x20 → InMemoryOrderModuleList (LIST_ENTRY)
+    + 0x00 → Flink pointer → next LIST_ENTRY
+    + 0x20 → DllBase
+    + 0x38 → FullDllName (UNICODE_STRING)
+        + 0x8 → Buffer pointer
+    + 0x48 → BaseDllName (UNICODE_STRING)
+        + 0x8 → Buffer pointer
+		PBYTE listHead = PebAddress + 0x18 + 0x20;  // list head
+PBYTE entry = *(PBYTE*)listHead;            // first Flink
 
+while(entry != listHead) {
+    PBYTE dllBase = entry + 0x20;
+    PBYTE fullNameBuffer = *(PBYTE*)(entry + 0x38 + 0x8);
+    PBYTE baseNameBuffer = *(PBYTE*)(entry + 0x48 + 0x8);
+
+    // move to next
+    entry = *(PBYTE*)entry;  // Flink
+}
+
+
+		
+	*/
+
+	
 	PVOID pModule;
 	// NOTE: direct casting will only work for InLoadOrderModuleList because it is the first field of the struct
-	PLIST_ENTRY pListHead = &PebAddress->Ldr->InMemoryOrderModuleList; 
+	PLIST_ENTRY pListHead = &PebAddress->Ldr->InMemoryOrderModuleList;
 	PLIST_ENTRY pList = PebAddress->Ldr->InMemoryOrderModuleList.Flink;
 	PLDR_DATA_TABLE_ENTRY pDataTableEntry;
 
@@ -122,12 +151,26 @@ FARPROC GetProcAddressManual(LPCSTR lpModuleName, LPCSTR lpProcName)
 		}
 		pList = pList->Flink;
 	}
+
+	/*
+	Offset Arithmetic (64Bit ONLY):
+		DWORD e_lfanew = *(DWORD*)(pModule + 0x3c);
+		DWORD dwExportDirRVA = *(DWORD*)(pModule + e_lfanew + 0x88);
+		PIMAGE_EXPORT_DIRECTORY pExportDir = pModule + dwExportDirRVA;
+		// TODO: 
+		DWORD NumberOfNames = *(DWORD*)(pExportDir + 0x18);
+		DWORD* AddressOfFunctions    = (DWORD*)(pExportDir + 0x1C);
+		DWORD* AddressOfNames        = (DWORD*)(pExportDir + 0x20);
+		WORD*  AddressOfNameOrdinals = (WORD*)(pExportDir + 0x24);
+		
+		
+	*/
 	
 
 	// Find lpProcName
-	PIMAGE_NT_HEADERS pNTHeader = (PIMAGE_NT_HEADERS) ((ULONG_PTR) pModuleBase + ((PIMAGE_DOS_HEADER) pModuleBase)->e_lfanew);
-	DWORD dwExportDirRVA = pNTHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
-	PIMAGE_EXPORT_DIRECTORY pExportDir = (PIMAGE_EXPORT_DIRECTORY) ((ULONG_PTR) pModuleBase + dwExportDirRVA);
+	PIMAGE_NT_HEADERS pNTHeader = (PIMAGE_NT_HEADERS) ((ULONG_PTR) pModule + ((PIMAGE_DOS_HEADER) pModule)->e_lfanew); // pModule + 0x3c (32/64bit)
+	DWORD dwExportDirRVA = pNTHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress; // pModule + 0x3c + 0x88 (64bit)
+	PIMAGE_EXPORT_DIRECTORY pExportDir = (PIMAGE_EXPORT_DIRECTORY) ((ULONG_PTR) pModule + dwExportDirRVA); // pModule + (pModule + 0x3c)
 
 	// TODO: type cast these for clarity? 
 	DWORD* arrayOfFunctionRVAs = pModule + pExportDir->AddressOfFunctions; 		// PDWORD
