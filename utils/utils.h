@@ -1,10 +1,8 @@
 #ifndef _UTIL_H
 #define _UTIL_H
 
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <Winsock2.h>
-#include <intrin.h>
+//#define WIN32_LEAN_AND_MEAN
+//#include <windows.h>
 
 // TODO: Use offsets to reduce the need to define these LDR structs
 // see offsets here: https://struppigel.github.io/WisdomForHedgehogs/Execution%20Environments/PEB%20Walking%20and%20Export%20Parsing/
@@ -15,6 +13,14 @@ typedef struct _LIST_ENTRY {
    struct _LIST_ENTRY *Blink; // ptr to LDR_DATA_TABLE_ENTRY
 } LIST_ENTRY, *PLIST_ENTRY, *RESTRICTED_POINTER PRLIST_ENTRY;
 */
+
+typedef struct _UNICODE_STRING
+{
+    USHORT Length;
+    USHORT MaximumLength;
+    PWSTR Buffer;
+} UNICODE_STRING;
+typedef UNICODE_STRING *PUNICODE_STRING;
 
 // https://github.com/HavocFramework/Havoc/blob/main/payloads/DllLdr/Include/Native.h#L173
 // https://github.com/reactos/reactos/blob/master/sdk/include/ndk/ldrtypes.h#L140
@@ -58,6 +64,7 @@ typedef struct _PEB {
 	BYTE Reserved2[1];
 	PVOID Reserved3[2];
 	PPEB_LDR_DATA Ldr;
+    /*
 	PRTL_USER_PROCESS_PARAMETERS ProcessParameters;
 	PVOID Reserved4[3];
 	PVOID AtlThunkSListPtr;
@@ -72,6 +79,7 @@ typedef struct _PEB {
 	BYTE Reserved11[128];
 	PVOID Reserved12[1];
 	ULONG SessionId;
+    */
 } PEB,*PPEB;
 
 /* 64bit
@@ -87,6 +95,19 @@ typedef struct _PEB {
     ULONG SessionId;
 } PEB;
 */
+
+SIZE_T WCharStringToCharString(PCHAR Destination, PWCHAR Source, SIZE_T MaximumAllowed)
+{
+    INT Length = MaximumAllowed;
+
+    while (--Length >= 0)
+    {
+        if (!(*Destination++ = *Source++))
+            return MaximumAllowed - Length - 1;
+    }
+
+    return MaximumAllowed - Length;
+}
 
 
 // HMODULE GetModuleHandleManual(LPCSTR lpModuleName) ? 
@@ -129,9 +150,12 @@ FARPROC GetProcAddressManual(LPCSTR lpModuleName, LPCSTR lpProcName)
     		entry = *(PBYTE*)entry;  // Flink
 		}
 	*/
+    // TODO: remove this when hashing is implemented
+    SIZE_T size = 0;
+    WCHAR ModuleNameW[MAX_PATH] = {0};
+    CHAR ModuleName[MAX_PATH] = {0};
 
-	
-	PVOID pModule;
+    PVOID pModule;
 	// NOTE: direct casting will only work for InLoadOrderModuleList because it is the first field of the struct
 	PLIST_ENTRY pListHead = &PebAddress->Ldr->InMemoryOrderModuleList;
 	PLIST_ENTRY pList = PebAddress->Ldr->InMemoryOrderModuleList.Flink;
@@ -143,7 +167,9 @@ FARPROC GetProcAddressManual(LPCSTR lpModuleName, LPCSTR lpProcName)
         pDataTableEntry = CONTAINING_RECORD(pList, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks); // TODO: do CONTAINING_RECORD logic manually 
 		
 		// will need to do some type conversion
-		if (pDataTableEntry->BaseDllName.Buffer == lpModuleName) // TODO: fix
+		//if (strcmp(pDataTableEntry->BaseDllName.Buffer, lpModuleName) == 0)
+        size = WCharStringToCharString(ModuleName, pDataTableEntry->BaseDllName.Buffer, pDataTableEntry->BaseDllName.Length);
+        if (size > 0 && _stricmp(ModuleName, lpModuleName) == 0)
 		{
 			pModule = pDataTableEntry->DllBase;
 			break;
@@ -171,22 +197,23 @@ FARPROC GetProcAddressManual(LPCSTR lpModuleName, LPCSTR lpProcName)
 	DWORD dwExportDirRVA = pNTHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress; // pModule + 0x3c + 0x88 (64bit)
 	PIMAGE_EXPORT_DIRECTORY pExportDir = (PIMAGE_EXPORT_DIRECTORY) ((ULONG_PTR) pModule + dwExportDirRVA); // pModule + (pModule + 0x3c)
 
-	// TODO: type cast these for clarity? 
-	DWORD* arrayOfFunctionRVAs = pModule + pExportDir->AddressOfFunctions; 		// PDWORD
-    DWORD* arrayOfNamesRVAs = pModule + pExportDir->AddressOfNames;				// PDWORD
-    WORD* arrayOfNameOrdinals = pModule + pExportDir->AddressOfNameOrdinals; 	// PWORD
+	// TODO: type cast these for clarity? TODO: are these type cast correct?
+	DWORD* arrayOfFunctionRVAs = (DWORD *)((ULONG_PTR)pModule + pExportDir->AddressOfFunctions); 		// PDWORD
+    DWORD* arrayOfNamesRVAs = (DWORD *)((ULONG_PTR)pModule + pExportDir->AddressOfNames);				// PDWORD
+    WORD* arrayOfNameOrdinals = (WORD *)((ULONG_PTR)pModule + pExportDir->AddressOfNameOrdinals); 	// PWORD
 
-	for (DWORD i = 0; i < pExportDir->NumberOfNames; ++i)
-	{
-		char* prodName = (char *)(pModule + arrayOfNamesRVAs[i]);
-		WORD ordinalIndex = arrayOfNameOrdinals[i];
-		FARPROC functionAddress = pModule + arrayOfFunctionRVAs[ordinalIndex];
+    for (DWORD i = 0; i < pExportDir->NumberOfNames; ++i)
+    {
+        char *prodName = (char *)((ULONG_PTR)pModule + arrayOfNamesRVAs[i]);
+        WORD ordinalIndex = arrayOfNameOrdinals[i];
+        FARPROC functionAddress = (FARPROC)((ULONG_PTR)pModule + arrayOfFunctionRVAs[ordinalIndex]);
 
-		if (strcmp(lpProcName, prodName) == 0)
-		{
-			return functionAddress;
-		}
-	}
+        // TODO: idk if case-insensitive strcmp is needed on here
+        if (_stricmp(lpProcName, prodName) == 0)
+        {
+            return functionAddress;
+        }
+    }
     return NULL;
 }
 #endif
