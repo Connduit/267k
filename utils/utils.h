@@ -50,7 +50,7 @@ typedef struct _PEB_LDR_DATA {
     //PVOID ShutdownThreadId;
 } PEB_LDR_DATA,*PPEB_LDR_DATA;
 
-// TODO: this struct isn't needed? we only need Ldr anyways
+// TODO: this struct isn't needed? we only need Ldr anyways... might have to uncomment to avoid using certain #includes tho
 // If it matters: https://github.com/HavocFramework/Havoc/blob/main/payloads/DllLdr/Include/Native.h#L41
 typedef struct _PEB {
 	BYTE Reserved1[2];
@@ -88,7 +88,8 @@ typedef struct _PEB {
 } PEB;
 */
 
-// GetModule() ? // have 
+
+// HMODULE GetModuleHandleManual(LPCSTR lpModuleName) ? // have 
 
 
 // first find the lpModuleName (exe/dll name), then find the lpProcName (proceduce/function name)
@@ -102,17 +103,17 @@ FARPROC GetProcAddressManual(LPCSTR lpModuleName, LPCSTR lpProcName)
     PebAddress = (PPEB) __readfsdword( 0x30 );
 #endif
 
+	PVOID pModule;
 	// NOTE: direct casting will only work for InLoadOrderModuleList because it is the first field of the struct
 	PLIST_ENTRY pListHead = &PebAddress->Ldr->InMemoryOrderModuleList; 
-	PLIST pList = PebAddress->Ldr->InMemoryOrderModuleList.Flink;
-    PVOID pModule; 
+	PLIST_ENTRY pList = PebAddress->Ldr->InMemoryOrderModuleList.Flink;
 	PLDR_DATA_TABLE_ENTRY pDataTableEntry;
 
+	// Find lpModuleName
 	while (pList != pListHead)
 	{
-
         pDataTableEntry = CONTAINING_RECORD(pList, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks); // TODO: do CONTAINING_RECORD logic manually 
-
+		
 		// will need to do some type conversion
 		if (pDataTableEntry->BaseDllName.Buffer == lpModuleName) // TODO: fix
 		{
@@ -123,29 +124,27 @@ FARPROC GetProcAddressManual(LPCSTR lpModuleName, LPCSTR lpProcName)
 	}
 	
 
-	// TODO: 
-	//
-	//PIMAGE_DATA_DIRECTORY pDataDirectory = (PIMAGE_DATA_DIRECTORY)&pNtHeaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
-	// ntHeaders->OptionalHeader.ImageBase
-	//PIMAGE_EXPORT_DIRECTORY pExportDirectory = (PIMAGE_EXPORT_DIRECTORY)(pModuleBase + pDataDirectory->VirtualAddress);
-	//
-	//
-	//
-	// PIMAGE_NT_HEADERS pNTHeader = (PIMAGE_NT_HEADERS) ((ULONG_PTR) pModuleBase + ((PIMAGE_DOS_HEADER) pModuleBase)->e_lfanew);
-	// dwExportDirRVA = pNTHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
-	// pExportDir = (PIMAGE_EXPORT_DIRECTORY) ((ULONG_PTR) pModuleBase + dwExportDirRVA);
+	// Find lpProcName
+	PIMAGE_NT_HEADERS pNTHeader = (PIMAGE_NT_HEADERS) ((ULONG_PTR) pModuleBase + ((PIMAGE_DOS_HEADER) pModuleBase)->e_lfanew);
+	DWORD dwExportDirRVA = pNTHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
+	PIMAGE_EXPORT_DIRECTORY pExportDir = (PIMAGE_EXPORT_DIRECTORY) ((ULONG_PTR) pModuleBase + dwExportDirRVA);
 
-	for (int i = 0; i < pExportDirectory->NumberOfNames; ++i)
+	// TODO: type cast these for clarity? 
+	DWORD* arrayOfFunctionRVAs = pModule + pExportDir->AddressOfFunctions; 		// PDWORD
+    DWORD* arrayOfNamesRVAs = pModule + pExportDir->AddressOfNames;				// PDWORD
+    WORD* arrayOfNameOrdinals = pModule + pExportDir->AddressOfNameOrdinals; 	// PWORD
+
+	for (DWORD i = 0; i < pExportDir->NumberOfNames; ++i)
 	{
-		// AddressOfNames          = C_PTR( Module + ModuleExportedDirectory->AddressOfNames  );
-		//if (strcmp(lpProcName, (const char*)hModule + addressOfNames[i]) == 0) {
-		if (strcmp(lpProcName, (const char*)hModule + addressOfNames[i]) == 0) {
-			return (FARPROC)((BYTE*)hModule + addressOfFunctions[addressOfNameOrdinals[i]]);
+		char* prodName = (char *)(pModule + arrayOfNamesRVAs[i]);
+		WORD ordinalIndex = arrayOfNameOrdinals[i];
+		FARPROC functionAddress = pModule + arrayOfFunctionRVAs[ordinalIndex];
+
+		if (strcmp(lpProcName, prodName) == 0)
+		{
+			return functionAddress;
 		}
 	}
-
-
-
     return NULL;
 }
 #endif
