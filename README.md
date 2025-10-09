@@ -90,3 +90,6 @@ stub -> payload (establish persistence) -> full install -> profit?
 -   Execution → script or small Mach-O payload
 -   Persistence → launchd agent, cron, login item
 -   Stealth → hide files, mimic system apps, automate via osascript
+
+# Resources
+- https://attack.mitre.org/
