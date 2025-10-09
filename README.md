@@ -22,6 +22,7 @@ tcp stub
 - gui written in c++ and qt gui ?
 
 ### Workflow
+dropper/installer -> stager -> beacon/agent (payload) -> profit? 
 stub -> payload (establish persistence) -> full install -> profit? 
 
 ### stub
