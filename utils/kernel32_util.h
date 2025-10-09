@@ -6,6 +6,9 @@ metasploit:
 #ifndef _KERNEL_UTIL
 #define _KERNEL_UTIL
 
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
 typedef BOOL (WINAPI *FuncCreateProcess) (
 	LPCTSTR lpApplicationName,
 	LPTSTR lpCommandLine,

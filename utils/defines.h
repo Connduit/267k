@@ -7,4 +7,7 @@
 #define FALSE 0
 
 
+// HASHES here? maybe move to a differnt folder like "crypto" in the future?
+#define KERNEL32_HASH 0xdeadbeef
+
 #endif

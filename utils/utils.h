@@ -1,6 +1,7 @@
 #ifndef _UTIL_H
 #define _UTIL_H
 
+#include <stdio.h>
 //#define WIN32_LEAN_AND_MEAN
 //#include <windows.h>
 
@@ -14,6 +15,7 @@ typedef struct _LIST_ENTRY {
 } LIST_ENTRY, *PLIST_ENTRY, *RESTRICTED_POINTER PRLIST_ENTRY;
 */
 
+// TODO: put UNICODE_STRING in a common area so it can be shared by ntdll_util.h too
 typedef struct _UNICODE_STRING
 {
     USHORT Length;
@@ -109,8 +111,38 @@ SIZE_T WCharStringToCharString(PCHAR Destination, PWCHAR Source, SIZE_T MaximumA
     return MaximumAllowed - Length;
 }
 
+FARPROC GetProcAddressManualM(PVOID pModule, LPCSTR lpProcName)
+{
+    printf("fart\n");
+	// Find lpProcName
+    // TODO: fails here:
+	PIMAGE_NT_HEADERS pNTHeader = (PIMAGE_NT_HEADERS) ((ULONG_PTR) pModule + ((PIMAGE_DOS_HEADER) pModule)->e_lfanew); // pModule + 0x3c (32/64bit)
+	DWORD dwExportDirRVA = pNTHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress; // pModule + 0x3c + 0x88 (64bit)
+	PIMAGE_EXPORT_DIRECTORY pExportDir = (PIMAGE_EXPORT_DIRECTORY) ((ULONG_PTR) pModule + dwExportDirRVA); // pModule + (pModule + 0x3c)
 
-// HMODULE GetModuleHandleManual(LPCSTR lpModuleName) ? 
+    printf("fart1\n");
+	// TODO: type cast these for clarity? TODO: are these type cast correct?
+	DWORD* arrayOfFunctionRVAs = (DWORD *)((ULONG_PTR)pModule + pExportDir->AddressOfFunctions); 		// PDWORD
+    DWORD* arrayOfNamesRVAs = (DWORD *)((ULONG_PTR)pModule + pExportDir->AddressOfNames);				// PDWORD
+    WORD* arrayOfNameOrdinals = (WORD *)((ULONG_PTR)pModule + pExportDir->AddressOfNameOrdinals); 	// PWORD
+
+    printf("fart2\n");
+    for (DWORD i = 0; i < pExportDir->NumberOfNames; ++i)
+    {
+        char *prodName = (char *)((ULONG_PTR)pModule + arrayOfNamesRVAs[i]);
+        WORD ordinalIndex = arrayOfNameOrdinals[i];
+        FARPROC functionAddress = (FARPROC)((ULONG_PTR)pModule + arrayOfFunctionRVAs[ordinalIndex]);
+
+        // TODO: idk if case-insensitive strcmp is needed on here
+        printf("prodName = %s\n", prodName);
+        if (_stricmp(lpProcName, prodName) == 0)
+        {
+            return functionAddress;
+        }
+    }
+    return NULL;
+}
+
 
 // first find the lpModuleName (exe/dll name), then find the lpProcName (proceduce/function name)
 FARPROC GetProcAddressManual(LPCSTR lpModuleName, LPCSTR lpProcName)
@@ -151,8 +183,8 @@ FARPROC GetProcAddressManual(LPCSTR lpModuleName, LPCSTR lpProcName)
 		}
 	*/
     // TODO: remove this when hashing is implemented
-    SIZE_T size = 0;
-    WCHAR ModuleNameW[MAX_PATH] = {0};
+    SIZE_T Size = 0;
+    //WCHAR ModuleNameW[MAX_PATH] = {0};
     CHAR ModuleName[MAX_PATH] = {0};
 
     PVOID pModule;
@@ -168,9 +200,11 @@ FARPROC GetProcAddressManual(LPCSTR lpModuleName, LPCSTR lpProcName)
 		
 		// will need to do some type conversion
 		//if (strcmp(pDataTableEntry->BaseDllName.Buffer, lpModuleName) == 0)
-        size = WCharStringToCharString(ModuleName, pDataTableEntry->BaseDllName.Buffer, pDataTableEntry->BaseDllName.Length);
-        if (size > 0 && _stricmp(ModuleName, lpModuleName) == 0)
+        Size = WCharStringToCharString(ModuleName, pDataTableEntry->BaseDllName.Buffer, pDataTableEntry->BaseDllName.Length);
+        //wprintf(L"string = %.*s\n", pDataTableEntry->BaseDllName.Length / sizeof(WCHAR), pDataTableEntry->BaseDllName.Buffer);
+        if (Size > 0 && _stricmp(ModuleName, lpModuleName) == 0)
 		{
+            //printf("found match\n");
 			pModule = pDataTableEntry->DllBase;
 			break;
 		}
