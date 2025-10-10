@@ -65,7 +65,7 @@ int run(const char* host, const char* port)
     NTSTATUS status = pLdrLoadDll(NULL, NULL, &usDllName, &dllBase);
     // TODO: for now we just assume it's always successful
     //if (!NT_SUCCESS(status))
-    if (status == 0)
+    if (status != 0)
 	{
         printf("status = %d\n", status);
 		printf("pLdrLoadDll was unable to obtain valid dllBase\n");
