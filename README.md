@@ -3,7 +3,7 @@ tcp stub
 
 # TODO (next steps)
 - hashing
-- recon
+- recon (mostly just for OS so the stager knows what type of loader/payload to request. however, this kind of implies that the stager is written in a cross platform language and probably not stealthy at all)
 - anti av, anti debug, anti edr
 
 ### Commands
