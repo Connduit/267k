@@ -98,3 +98,4 @@ stub -> payload (establish persistence) -> full install -> profit?
 
 # Resources
 - https://attack.mitre.org/
+- https://attack.mitre.org/groups/
