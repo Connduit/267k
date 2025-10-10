@@ -1,6 +1,11 @@
 # sekc
 tcp stub
 
+# TODO (next steps)
+- hashing
+- recon
+- anti av, anti debug, anti edr
+
 ### Commands
 - g++ stub.cpp -o stub
 - x86_64-w64-mingw32-g++ stub_win.cpp -o stub_win.exe -lws2_32
