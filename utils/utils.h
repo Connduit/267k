@@ -113,20 +113,15 @@ SIZE_T WCharStringToCharString(PCHAR Destination, PWCHAR Source, SIZE_T MaximumA
 
 FARPROC GetProcAddressManualM(PVOID pModule, LPCSTR lpProcName)
 {
-    printf("fart\n");
 	// Find lpProcName
-    // TODO: fails here:
 	PIMAGE_NT_HEADERS pNTHeader = (PIMAGE_NT_HEADERS) ((ULONG_PTR) pModule + ((PIMAGE_DOS_HEADER) pModule)->e_lfanew); // pModule + 0x3c (32/64bit)
 	DWORD dwExportDirRVA = pNTHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress; // pModule + 0x3c + 0x88 (64bit)
 	PIMAGE_EXPORT_DIRECTORY pExportDir = (PIMAGE_EXPORT_DIRECTORY) ((ULONG_PTR) pModule + dwExportDirRVA); // pModule + (pModule + 0x3c)
 
-    printf("fart1\n");
-	// TODO: type cast these for clarity? TODO: are these type cast correct?
 	DWORD* arrayOfFunctionRVAs = (DWORD *)((ULONG_PTR)pModule + pExportDir->AddressOfFunctions); 		// PDWORD
     DWORD* arrayOfNamesRVAs = (DWORD *)((ULONG_PTR)pModule + pExportDir->AddressOfNames);				// PDWORD
     WORD* arrayOfNameOrdinals = (WORD *)((ULONG_PTR)pModule + pExportDir->AddressOfNameOrdinals); 	// PWORD
 
-    printf("fart2\n");
     for (DWORD i = 0; i < pExportDir->NumberOfNames; ++i)
     {
         char *prodName = (char *)((ULONG_PTR)pModule + arrayOfNamesRVAs[i]);
@@ -134,7 +129,7 @@ FARPROC GetProcAddressManualM(PVOID pModule, LPCSTR lpProcName)
         FARPROC functionAddress = (FARPROC)((ULONG_PTR)pModule + arrayOfFunctionRVAs[ordinalIndex]);
 
         // TODO: idk if case-insensitive strcmp is needed on here
-        printf("prodName = %s\n", prodName);
+        // printf("prodName = %s\n", prodName);
         if (_stricmp(lpProcName, prodName) == 0)
         {
             return functionAddress;
