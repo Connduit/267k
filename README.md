@@ -3,7 +3,7 @@ tcp stub
 
 # TODO (next steps)
 - hashing
-- recon (mostly just for OS so the stager knows what type of loader/payload to request. however, this kind of implies that the stager is written in a cross platform language and probably not stealthy at all)
+- recon (mostly just for OS so the stager knows what type of loader/payload to request. however, this kind of implies that the stager is written in a cross platform language and probably not stealthy at all. maybe have a PDF that has embedded scripts that download cross platform stuff... curl on unix powershell cmd?)
 - anti av, anti debug, anti edr
 
 ### Commands
