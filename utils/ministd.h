@@ -14,7 +14,7 @@
 
 SIZE_T CharStringToWCharString(PWCHAR Destination, PCHAR Source, SIZE_T MaximumAllowed)
 {
-    printf("inside\n");
+    //printf("inside\n");
     INT Length = MaximumAllowed;
 
     while (--Length >= 0)
@@ -23,7 +23,7 @@ SIZE_T CharStringToWCharString(PWCHAR Destination, PCHAR Source, SIZE_T MaximumA
             return MaximumAllowed - Length - 1;
     }
 
-    printf("inside\n");
+    //printf("inside\n");
     return MaximumAllowed - Length;
 }
 

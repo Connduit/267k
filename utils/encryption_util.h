@@ -84,4 +84,20 @@ DWORD mult_hash(const char* str) {
     return hash;
 }
 
+
+/*
+DWORD mult_hash_wide_insensitive(PWSTR str)
+{
+	DWORD hash = 0;
+	for (int i = 0; str[i]; i++)
+	{
+		// Convert to lowercase before hashing
+		WCHAR lowerChar = (str[i] >= L'A' && str[i] <= L'Z') ? (str[i] + (L'a' - L'A')) : str[i];
+		hash = (hash * MULT) + lowerChar;
+	}
+	return hash;
+
+}
+*/
+
 #endif
