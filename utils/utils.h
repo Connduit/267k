@@ -1,12 +1,19 @@
 #ifndef _UTIL_H
 #define _UTIL_H
 
+#include "encryption_util.h"
 #include <stdio.h>
 //#define WIN32_LEAN_AND_MEAN
 //#include <windows.h>
 
 // TODO: Use offsets to reduce the need to define these LDR structs
 // see offsets here: https://struppigel.github.io/WisdomForHedgehogs/Execution%20Environments/PEB%20Walking%20and%20Export%20Parsing/
+
+#if defined(_WIN64)
+    #define GET_PEB() (PPEB) __readgsqword(0x60)
+#else 
+    #define GET_PEB() (PPEB) __readfsdword(0x30)
+#endif
 
 /*
 typedef struct _LIST_ENTRY {
@@ -111,6 +118,74 @@ SIZE_T WCharStringToCharString(PCHAR Destination, PWCHAR Source, SIZE_T MaximumA
     return MaximumAllowed - Length;
 }
 
+// TODO: change so if a param isn't passed hmodule to current exe gets returned instead?
+// GetModuleHandleManualW
+//HMODULE GetModuleHandleManual(LPCWSTR lpModuleName)
+HMODULE GetModuleHandleManualHash(DWORD moduleHash)
+{
+    PPEB PebAddress = GET_PEB();
+
+    SIZE_T Size = 0;
+    CHAR ModuleName[MAX_PATH] = {0};
+
+    PVOID pModule;
+	PLIST_ENTRY pListHead = &PebAddress->Ldr->InMemoryOrderModuleList;
+	PLIST_ENTRY pList = PebAddress->Ldr->InMemoryOrderModuleList.Flink;
+	PLDR_DATA_TABLE_ENTRY pDataTableEntry;
+
+	// Find matching module hash
+	while (pList != pListHead)
+	{
+        // TODO: do CONTAINING_RECORD logic manually 
+        pDataTableEntry = CONTAINING_RECORD(pList, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks); 
+		
+		// will need to do some type conversion
+		//if (strcmp(pDataTableEntry->BaseDllName.Buffer, lpModuleName) == 0)
+        Size = WCharStringToCharString(ModuleName, pDataTableEntry->BaseDllName.Buffer, pDataTableEntry->BaseDllName.Length);
+        //wprintf(L"string = %.*s\n", pDataTableEntry->BaseDllName.Length / sizeof(WCHAR), pDataTableEntry->BaseDllName.Buffer);
+        //if (Size > 0 && _stricmp(ModuleName, moduleHash) == 0)
+        if (Size > 0 && xor_hash_ci(ModuleName) == moduleHash)
+		{
+            //printf("found match\n");
+			pModule = pDataTableEntry->DllBase;
+			break;
+		}
+		pList = pList->Flink;
+	}
+
+    return pModule;
+
+}
+
+FARPROC GetProcAddressManualHash(HMODULE hModule, DWORD procHash)
+{
+	// Find lpProcName
+	PIMAGE_NT_HEADERS pNTHeader = (PIMAGE_NT_HEADERS) ((ULONG_PTR) hModule + ((PIMAGE_DOS_HEADER) hModule)->e_lfanew); // pModule + 0x3c (32/64bit)
+	DWORD dwExportDirRVA = pNTHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress; // pModule + 0x3c + 0x88 (64bit)
+	PIMAGE_EXPORT_DIRECTORY pExportDir = (PIMAGE_EXPORT_DIRECTORY) ((ULONG_PTR) hModule + dwExportDirRVA); // pModule + (pModule + 0x3c)
+
+	DWORD* arrayOfFunctionRVAs = (DWORD *)((ULONG_PTR)hModule + pExportDir->AddressOfFunctions); 		// PDWORD
+    DWORD* arrayOfNamesRVAs = (DWORD *)((ULONG_PTR)hModule + pExportDir->AddressOfNames);				// PDWORD
+    WORD* arrayOfNameOrdinals = (WORD *)((ULONG_PTR)hModule + pExportDir->AddressOfNameOrdinals); 	// PWORD
+
+    for (DWORD i = 0; i < pExportDir->NumberOfNames; ++i)
+    {
+        char *prodName = (char *)((ULONG_PTR)hModule + arrayOfNamesRVAs[i]);
+        WORD ordinalIndex = arrayOfNameOrdinals[i];
+        FARPROC functionAddress = (FARPROC)((ULONG_PTR)hModule + arrayOfFunctionRVAs[ordinalIndex]);
+
+        // TODO: idk if case-insensitive strcmp is needed on here
+        // printf("prodName = %s\n", prodName);
+        //if (_stricmp(lpProcName, prodName) == 0)
+        if (xor_hash_ci(prodName) == procHash)
+        {
+            return functionAddress;
+        }
+    }
+    return NULL;
+}
+
+
 FARPROC GetProcAddressManualM(PVOID pModule, LPCSTR lpProcName)
 {
 	// Find lpProcName
@@ -142,13 +217,8 @@ FARPROC GetProcAddressManualM(PVOID pModule, LPCSTR lpProcName)
 // first find the lpModuleName (exe/dll name), then find the lpProcName (proceduce/function name)
 FARPROC GetProcAddressManual(LPCSTR lpModuleName, LPCSTR lpProcName)
 {
-    PPEB PebAddress;
     // Get PEB
-#if defined(_WIN64)
-    PebAddress = (PPEB) __readgsqword( 0x60 );
-#else
-    PebAddress = (PPEB) __readfsdword( 0x30 );
-#endif
+    PPEB PebAddress = GET_PEB();
 	/*
 	Offset Arithmetic (64Bit ONLY):
 		PEB_LDR_DATA ldr = (BYTE *)PebAddress + 0x18;
@@ -226,10 +296,15 @@ FARPROC GetProcAddressManual(LPCSTR lpModuleName, LPCSTR lpProcName)
 	DWORD dwExportDirRVA = pNTHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress; // pModule + 0x3c + 0x88 (64bit)
 	PIMAGE_EXPORT_DIRECTORY pExportDir = (PIMAGE_EXPORT_DIRECTORY) ((ULONG_PTR) pModule + dwExportDirRVA); // pModule + (pModule + 0x3c)
 
-	// TODO: type cast these for clarity? TODO: are these type cast correct?
 	DWORD* arrayOfFunctionRVAs = (DWORD *)((ULONG_PTR)pModule + pExportDir->AddressOfFunctions); 		// PDWORD
     DWORD* arrayOfNamesRVAs = (DWORD *)((ULONG_PTR)pModule + pExportDir->AddressOfNames);				// PDWORD
     WORD* arrayOfNameOrdinals = (WORD *)((ULONG_PTR)pModule + pExportDir->AddressOfNameOrdinals); 	// PWORD
+
+    /* 
+    TODO: attempt to resolve ordinally first...
+    check if imports are ordinal, if they are we can immediatly find the address of the 
+        function without looping through the whole array via arrayOfFunctionRVAs += ((IMAGE_ORDINAL((DWORD)lpProcName) - pExportDirectory->Base) * sizeof(DWORD));
+    */
 
     for (DWORD i = 0; i < pExportDir->NumberOfNames; ++i)
     {

