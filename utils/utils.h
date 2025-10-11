@@ -194,6 +194,42 @@ HMODULE GetModuleHandleManualHash(DWORD moduleHash)
 //FARPROC* GetMultipleProcAddressManualHashes(HMODULE hModule, DWORD *procHashes)
 int GetProcAddressManualHashes(HMODULE hModule, DWORD *procHashes, FARPROC *funcAddresses, int count)
 {
+	// Find lpProcName
+	PIMAGE_NT_HEADERS pNTHeader = (PIMAGE_NT_HEADERS) ((ULONG_PTR) hModule + ((PIMAGE_DOS_HEADER) hModule)->e_lfanew); // pModule + 0x3c (32/64bit)
+	DWORD dwExportDirRVA = pNTHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress; // pModule + 0x3c + 0x88 (64bit)
+	PIMAGE_EXPORT_DIRECTORY pExportDir = (PIMAGE_EXPORT_DIRECTORY) ((ULONG_PTR) hModule + dwExportDirRVA); // pModule + (pModule + 0x3c)
+
+	DWORD* arrayOfFunctionRVAs = (DWORD *)((ULONG_PTR)hModule + pExportDir->AddressOfFunctions); 		// PDWORD
+    DWORD* arrayOfNamesRVAs = (DWORD *)((ULONG_PTR)hModule + pExportDir->AddressOfNames);				// PDWORD
+    WORD* arrayOfNameOrdinals = (WORD *)((ULONG_PTR)hModule + pExportDir->AddressOfNameOrdinals); 	// PWORD
+
+    DWORD numNames = pExportDir->NumberOfNames;
+	int foundCount = 0;
+
+    //for (DWORD i = 0; i < pExportDir->NumberOfNames; ++i)
+    for (DWORD i = 0; i < numNames; ++i)
+    {
+        char *prodName = (char *)((ULONG_PTR)hModule + arrayOfNamesRVAs[i]);
+        WORD ordinalIndex = arrayOfNameOrdinals[i];
+		DWORD currentHash = mult_hash(prodName);
+        //FARPROC functionAddress = (FARPROC)((ULONG_PTR)hModule + arrayOfFunctionRVAs[ordinalIndex]);
+
+		for (int j = 0; j < count; j++)
+		{
+			if (procHashes[j] == currentHash && !funcAddresses[j]) // Check if not already found
+			{
+				funcAddresses[j] = (FARPROC)((ULONG_PTR)hModule + arrayOfFunctionRVAs[arrayOfNameOrdinals[i]]);
+				foundCount++;
+				// Early exit if we found all functions
+				if (foundCount == count) {
+					return count - foundCount; // return 0
+				}
+				break; // Move to next export
+			}
+		}
+	}
+
+    return count - foundCount;
 	/* TODO: 
 	  int GetMultipleProcAddresses(HMODULE hModule, DWORD *procHashes, int count, FARPROC *results)
 	  {
@@ -244,41 +280,6 @@ int GetProcAddressManualHashes(HMODULE hModule, DWORD *procHashes, FARPROC *func
 	 
 	 * */
 
-
-
-
-	// Find lpProcName
-	PIMAGE_NT_HEADERS pNTHeader = (PIMAGE_NT_HEADERS) ((ULONG_PTR) hModule + ((PIMAGE_DOS_HEADER) hModule)->e_lfanew); // pModule + 0x3c (32/64bit)
-	DWORD dwExportDirRVA = pNTHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress; // pModule + 0x3c + 0x88 (64bit)
-	PIMAGE_EXPORT_DIRECTORY pExportDir = (PIMAGE_EXPORT_DIRECTORY) ((ULONG_PTR) hModule + dwExportDirRVA); // pModule + (pModule + 0x3c)
-
-	DWORD* arrayOfFunctionRVAs = (DWORD *)((ULONG_PTR)hModule + pExportDir->AddressOfFunctions); 		// PDWORD
-    DWORD* arrayOfNamesRVAs = (DWORD *)((ULONG_PTR)hModule + pExportDir->AddressOfNames);				// PDWORD
-    WORD* arrayOfNameOrdinals = (WORD *)((ULONG_PTR)hModule + pExportDir->AddressOfNameOrdinals); 	// PWORD
-
-    DWORD numNames = pExportDir->NumberOfNames;
-	int foundCount = 0;
-
-    //for (DWORD i = 0; i < pExportDir->NumberOfNames; ++i)
-    for (DWORD i = 0; i < numNames; ++i)
-    {
-        char *prodName = (char *)((ULONG_PTR)hModule + arrayOfNamesRVAs[i]);
-        WORD ordinalIndex = arrayOfNameOrdinals[i];
-		DWORD currentHash = mult_hash(prodName);
-        //FARPROC functionAddress = (FARPROC)((ULONG_PTR)hModule + arrayOfFunctionRVAs[ordinalIndex]);
-
-		for (int j = 0; j < count; j++)
-		{
-			if (procHashes[j] == currentHash && !funcAddresses[j]) // Check if not already found
-			{
-				funcAddresses[j] = (FARPROC)((ULONG_PTR)hModule + arrayOfFunctionRVAs[arrayOfNameOrdinals[i]]);
-				foundCount++;
-				break;
-			}
-		}
-	}
-
-    return count - foundCount;
 }
 
 FARPROC GetProcAddressManualHash(HMODULE hModule, DWORD procHash)

