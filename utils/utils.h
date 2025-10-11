@@ -1,6 +1,7 @@
 #ifndef _UTIL_H
 #define _UTIL_H
 
+#include "ministd.h"
 #include "encryption_util.h"
 #include <stdio.h>
 //#define WIN32_LEAN_AND_MEAN
@@ -105,18 +106,7 @@ typedef struct _PEB {
 } PEB;
 */
 
-SIZE_T WCharStringToCharString(PCHAR Destination, PWCHAR Source, SIZE_T MaximumAllowed)
-{
-    INT Length = MaximumAllowed;
 
-    while (--Length >= 0)
-    {
-        if (!(*Destination++ = *Source++))
-            return MaximumAllowed - Length - 1;
-    }
-
-    return MaximumAllowed - Length;
-}
 
 // TODO: change so if a param isn't passed hmodule to current exe gets returned instead?
 // GetModuleHandleManualW
