@@ -134,7 +134,7 @@ HMODULE GetModuleHandleManualHash(DWORD moduleHash)
         Size = WCharStringToCharString(ModuleName, pDataTableEntry->BaseDllName.Buffer, pDataTableEntry->BaseDllName.Length);
         //wprintf(L"string = %.*s\n", pDataTableEntry->BaseDllName.Length / sizeof(WCHAR), pDataTableEntry->BaseDllName.Buffer);
         //if (Size > 0 && _stricmp(ModuleName, moduleHash) == 0)
-        if (Size > 0 && xor_hash_ci(ModuleName) == moduleHash)
+        if (Size > 0 && mult_hash(ModuleName) == moduleHash)
 		{
             //printf("found match\n");
 			pModule = pDataTableEntry->DllBase;
@@ -167,7 +167,7 @@ FARPROC GetProcAddressManualHash(HMODULE hModule, DWORD procHash)
         // TODO: idk if case-insensitive strcmp is needed on here
         // printf("prodName = %s\n", prodName);
         //if (_stricmp(lpProcName, prodName) == 0)
-        if (xor_hash_ci(prodName) == procHash)
+        if (mult_hash(prodName) == procHash)
         {
             return functionAddress;
         }
