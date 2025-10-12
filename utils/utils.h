@@ -106,54 +106,8 @@ typedef struct _PEB {
 } PEB;
 */
 
-// returns the number of modules found? mayybe number of modules not found?
-//int GetModuleHandleS(DWORD *hashes, HMODULE *modules, int count)
+/* NOTE: non offset get module */
 /*
-int GetModuleHandleS(DWORD *hashes, int count) // TODO: this is only really needed by GetProcAddressManualHash vs GetModuleHandleS
-{
-
-	HMODULE modules[count];
-
-    PPEB PebAddress = GET_PEB();
-
-    SIZE_T Size = 0;
-    CHAR ModuleName[MAX_PATH] = {0};
-
-    PVOID pModule;
-	PLIST_ENTRY pListHead = &PebAddress->Ldr->InMemoryOrderModuleList;
-	PLIST_ENTRY pList = PebAddress->Ldr->InMemoryOrderModuleList.Flink;
-	PLDR_DATA_TABLE_ENTRY pDataTableEntry;
-
-	// Find matching module hash
-	while (pList != pListHead)
-	{
-        // TODO: do CONTAINING_RECORD logic manually 
-        pDataTableEntry = CONTAINING_RECORD(pList, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks); 
-		
-		// will need to do some type conversion
-		//if (strcmp(pDataTableEntry->BaseDllName.Buffer, lpModuleName) == 0)
-        Size = WCharStringToCharString(ModuleName, pDataTableEntry->BaseDllName.Buffer, pDataTableEntry->BaseDllName.Length);
-        //wprintf(L"string = %.*s\n", pDataTableEntry->BaseDllName.Length / sizeof(WCHAR), pDataTableEntry->BaseDllName.Buffer);
-        //if (Size > 0 && _stricmp(ModuleName, moduleHash) == 0)
-        //if (Size > 0 && mult_hash(ModuleName) == moduleHash)
-		// TODO: for loop though module names
-        if (Size > 0 && mult_hash_wide_insensitive(ModuleName) == moduleHash)
-		{
-            //printf("found match\n");
-			pModule = pDataTableEntry->DllBase;
-			break;
-		}
-		pList = pList->Flink;
-	}
-
-    return pModule;
-} */
-
-
-
-// TODO: change so if a param isn't passed hmodule to current exe gets returned instead?
-// GetModuleHandleManualW
-//HMODULE GetModuleHandleManual(LPCWSTR lpModuleName)
 HMODULE GetModuleHandleManualHash(DWORD moduleHash)
 {
     PPEB PebAddress = GET_PEB();
@@ -185,6 +139,54 @@ HMODULE GetModuleHandleManualHash(DWORD moduleHash)
 		}
 		pList = pList->Flink;
 	}
+    return pModule;
+}*/
+
+
+
+// TODO: change so if a param isn't passed hmodule to current exe gets returned instead?
+// GetModuleHandleManualW
+//HMODULE GetModuleHandleManual(LPCWSTR lpModuleName)
+HMODULE GetModuleHandleManualHashO(DWORD moduleHash)
+{
+    //printf("start of func\n");
+    PPEB PebAddress = GET_PEB();
+
+    SIZE_T Size = 0;
+    CHAR ModuleName[MAX_PATH] = {0};
+
+    PVOID pModule;
+	//PLIST_ENTRY pListHead = &PebAddress->Ldr->InMemoryOrderModuleList;
+	//PLIST_ENTRY pList = PebAddress->Ldr->InMemoryOrderModuleList.Flink;
+    //
+    //DWORD64 Ldr = *(DWORD64*)(PebAddress + 0x18);
+    DWORD64 Ldr = *(DWORD64*)((DWORD64)PebAddress + 0x18);
+    PLIST_ENTRY pListHead = (PLIST_ENTRY)(Ldr + 0x20); // == &PebAddress->Ldr->InMemoryOrderModuleList
+    PLIST_ENTRY pList = pListHead->Flink;
+	PLDR_DATA_TABLE_ENTRY pDataTableEntry;
+
+	// Find matching module hash
+	while (pList != pListHead)
+	{
+
+        // TODO: do CONTAINING_RECORD logic manually 
+        pDataTableEntry = CONTAINING_RECORD(pList, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks); 
+		
+		// will need to do some type conversion
+		//if (strcmp(pDataTableEntry->BaseDllName.Buffer, lpModuleName) == 0)
+        Size = WCharStringToCharString(ModuleName, pDataTableEntry->BaseDllName.Buffer, pDataTableEntry->BaseDllName.Length);
+        //wprintf(L"string = %.*s\n", pDataTableEntry->BaseDllName.Length / sizeof(WCHAR), pDataTableEntry->BaseDllName.Buffer);
+        //printf("s = %s\n", ModuleName);
+        //if (Size > 0 && _stricmp(ModuleName, moduleHash) == 0)
+        if (Size > 0 && mult_hash(ModuleName) == moduleHash)
+		{
+            //printf("found match: %s\n", ModuleName);
+            return pDataTableEntry->DllBase;
+			//pModule = pDataTableEntry->DllBase;
+			break;
+		}
+		pList = pList->Flink;
+	}
 
     return pModule;
 
@@ -210,18 +212,21 @@ int GetProcAddressManualHashes(HMODULE hModule, DWORD *procHashes, FARPROC *func
     for (DWORD i = 0; i < numNames; ++i)
     {
         char *prodName = (char *)((ULONG_PTR)hModule + arrayOfNamesRVAs[i]);
-        WORD ordinalIndex = arrayOfNameOrdinals[i];
+        //printf("name = %s, hash = 0x%08X\n", prodName, mult_hash(prodName));
+        //WORD ordinalIndex = arrayOfNameOrdinals[i];
 		DWORD currentHash = mult_hash(prodName);
         //FARPROC functionAddress = (FARPROC)((ULONG_PTR)hModule + arrayOfFunctionRVAs[ordinalIndex]);
 
 		for (int j = 0; j < count; j++)
 		{
-			if (procHashes[j] == currentHash && !funcAddresses[j]) // Check if not already found
+			if (procHashes[j] == currentHash)// && !funcAddresses[j]) // Check if not already found
 			{
+                //printf("%s found\n", prodName);
 				funcAddresses[j] = (FARPROC)((ULONG_PTR)hModule + arrayOfFunctionRVAs[arrayOfNameOrdinals[i]]);
 				foundCount++;
 				// Early exit if we found all functions
 				if (foundCount == count) {
+                    //printf("returning early\n");
 					return count - foundCount; // return 0
 				}
 				break; // Move to next export
@@ -230,56 +235,6 @@ int GetProcAddressManualHashes(HMODULE hModule, DWORD *procHashes, FARPROC *func
 	}
 
     return count - foundCount;
-	/* TODO: 
-	  int GetMultipleProcAddresses(HMODULE hModule, DWORD *procHashes, int count, FARPROC *results)
-	  {
-	  	// Initialize all results to NULL
-	   	for (int i = 0; i < count; i++) {
-	    	results[i] = NULL;
-	  	}
-	 
-	    PIMAGE_DOS_HEADER pDosHeader = (PIMAGE_DOS_HEADER)hModule;
-	    PIMAGE_NT_HEADERS pNTHeader = (PIMAGE_NT_HEADERS)((ULONG_PTR)hModule + pDosHeader->e_lfanew);
-	   	IMAGE_DATA_DIRECTORY* exportDir = &pNTHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
-	    if (!exportDir->VirtualAddress || !exportDir->Size) return 0;
-	                                                  
-		PIMAGE_EXPORT_DIRECTORY pExportDir = (PIMAGE_EXPORT_DIRECTORY)((ULONG_PTR)hModule + exportDir->VirtualAddress);
-	   
-	  	DWORD* namesRVAs = (DWORD*)((ULONG_PTR)hModule + pExportDir->AddressOfNames);
-	   	WORD* nameOrdinals = (WORD*)((ULONG_PTR)hModule + pExportDir->AddressOfNameOrdinals);
-	   	DWORD* functionRVAs = (DWORD*)((ULONG_PTR)hModule + pExportDir->AddressOfFunctions);
-	                                                                      
-	   	DWORD numNames = pExportDir->NumberOfNames;
-	   	int foundCount = 0;
-
-		// Single pass through export table
-	   	for (DWORD i = 0; i < numNames && foundCount < count; ++i)
-	   	{
-	   		char* funcName = (char*)((ULONG_PTR)hModule + namesRVAs[i]);
-	       	DWORD currentHash = mult_hash(funcName);
-			// Check against all requested hashes
-	       	for (int j = 0; j < count; j++)
-	       	{
-	       		// Only check unresolved functions
-				if (results[j] == NULL && procHashes[j] == currentHash)
-	           	{
-	           		results[j] = (FARPROC)((ULONG_PTR)hModule + functionRVAs[nameOrdinals[i]]);
-	               	foundCount++;
-	               
-	              	// Early exit if we found all functions
-	               	if (foundCount == count) {
-	               		return foundCount;
-	                }
-	               	break; // Move to next export
-	            }
-	        }
-	    }
-	   return foundCount;
-	  }
-	  
-	 
-	 * */
-
 }
 
 FARPROC GetProcAddressManualHash(HMODULE hModule, DWORD procHash)

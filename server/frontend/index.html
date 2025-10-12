@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My React + Go App</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        function App() {
+            const [count, setCount] = React.useState(0);
+            const [message, setMessage] = React.useState('');
+            const [loading, setLoading] = React.useState(false);
+            
+            // Function to fetch data from Go backend
+            const fetchFromGo = async () => {
+                setLoading(true);
+                try {
+                    const response = await fetch('http://localhost:8080/api/hello');
+                    const data = await response.json();
+                    setMessage(data.text);
+                } catch (error) {
+                    setMessage('Failed to connect to Go server');
+                    console.error('Error:', error);
+                }
+                setLoading(false);
+            };
+            
+            return (
+                <div>
+                    <h1>React Frontend + Go Backend</h1>
+                    
+                    {/* Original counter */}
+                    <div style={{margin: '20px 0', padding: '10px', border: '1px solid #ccc'}}>
+                        <h2>React State Example</h2>
+                        <p>Count: {count}</p>
+                        <button onClick={() => setCount(count + 1)}>
+                            Click me
+                        </button>
+                    </div>
+                    
+                    {/* Go API connection */}
+                    <div style={{margin: '20px 0', padding: '10px', border: '1px solid #ccc'}}>
+                        <h2>Go Backend Connection</h2>
+                        <button onClick={fetchFromGo} disabled={loading}>
+                            {loading ? 'Loading...' : 'Fetch from Go Server'}
+                        </button>
+                        {message && <p style={{marginTop: '10px'}}>Go says: {message}</p>}
+                    </div>
+                </div>
+            );
+        }
+        
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

