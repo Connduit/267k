@@ -5,3 +5,5 @@
     - https://github.com/vxunderground/VX-API/blob/main/VX-API/SleepObfuscationViaVirtualProtect.cpp
 - https://github.com/MythicAgents/Hannibal
 - integrity checks done here to prevent adversary-in-the-middle tampering
+
+- stager.exe should be "truly modular"... receveies dlls or shell code and executes
