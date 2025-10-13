@@ -47,3 +47,80 @@
   - converts commands sent by the server core into commands that the victim will actually know what to do with
 - agent/implant (runs on victim machine)
 
+
+### Diagram 2
+
+                       +---------------------+
+                       |  Frontend (Mythic)  |
+                       |  - Operator UI      |
+                       +----------+----------+
+                                  |
+                                  | issue task (UI)
+                                  v
+                       +---------------------+
+                       |   Mythic Core       |
+                       |  - Core API / DB    |
+                       |  - Task queue       |
+                       +---+-------------+---+
+                           |             ^
+           dequeue task    |             | store/display
+                           v             |
+               +---------------------------+
+               | Agent Worker / Translator |
+               | - create_tasking()        |  <-- parses & formats
+               | - process_response()      |      human <> agent bytes
+               +-----+---------------------+
+                               |
+             serialized bytes  | (agent-specific payload)
+                               v
+            +-------------------------+
+            |   C2 Profile (Python)   |
+            | - framing / headers     |
+            | - encrypt/decrypt       |
+            | - beaconing / jitter    |
+            | - endpoint config (CDN) |
+            +-----+-------------------+
+                  | (transported bytes)
+                  v
+         +-----------------------------+
+         |   Network / Proxy / CDN     |
+         | - optional TLS termination  |
+         | - proxying / egress infra   |
+         +-----+-----------------------+
+                  |
+                  v
+         +-----------------------------+
+         |   Hannibal Agent (C)        |
+         | - receive, decrypt, parse   |
+         | - execute tasks             |
+         | - optional staging/modules  |
+         | - send back raw results     |
+         +-----+-----------------------+
+                  |
+           raw result bytes
+                  |
+                  v
+         +-----------------------------+
+         |   Network / Proxy / CDN     |
+         +-----+-----------------------+
+                  |
+                  v
+            +--------------------+
+            |  C2 Profile (cont) |
+            | - unwrap/frame     |
+            | - decrypt if needed|
+            +-----+--------------+
+                  |
+                  v
+        +------------------------------+
+        |  Agent Worker / Translator   |
+        | - process_response()         |
+        | - store result, update Core  |
+        +-----+------------------------+
+              |
+              v
+         +---------------------+
+         |   Mythic Core / UI  |
+         | - show result to op |
+         +---------------------+
+
