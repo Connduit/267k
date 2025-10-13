@@ -40,6 +40,7 @@
   - handles commands from user input from the frontend
 - c2 profile (backend)
   - does logic / preps commands and data coming in or going out of the server?
+  - integrity checks done here to prevent adversary-in-the-middle tampering?
 - translator (backend)
   - the translator is literally just a parser
   - converts data sent by victim machine into data that the server core actually knows how to interpret
