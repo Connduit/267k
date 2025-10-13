@@ -4,3 +4,4 @@
   - try adding a sleep or benign noise in between kernel32.dll functions?
     - https://github.com/vxunderground/VX-API/blob/main/VX-API/SleepObfuscationViaVirtualProtect.cpp
 - https://github.com/MythicAgents/Hannibal
+- integrity checks done here to prevent adversary-in-the-middle tampering
