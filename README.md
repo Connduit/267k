@@ -29,8 +29,8 @@ tcp stub
 - gui written in c++ and qt gui ?
 
 ### Workflow
-dropper/installer -> loader -> stub/stager -> beacon/agent/implant (payload) -> specific modules/payloads/tasks -> profit? 
-stub -> payload (establish persistence) -> full install -> profit? 
+- dropper/installer -> loader -> stub/stager -> beacon/agent/implant (payload) -> specific modules/payloads/tasks -> profit? 
+- stub -> payload (establish persistence) -> full install -> profit? 
 
 ### stub
 - avoid installation / when stub is being transfer to the victim
