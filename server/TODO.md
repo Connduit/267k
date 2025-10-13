@@ -34,3 +34,15 @@
           │  - Communicates via C2 Profile│
           └───────────────────────────────┘
 
+##### Explanation (in data flow order)
+- server ui (frontend)
+- server core (backend)
+  - handles commands from user input from the frontend
+- c2 profile (backend)
+  - does logic / preps commands and data coming in or going out of the server?
+- translator (backend)
+  - the translator is literally just a parser
+  - converts data sent by victim machine into data that the server core actually knows how to interpret
+  - converts commands sent by the server core into commands that the victim will actually know what to do with
+- agent/implant (runs on victim machine)
+
