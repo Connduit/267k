@@ -22,13 +22,14 @@ tcp stub
 
 ### Features (TODO)
 - sleep obfuscation
+- when server is offline, client should be able to store commands, store results locally, use dead-drop resolvers, and/or retry connections periodically
 
 ### TODO (server)
 - logic written in golang
 - gui written in c++ and qt gui ?
 
 ### Workflow
-dropper/installer -> stager -> beacon/agent (payload) -> profit? 
+dropper/installer -> loader -> stub/stager -> beacon/agent/implant (payload) -> specific modules/payloads/tasks -> profit? 
 stub -> payload (establish persistence) -> full install -> profit? 
 
 ### stub

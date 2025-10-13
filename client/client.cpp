@@ -1,15 +1,3 @@
-/* TODO:
- * https://github.com/rapid7/metasploit-framework/tree/master/data/headers/windows
- * https://github.com/rapid7/metasploit-framework/tree/master/data/templates/src/pe
- * https://github.com/rapid7/metasploit-framework/tree/master/external/source/shellcode/windows
- *
- * https://github.com/rapid7/metasploit-framework/tree/master/data/utilities/encrypted_payload
- *
- *
- *
- * */
-
-
 
 #include "client.h"
 
