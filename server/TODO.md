@@ -8,7 +8,7 @@
 ### Diagram
 
           ┌───────────────────────────────┐
-          │       Frontend (Mythic UI)    │
+          │      Frontend (Mythic UI)     │
           │  - Web interface for operator │
           └──────────────┬────────────────┘
                          │  REST/WebSocket
