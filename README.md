@@ -98,6 +98,9 @@ tcp stub
 -   Persistence → launchd agent, cron, login item
 -   Stealth → hide files, mimic system apps, automate via osascript
 
+### Goals
+- true modular loading: the initial stager downloads modules (DLLs, shared objects, native code blobs, shellcode, or scripts) and the running implant dynamically loads/executes them in memory.
+
 # Resources
 - https://attack.mitre.org/
 - https://attack.mitre.org/groups/
