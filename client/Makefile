@@ -22,7 +22,7 @@ CXX := x86_64-w64-mingw32-gcc
 ###############################################################################
 DSTDIR := ${CFG}
 
-CXXFLAGS += -Wall
+#CXXFLAGS += -Wall
 
 .PHONY: default all clean cleanall test
 
