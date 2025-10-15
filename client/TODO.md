@@ -11,33 +11,33 @@
 - sleep/wait until ready to send "alive" message to server
 
 
-    ┌─────────────────────────────────────────────────┐
-    │                 CORE IMPLANT LOOP               │
-    ├─────────────────────────────────────────────────┤
-    │                                                 │
-    │  1. BEACON & CHECK-IN                           │
-    │     → HTTP GET/POST to C2                       │
-    │     → "I'm alive" signal                        │
-    │     → Wait for tasks                            │
-    │                                                 │
-    │  2. RECEIVE & PARSE TASKS                       │
-    │     ← Get command from C2 response              │
-    │     ← Parse command type & parameters           │
-    │     ← Prepare for execution                     │
-    │                                                 │
-    │  3. EXECUTE COMMANDS                            │
-    │     → Run shell commands                        │
-    │     → Handle file operations                    │
-    │     → Capture output/errors                     │
-    │                                                 │
-    │  4. SEND RESULTS                                │
-    │     → Format output for transmission            │
-    │     → HTTP POST back to C2                      │
-    │     → Confirm task completion                   │
-    │                                                 │
-    └─────────────────────────────────────────────────┘
-            ↓
-        SLEEP & REPEAT
+        ┌─────────────────────────────────────────────────┐
+        │                 CORE IMPLANT LOOP               │
+        ├─────────────────────────────────────────────────┤
+        │                                                 │
+        │  1. BEACON & CHECK-IN                           │
+        │     → HTTP GET/POST to C2                       │
+        │     → "I'm alive" signal                        │
+        │     → Wait for tasks                            │
+        │                                                 │
+        │  2. RECEIVE & PARSE TASKS                       │
+        │     ← Get command from C2 response              │
+        │     ← Parse command type & parameters           │
+        │     ← Prepare for execution                     │
+        │                                                 │
+        │  3. EXECUTE COMMANDS                            │
+        │     → Run shell commands                        │
+        │     → Handle file operations                    │
+        │     → Capture output/errors                     │
+        │                                                 │
+        │  4. SEND RESULTS                                │
+        │     → Format output for transmission            │
+        │     → HTTP POST back to C2                      │
+        │     → Confirm task completion                   │
+        │                                                 │
+        └─────────────────────────────────────────────────┘
+                ↓
+            SLEEP & REPEAT
 
 
 ### Features (TODO)
