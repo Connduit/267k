@@ -44,6 +44,9 @@
 - process hollowing, module stomping (reuse existing loaded modules)
 - reflective dll, module overloading (load dll into legit module space)
 
+### TODO (files/functions)
+- encoding: stealth shouldn't matter too much? it's ok the av knows we're doing encoding. just need to pretend we're a legitimate program sending legitimate messages/data
+
 
 ### References
 - https://github.com/HavocFramework/Havoc/tree/main/payloads/Demon
