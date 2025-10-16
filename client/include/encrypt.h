@@ -3,6 +3,7 @@
 
 // aes (symmetric) or rsa (asymmetric)?
 
+// https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.197-upd1.pdf
 // void/int
 int aes128_encrypt(data, key, result)
 {
