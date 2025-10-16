@@ -24,7 +24,7 @@ DSTDIR := ${CFG}
 
 #CXXFLAGS += -Wall
 
-.PHONY: default all clean cleanall test
+.PHONY: default all clean cleanall
 
 default: all
 
