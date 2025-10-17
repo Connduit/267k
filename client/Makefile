@@ -3,11 +3,11 @@ CFG := Debug
 endif
 
 ifeq (${CFG}, Debug)
-CPPFLAGS += -g -O0 -D_DEBUG -Iinclude -I../utils -Icommon
-LDFLAGS += -g
+CPPFLAGS += -g -O0 -D_DEBUG -Iinclude -I../utils -Icommon -I/home/connor/docs/lib/libcurl/include
+LDFLAGS += -L/home/connor/docs/lib/libcurl/lib -g -lcrypto
 else ifeq (${CFG}, Release)
-CPPFLAGS += -DNDEBUG -Iinclude -I../utils -Icommon
-#LDFLAGS += -O
+CPPFLAGS += -DNDEBUG -Iinclude -I../utils -Icommon -I/home/connor/docs/lib/libcurl/include
+LDFLAGS += -L/home/connor/docs/lib/libcurl/lib -lcrypto
 else
 $(error Invalid CFG specified: ${CFG})
 endif
@@ -32,19 +32,13 @@ default: all
 all: ${DSTDIR} ${DSTDIR}/client
 
 clean:
-	@echo
-	@echo "Cleaning ..."
 	${RM} -r ${DSTDIR}
 
 cleanall: clean
-	@echo
-	@echo "Cleaning ALL ..."
 	${RM} *~ testFile.dat
 	${RM} -r rpt
 
 ${DSTDIR}/%.o: %.c
-	@echo
-	@echo "Compiling $@ ..."
 	mkdir -p $(dir $@)
 	${CXX} ${CXXFLAGS} ${CPPFLAGS} -c $< -o $@
 
@@ -56,14 +50,12 @@ $(info CPPS: ${CPPS})
 OBJS := $(patsubst %.c, ${DSTDIR}/%.o, ${CPPS})
 $(info OBJS: ${OBJS})
 
-
 # Hello is some executable... make multiple of these if there's multiple executatbles?
 ${DSTDIR}/client : ${OBJS}
-	@echo
-	@echo "Linking $@ ..."
 	$(CXX) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
 ${DSTDIR} :
-	@echo
-	@echo "mkdir $@ ..."
 	mkdir $@
+
+
+
