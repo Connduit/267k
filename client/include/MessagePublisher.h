@@ -51,3 +51,5 @@ EVP_PKEY* load_private_key(const char* filename) {
 	return key;
 }
 
+/**/
+// createHeader() ?
