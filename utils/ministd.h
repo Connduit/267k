@@ -8,7 +8,8 @@
 #include <windows.h>
 #include <stdio.h>
 
-#define NO_INLINE __attribute__ ((noinline))
+//#define NO_INLINE __attribute__ ((noinline))
+#define NO_INLINE __declspec(noinline)
 
 
 

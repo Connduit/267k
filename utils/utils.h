@@ -3,6 +3,7 @@
 
 #include "ministd.h"
 #include "encryption_util.h"
+#include "ntdll_util.h"
 //#define WIN32_LEAN_AND_MEAN
 //#include <windows.h>
 
@@ -23,13 +24,14 @@ typedef struct _LIST_ENTRY {
 */
 
 // TODO: put UNICODE_STRING in a common area so it can be shared by ntdll_util.h too
+/*
 typedef struct _UNICODE_STRING
 {
     USHORT Length;
     USHORT MaximumLength;
     PWSTR Buffer;
 } UNICODE_STRING;
-typedef UNICODE_STRING *PUNICODE_STRING;
+typedef UNICODE_STRING *PUNICODE_STRING;*/
 
 // https://github.com/HavocFramework/Havoc/blob/main/payloads/DllLdr/Include/Native.h#L173
 // https://github.com/reactos/reactos/blob/master/sdk/include/ndk/ldrtypes.h#L140
@@ -154,7 +156,7 @@ HMODULE GetModuleHandleManualHashO(DWORD moduleHash)
     SIZE_T Size = 0;
     CHAR ModuleName[MAX_PATH] = {0};
 
-    PVOID pModule;
+    PVOID pModule = NULL;
 	//PLIST_ENTRY pListHead = &PebAddress->Ldr->InMemoryOrderModuleList;
 	//PLIST_ENTRY pList = PebAddress->Ldr->InMemoryOrderModuleList.Flink;
     //
