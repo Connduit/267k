@@ -3,10 +3,14 @@ CFG := Debug
 endif
 
 ifeq (${CFG}, Debug)
-CPPFLAGS += -g -O0 -D_DEBUG -Iinclude -I../utils -Icommon -I/home/connor/docs/lib/libcurl/include
+CPPFLAGS += -g -O0 -D_DEBUG -Iinclude -I../utils -Icommon -I/home/connor/docs/lib/libcurl/include \
+	-I/home/connor/docs/lib/libcurl/include/cryptography \
+	-I/home/connor/docs/lib/libcurl/include/encoders
 LDFLAGS += -L/home/connor/docs/lib/libcurl/lib -g -lcrypto
 else ifeq (${CFG}, Release)
-CPPFLAGS += -DNDEBUG -Iinclude -I../utils -Icommon -I/home/connor/docs/lib/libcurl/include
+CPPFLAGS += -DNDEBUG -Iinclude -I../utils -Icommon -I/home/connor/docs/lib/libcurl/include \
+	-I/home/connor/docs/lib/libcurl/include/cryptography \
+	-I/home/connor/docs/lib/libcurl/include/encoders
 LDFLAGS += -L/home/connor/docs/lib/libcurl/lib -lcrypto
 else
 $(error Invalid CFG specified: ${CFG})
