@@ -1,9 +1,6 @@
 /* recon.h */
 /* recon.h anything related to information gathering */
 
-
-
-
 // NOTE: identifier for the victim machine
 // generateId() 
 
@@ -31,3 +28,39 @@
 
 
 // getSystemInfo()
+
+
+struct ReconMessage
+{
+	// _OSVERSIONINFOEXW
+	ULONG dwMajorVersion;
+	ULONG dwMinorVersion;
+	ULONG dwBuildNumber;
+	UCHAR wProductType;
+
+	// ram
+	// processor
+
+	// localIp
+
+	//this->username      = _GetUserName();
+	//this->domain_name   = _GetDomainName();
+	//this->computer_name = _GetHostName();
+	//this->process_name  = _GetProcessName();
+
+	//computername;
+	//username;
+
+} typedef ReconMessage;
+
+
+/*
+ * GetVersionExA()
+ * GetComputerNameA()
+ * GetUserNameA()
+ * GetSystemInfo()
+ * GlobalMemoryStatusEx()
+ * GetCurrentDirectoryA()
+ * GetSystemDirectoryA()
+ *
+ * */

