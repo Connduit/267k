@@ -314,6 +314,16 @@ int run(const char* host, const char* port)
     return 0;
 }
 
+int receiveLoop()
+{
+	// TODO: replace 'true' with a condition
+	while (true)
+	{
+		// MessageConsumer::handle(message); // TODO: this is c++... convert to c
+		handleMessage(message);
+	}
+}
+
 int main()
 {
     //Stager tcpStager;

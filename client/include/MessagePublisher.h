@@ -51,7 +51,6 @@ EVP_PKEY* load_private_key(const char* filename) {
 	return key;
 }
 
-/**/
 // createHeader() ?
 
 
@@ -94,31 +93,15 @@ typedef struct {
 // json / custom struct -> compress (if needed) -> serialize -> encrypt (+ hmac if encryption doesn't have builtin auth) -> tlv -> send?
 
 
+/*
 struct Name
 {
 	// stuff
 };
-
 typedef Name NewName
+*/
 
 
-
-
-///////////////////////////////////////////////
-
-const uint32_t FINGERPRINT = 0xBEADCDAC;
-
-struct CommonMessageHeader
-{
-	uint32_t fingerprint_;
-	uint16_t formatVersion_;
-	uint16_t formatID_;
-	uint32_t length_;
-	uint32_t timeStampClockRate_; // rate at twhich the timestampsubsecs field increments
-	uint32_t timeStampSec_; // time message is sent
-	uint32_t timeStampSubsecs_; // subsecond portion of time
-
-};
 
 ///////////////////////////////////////////////
 
@@ -134,6 +117,7 @@ struct InternalMessage
 }; 
 
 
+// NOTE: Config is the config that comes from the C2 profile
 // return non-zero on error
 int send(MessageData* data, Config* config)
 {
@@ -157,7 +141,6 @@ int send(MessageData* data, Config* config)
 	send_data(&buf, config->server_endpoint);
 
 	// cleanup: free buf
-
 	return 0;
 }
 
