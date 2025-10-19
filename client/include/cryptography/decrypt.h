@@ -1,7 +1,9 @@
 /* decrypt.h */
 
-#include <openssl/evp.h>
+#include <openssl/evp.h> // AES/RSA
 #include <openssl/rand.h>
+#include <openssl/rsa.h> // RSA
+#include <openssl/pem.h> // RSA
 #include <stdlib.h>
 
 

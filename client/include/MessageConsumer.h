@@ -32,7 +32,8 @@
  * */
 
 
-int handleTCP(uint8_t* rawData, Config* config)  // TODO: add InternalMessage var to store result?
+// TODO: rawData should be const?
+int handleTCP(uint8_t* rawData, size_t rawDataLength, Config* config)  // TODO: add InternalMessage var to store result?
 {
 	// Raw Bytes from Socket
 	uint8_t buf[4096]; // TODO: rename to plaintext?
@@ -41,7 +42,7 @@ int handleTCP(uint8_t* rawData, Config* config)  // TODO: add InternalMessage va
 	// [IV (12 bytes - cleartext)][Ciphertext (encrypted)][Tag (16 bytes - cleartext)]
 	const uint8_t* iv = rawData;
 	const uint8_t* ciphertext = rawData + 12;
-	size_t ciphertext_len = rawData - 12 - 16;
+	size_t ciphertext_len = rawDataLength - 12 - 16;
 	const uint8_t* tag = rawData + 12 + ciphertext_len;
 	decrypt_aes_256_gcm(ciphertext, ciphertext_len, config->crypto_key, iv, tag, buf);
 

