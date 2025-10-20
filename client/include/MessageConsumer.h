@@ -33,6 +33,7 @@
  * */
 
 
+// NOTE: rawData (comes from recv function) -> decrypt -> decompress (if needed) -> decode (if needed) -> deserialize/parse -> handle command
 // TODO: rawData should be const?
 int handleTCP(uint8_t* rawData, size_t rawDataLength, Config* config)  // TODO: add InternalMessage var to store result?
 {
