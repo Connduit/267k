@@ -2,23 +2,24 @@
 
 #include <stdint.h>
 
-enum TransportType
+typedef enum
 {
 	TCP,
 	HTTP,
 	HTTPS
 	
-} typedef TransportType;
+} TransportType;
 
-enum SerializationType
+typedef enum
 {
     BASE64,
     JSON, // JSON??
     NONE
 
-} typedef SerializationType;
+} SerializationType;
 
-typedef struct {
+typedef struct 
+{
     // === NETWORK CONFIG ===
     char server_host[256];      // C2 server IP/domain
     uint16_t server_port;       // C2 server port
