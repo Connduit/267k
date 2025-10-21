@@ -30,7 +30,7 @@
 // getSystemInfo()
 
 // TODO: move this into message types?
-struct ReconMessage
+typedef struct
 {
 	// _OSVERSIONINFOEXW
 	DWORD dwMajorVersion;
@@ -59,7 +59,7 @@ struct ReconMessage
 	//CHAR domainName[256]; // DNS_MAX_NAME_BUFFER_LENGTH
 	//CHAR processName[MAX_PATH];
 
-} typedef ReconMessage;
+} ReconMessage;
 
 
 /*
