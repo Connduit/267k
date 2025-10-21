@@ -1,14 +1,87 @@
-/* MessageTypes.h ... rename to MessageType.h? */
+/* MessageTypes.h */
+// TODO: reorganize order of data types in this file so they're easier to find?
+
+
 
 //#include <stdint.h>
 
+/*
+STRUCT C2Message:
+message_id: String = GENERATE_UUID()
+victim_id: String
+timestamp: Long
+message_type: Enum = [
+	HANDSHAKE,           Initial connection
+	HEARTBEAT,          // Regular check-in
+	SYSTEM_INFO,        // Victim system data
+	COMMAND_RESULT,     // Output from executed command
+	DATA_EXFIL,         // Stolen data
+	FILE_UPLOAD,        // File transfer
+	ERROR_REPORT        // Error information
+
+]
+payload: EncryptedData
+compression: Boolean
+priority: Integer
+END STRUCT
+*/
+
+/*
+typedef struct {
+	bool use_compression;
+	SerializationType serialization_type;
+	ProtocolType protocol;
+	CryptoKey crypto_key;
+	Endpoint server_endpoint;
+
+} Config;
+*/
+
+
+// TODO: messagetype and their structs should be in their own file called MessageType/s.h?
+enum MessageType
+{
+	HANDSHAKE,          // Initial connection
+	HEARTBEAT,          // Regular check-in
+	SYSTEM_INFO,        // Victim system data
+	COMMAND_RESULT,     // Output from executed command
+	DATA_EXFIL,         // Stolen data
+	FILE_UPLOAD,        // File transfer
+	ERROR_REPORT        // Error information
+
+} typedef MessageType;
+
+#pragma pack(push, 1)
+struct MessageHeader
+{
+	MessageType messageType;
+	uint32_t data_size;     // Size of following data
+	uint32_t message_id;    // Unique ID for tracking
+	//ULONG messageId; ?
+	//ULONG payloadSize; // MessageDataSize
+	//ULONG checksum; ?
+
+} typedef MessageHeader;
+#pragma pack(pop)
+
+// NOTE: InternalMessage will have to serialize,encrypt,enocde,...etc both the header and payload separately? then combine them together into one array?
+// ex: serialize(InternalMessage) wont work, need to do serialize(InternalMessage.header) + serialize(InternalMessage.payload)
+// NOTE: this stuct will be easier to detect (struct containing structs), instead of just having the raw fields listed out
+struct InternalMessage
+{
+	MessageHeader header; // the header... always use custom header? no need for tlv... MessageType enum should be defined in header
+	//MessageData payload; // the actual payload
+	BYTE payload[4096]; // TODO: shouldn't be fixed size?
+} typedef InternalMessage;
+
+/*
 //Message types
 typedef enum {
 	MSG_RECON = 1,      // Recon data from victim
 	MSG_CMD = 2,        // Command to victim
 	MSG_RESULT = 3,     // Command result from victim
 	MSG_ERROR = 4       // Error message
-} MessageType;
+} MessageType;*/
 
 // Command types  
 typedef enum {
@@ -18,18 +91,10 @@ typedef enum {
 	CMD_EXIT = 4        // Stop implant
 } CommandType;
 
-// Generic message header
-#pragma pack(push, 1)
-typedef struct {
-	uint32_t message_type;  // MessageType enum
-	uint32_t data_size;     // Size of following data
-	uint32_t message_id;    // Unique ID for tracking
-} MessageHeader;
-#pragma pack(pop)
 
 // Command message from C2 to victim
 typedef struct {
-	uint32_t command_type;  // CommandType enum
+	CommandType command_type;  // CommandType enum
 	uint32_t data_size;     // Size of command_data
 	char command_data[];    // Flexible array (shell command, filename, etc.)
 } CommandMessage;

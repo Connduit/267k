@@ -1,13 +1,15 @@
 #include "recon.h"
 
-int getClientInfo()
-{
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 
-}
+//int getClientInfo()
+//{
+//}
 
-BOOL FillReconMessage(ReconMessage* msg) 
+int generateReconMessage(ReconMessage* msg) // TODO: should return message
 {
-	if (!msg) return FALSE;
+	if (!msg) return 1;
 
 	ZeroMemory(msg, sizeof(ReconMessage));
 
@@ -36,23 +38,24 @@ BOOL FillReconMessage(ReconMessage* msg)
 	msg->processorArchitecture = systemInfo.wProcessorArchitecture;
 
 	// Get processor name from registry (simplified)
-	GetProcessorName(msg->processorName, sizeof(msg->processorName));
+	//GetProcessorName(msg->processorName, sizeof(msg->processorName));
 
 	// Local IP
-	GetLocalIpAddress(msg->localIp, sizeof(msg->localIp));
+	//GetLocalIpAddress(msg->localIp, sizeof(msg->localIp));
 
 	// System Names
-	DWORD size = sizeof(msg->computerName);
-	GetComputerNameA(msg->computerName, &size);
+	//DWORD size = sizeof(msg->computerName);
+	//GetComputerNameA(msg->computerName, &size);
 
-	size = sizeof(msg->userName);
-	GetUserNameA(msg->userName, &size);
+	//size = sizeof(msg->userName);
+	//GetUserNameA(msg->userName, &size);
 
 	// Domain name (simplified)
-	GetDomainName(msg->domainName, sizeof(msg->domainName));
+	//GetDomainName(msg->domainName, sizeof(msg->domainName));
 
 	// Process name
-	GetModuleFileNameA(NULL, msg->processName, sizeof(msg->processName));
+	//GetModuleFileNameA(NULL, msg->processName, sizeof(msg->processName));
 
-	return TRUE;
+
+	return 0;
 }

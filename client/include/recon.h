@@ -29,17 +29,20 @@
 
 // getSystemInfo()
 
-
+// TODO: move this into message types?
 struct ReconMessage
 {
 	// _OSVERSIONINFOEXW
-	ULONG dwMajorVersion;
-	ULONG dwMinorVersion;
-	ULONG dwBuildNumber;
-	UCHAR wProductType;
+	DWORD dwMajorVersion;
+	DWORD dwMinorVersion;
+	DWORD dwBuildNumber;
+	BYTE wProductType;
 
-	// ram
-	// processor
+	DWORDLONG totalPhysicalMemory;
+	DWORDLONG availablePhysicalMemory;
+
+	DWORD numberOfProcessors;
+	DWORD processorArchitecture; // TODO: this should be WORD? https://learn.microsoft.com/en-us/windows/win32/api/sysinfoapi/ns-sysinfoapi-system_info
 
 	// localIp
 
@@ -50,6 +53,11 @@ struct ReconMessage
 
 	//computername;
 	//username;
+
+	//CHAR computerName[MAX_COMPUTERNAME_LENGTH + 1];
+	//CHAR userName[256];  // UNLEN + 1
+	//CHAR domainName[256]; // DNS_MAX_NAME_BUFFER_LENGTH
+	//CHAR processName[MAX_PATH];
 
 } typedef ReconMessage;
 
@@ -64,3 +72,5 @@ struct ReconMessage
  * GetSystemDirectoryA()
  *
  * */
+
+int generateReconMessage(ReconMessage* msg);
