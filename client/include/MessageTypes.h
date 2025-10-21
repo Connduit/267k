@@ -39,7 +39,7 @@ typedef struct {
 
 
 // TODO: messagetype and their structs should be in their own file called MessageType/s.h?
-enum MessageType
+typedef enum
 {
 	HANDSHAKE,          // Initial connection
 	HEARTBEAT,          // Regular check-in
@@ -49,10 +49,10 @@ enum MessageType
 	FILE_UPLOAD,        // File transfer
 	ERROR_REPORT        // Error information
 
-} typedef MessageType;
+} MessageType;
 
 #pragma pack(push, 1)
-struct MessageHeader
+typedef struct
 {
 	MessageType messageType;
 	uint32_t data_size;     // Size of following data
@@ -61,18 +61,18 @@ struct MessageHeader
 	//ULONG payloadSize; // MessageDataSize
 	//ULONG checksum; ?
 
-} typedef MessageHeader;
+} MessageHeader;
 #pragma pack(pop)
 
 // NOTE: InternalMessage will have to serialize,encrypt,enocde,...etc both the header and payload separately? then combine them together into one array?
 // ex: serialize(InternalMessage) wont work, need to do serialize(InternalMessage.header) + serialize(InternalMessage.payload)
 // NOTE: this stuct will be easier to detect (struct containing structs), instead of just having the raw fields listed out
-struct InternalMessage
+typedef struct
 {
 	MessageHeader header; // the header... always use custom header? no need for tlv... MessageType enum should be defined in header
 	//MessageData payload; // the actual payload
 	BYTE payload[4096]; // TODO: shouldn't be fixed size?
-} typedef InternalMessage;
+} InternalMessage;
 
 /*
 //Message types
@@ -84,7 +84,8 @@ typedef enum {
 } MessageType;*/
 
 // Command types  
-typedef enum {
+typedef enum 
+{
 	CMD_SHELL = 1,      // Execute shell command
 	CMD_DOWNLOAD = 2,   // Download file
 	CMD_UPLOAD = 3,     // Upload file
@@ -93,14 +94,16 @@ typedef enum {
 
 
 // Command message from C2 to victim
-typedef struct {
+typedef struct 
+{
 	CommandType command_type;  // CommandType enum
 	uint32_t data_size;     // Size of command_data
 	char command_data[];    // Flexible array (shell command, filename, etc.)
 } CommandMessage;
 
 // Result message from victim to C2  
-typedef struct {
+typedef struct 
+{
 	uint32_t exit_code;     // Command exit code
 	uint32_t data_size;     // Size of output_data
 	char output_data[];     // Command output or file data
