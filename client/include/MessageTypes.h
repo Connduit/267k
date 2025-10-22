@@ -55,8 +55,8 @@ typedef enum
 typedef struct
 {
 	MessageType messageType;
-	uint32_t data_size;     // Size of following data
-	uint32_t message_id;    // Unique ID for tracking
+	uint32_t dataSize;     // Size of following data // size of payload?
+	uint32_t messageId;    // Unique ID for tracking
 	//ULONG messageId; ?
 	//ULONG payloadSize; // MessageDataSize
 	//ULONG checksum; ?
