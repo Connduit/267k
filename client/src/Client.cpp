@@ -326,6 +326,15 @@ int run(const char* host, const char* port)
     return 0;
 }
 
+Client::Client(Config config) : 
+	encryptorPtr_(std::make_unique<Encryptor>()),
+	encoderPtr_(std::make_unique<Encoder>()),
+	serializerPtr_(std::make_unique<Serializer>()),
+	messageConsumer_(*encryptorPtr_, *encoderPtr_, *serializerPtr_),
+	messagePublisher(*encryptorPtr_, *encoderPtr_, *serializerPtr_),
+	config_(config)
+{}
+
 
 int main()
 {
