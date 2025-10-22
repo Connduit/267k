@@ -66,3 +66,51 @@ int compressData(uint8_t* buf)
 
 }
 
+///////////////////////
+
+
+MessageHandler::MessageHandler(
+            CompressorUniquePtr compressorPtr,
+            EncrypterUniquePtr encrypterPtr,
+            EncoderUniquePtr encoderPtr,
+            SerializerUniquePtr serializerPtr,
+            Config* config) :
+          	compressorPtr_(compressorPtr),
+            encrypterPtr_(encrypterPtr),
+            encoderPtr_(encoderPtr),
+            serializerPtr_(serializerPtr),
+            config_(config)
+{}
+
+    
+bool MessageHandler::sendMessage(); // overload this function?
+{
+	// TODO: where does parsing go in this? (if it's even needed)
+
+	// InternalMessage
+	// Validate
+	// Serialize
+	// Encode
+	// Compress
+	// Encrypt
+	// Frame (if needed)
+	// Raw Bytes
+	// Send
+}
+
+// TODO: setup a listener function that calls this function?
+// listener function simply calls recv and handles socket stuff?
+// recvMessage would just serve as a wrapper for that maybe?
+bool MessageHandler::recvMessage(); // overload this function?
+{
+	// TODO: where does parsing go in this? (if it's even needed)
+
+	// Recv
+	// Raw Bytes
+	// Decrypt
+	// Decode
+	// Deserialize
+	// Obtain InternalMessage object
+	// Validate
+	// handle InternalMessage (based on its header)
+}
