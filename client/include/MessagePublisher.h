@@ -109,3 +109,18 @@ int send(InternalMessage* msg, Config* config) // TODO: def rename this function
 
 // NOTE: we wrap message into json to make it more stealthy and look like a legit api / web traffic... TODO: do this once everything is working
 // MessageData -> serialize into bytes -> encrypt bytes -> create InternalMessage (using header and bytes we encrypted) -> encode if needed: if raw, send direct binary bytes, but if http, then base64+json wrap -> send
+
+class MessagePublisher
+{
+public:
+	MessagePublisher(
+		Encryptor& encryptor,
+		Encoder& encoder,
+		Serializer& serializer);
+private:
+	bool sendMessage(InternalMessage* msg); // should take in a reference to an InternalMessage
+	Encryptor& encryptor_;
+	Encoder& encoder_;
+	Serializer& serializer_;
+};
+
