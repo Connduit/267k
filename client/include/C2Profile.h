@@ -26,6 +26,8 @@ class C2Profile
 public:
 	C2Profile();
 	//C2Profile(uint8_t* key);
+
+	//bool getEncryptionAlgorithm(); // TODO: change return type
 private:
     // === NETWORK CONFIG ===
     char server_host[256];      // C2 server IP/domain

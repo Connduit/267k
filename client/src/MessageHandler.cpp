@@ -146,6 +146,7 @@ int compressData(uint8_t* buf)
 ///////////////////////
 
 
+/*
 MessageHandler::MessageHandler(
             CompressorUniquePtr compressorPtr,
             EncrypterUniquePtr encrypterPtr,
@@ -157,7 +158,8 @@ MessageHandler::MessageHandler(
             encoderPtr_(encoderPtr),
             serializerPtr_(serializerPtr),
             config_(config)
-{}
+{}*/
+//MessageHandler::MessageHandler(C2Profile& config) {}
 
     
 bool MessageHandler::sendMessage(); // overload this function?

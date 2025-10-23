@@ -123,9 +123,13 @@ public:
 		Encoder& encoder,
 		Serializer& serializer);
 private:
+	//MessagePublisher(const MessagePublisher&) = delete;
+	//MessagePublisher& operator=(const MessagePublisher&) = delete;
+
 	bool sendMessage(InternalMessage* msg); // should take in a reference to an InternalMessage
 	Encryptor& encryptor_;
 	Encoder& encoder_;
 	Serializer& serializer_;
 };
+typedef std::unique_ptr<MessagePublisher> MessagePublisherPtr;
 #endif

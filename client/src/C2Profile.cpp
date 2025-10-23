@@ -9,7 +9,11 @@ C2Profile::C2Profile(uint8_t* key)
 {
 
 }*/
-
+/*
+bool C2Profile::getEncryptionAlgorithm() // TODO: change return type
+{
+	return true;
+}*/
 bool C2Profile::loadConfig()
 {
 	//C2Profile config = {0};

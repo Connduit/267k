@@ -20,8 +20,12 @@ public:
 		Serializer& serializer);
 private:
 	//bool recvMessage(uint8_t* msg);
+	//MessageConsumer(const MessageConsumer&) = delete;
+	//MessageConsumer& operator=(const MessageConsumer&) = delete;
+
 	Encryptor& encryptor_;
 	Encoder& encoder_;
 	Serializer& serializer_;
 };
+typedef std::unique_ptr<MessageConsumer> MessageConsumerPtr;
 #endif

@@ -8,7 +8,7 @@
 class MessageHandler
 {
 public:
-
+	MessageHandler(C2Profile& config) {}; // TODO:
     
     bool sendMessage(); // overload this function?
     bool recvMessage(); // overload this function?
@@ -19,5 +19,7 @@ private:
 
 };
 
+
+typedef std::unique_ptr<MessageHandler> MessageHandlerPtr;
 
 #endif

@@ -29,23 +29,34 @@
 
 
 
-Client::Client(C2Profile config) : 
+//Client::Client(C2Profile config) : 
+Client::Client(C2ProfileUniquePtr config) : 
 	encryptorPtr_(std::make_unique<Encryptor>()),
 	encoderPtr_(std::make_unique<Encoder>()),
-	serializerPtr_(std::make_unique<Serializer>())
+	serializerPtr_(std::make_unique<Serializer>()),
+	messageConsumerPtr_(nullptr), // TODO: should have to be a usingPtr
+	messagePublisherPtr_(nullptr), // TODO: should have to be a usingPtr
+	messageHandlerPtr_(nullptr) // TODO: should have to be a usingPtr
+
+	//messageHandler_(nullptr)
 	//configPtr_(std::make_unique<C2Profile>()),
 	//config_(config),
 {
-	encryptorPtr_->setKey(config.getCryptoKey());
-	encryptorPtr_->setAlgorithm(config.getEncryptionAlgorithm());
+	//TODO:
+	//encryptorPtr_->setKey(config.getCryptoKey());
+	//encryptorPtr_->setAlgorithm(config.getEncryptionAlgorithm());
 	//encoderPtr_->setKey(config.getCryptoKey());
 	//encoderPtr_->setAlgorithm(config.getEncryptionAlgorithm());
 	//serializerPtr_->setKey(config.getCryptoKey());
 	//serializerPtr_->setAlgorithm(config.getEncryptionAlgorithm());
 
-	messageConsumer_ = MessageConsumer(*encryptorPtr_, *encoderPtr_, *serializerPtr_);
-	messagePublisher_ = MessagePublisher(*encryptorPtr_, *encoderPtr_, *serializerPtr_);
-	messageHandler_ = MessageHandler(config); // config?
+	//messageConsumer_ = MessageConsumer(*encryptorPtr_, *encoderPtr_, *serializerPtr_);
+	//messagePublisher_ = MessagePublisher(*encryptorPtr_, *encoderPtr_, *serializerPtr_);
+	//messageHandler_ = MessageHandler(config); // config?
+
+	messageConsumerPtr_ = std::make_unique<MessageConsumer>(*encryptorPtr_, *encoderPtr_, *serializerPtr_);
+	messagePublisherPtr_ = std::make_unique<MessagePublisher>(*encryptorPtr_, *encoderPtr_, *serializerPtr_);
+	messageHandlerPtr_ = std::make_unique<MessageHandler>(*config);
 
 }
 
