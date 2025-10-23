@@ -28,6 +28,8 @@ private:
 	Encryptor& encryptor_;
 	Encoder& encoder_;
 	Serializer& serializer_;
+	// TODO: should own MessageHandler? that way it can pass the "consumed" message to 
+	// a MessageHandler function or something
 };
 typedef std::unique_ptr<MessageConsumer> MessageConsumerPtr;
 #endif
