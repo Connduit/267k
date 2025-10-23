@@ -187,6 +187,7 @@ bool MessageHandler::recvMessage(); // overload this function?
 	// Recv
 	// Raw Bytes
 	// Decrypt
+	// Decompress
 	// Decode
 	// Deserialize
 	// Obtain InternalMessage object
