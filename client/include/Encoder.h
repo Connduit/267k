@@ -1,4 +1,8 @@
 /* Encoder.h */
+#ifndef ENCODER_H
+#define ENCODER_H
+#include <memory>
+
 class Encoder
 {
 public:
@@ -6,3 +10,6 @@ public:
 	virtual void decode();
 private:
 };
+
+typedef std::unique_ptr<Encoder> EncoderUniquePtr;
+#endif

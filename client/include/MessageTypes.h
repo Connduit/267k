@@ -13,7 +13,7 @@ timestamp: Long
 message_type: Enum = [
 	HANDSHAKE,           Initial connection
 	HEARTBEAT,          // Regular check-in
-	SYSTEM_INFO,        // Victim system data
+	SYS_INFO,        // Victim system data
 	COMMAND_RESULT,     // Output from executed command
 	DATA_EXFIL,         // Stolen data
 	FILE_UPLOAD,        // File transfer
@@ -43,7 +43,7 @@ typedef enum
 {
 	HANDSHAKE,          // Initial connection
 	HEARTBEAT,          // Regular check-in
-	SYSTEM_INFO,        // Victim system data
+	SYS_INFO,        // Victim system data
 	COMMAND_RESULT,     // Output from executed command
 	DATA_EXFIL,         // Stolen data
 	FILE_UPLOAD,        // File transfer

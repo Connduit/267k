@@ -7,3 +7,6 @@ public:
 	virtual void decompress();
 private:
 };
+
+
+typedef std::unique_ptr<Compressor> CompressorUniquePtr;

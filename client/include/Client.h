@@ -1,33 +1,33 @@
+#ifndef CLIENT_H
+#define CLIENT_H
+
+
 #include "Compressor.h"
 #include "C2Profile.h"
 #include "Encoder.h"
-#include "Encrypter.h"
+#include "Encryptor.h"
 #include "Serializer.h"
+#include "MessagePublisher.h"
+#include "MessageConsumer.h"
 
 #include <memory>
 
-typedef std::unique_ptr<Compressor> CompressorUniquePtr;
-typedef std::unique_ptr<Encoder> EncoderUniquePtr;
-typedef std::unique_ptr<Encrypter> EncrypterUniquePtr;
-typedef std::unique_ptr<Serializer> SerializerUniquePtr;
 
 class Client
 {
 public:
-    Client(Config config);
-    /*Client(
-            CompressorUniquePtr compressorPtr,
-            EncrypterUniquePtr encrypterPtr,
-            EncoderUniquePtr encoderPtr,
-            SerializerUniquePtr serializerPtr,
-            Config* config);*/
+    Client(C2Profile config); // TODO: eventually config should be a uniquePtr?
 private:
     CompressorUniquePtr compressorPtr_;
-    EncrypterUniquePtr encrypterPtr_;
+    EncryptorUniquePtr encryptorPtr_;
     EncoderUniquePtr encoderPtr_;
     SerializerUniquePtr serializerPtr_;
     MessageConsumer messageConsumer_;
     MessagePublisher messagePublisher_;
-    // MessageHandler messageHandler_; 
-    Config config_;
+    MessageHandler messageHandler_; 
+    // C2ProfileUniquePtr configPtr_; // TODO: eventually have 
+
+	bool run(const char* host, const char* port);
 };
+
+#endif

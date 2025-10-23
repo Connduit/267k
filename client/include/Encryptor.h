@@ -1,4 +1,4 @@
-/* Encrypter.h */
+/* Encryptor.h */
 /* encryption is used to protect sensitive user information. ensures only authorized users can read it. keeps communication and messages private */
 
 // aes (symmetric) or rsa (asymmetric)?
@@ -15,7 +15,8 @@ int aes128_encrypt(data, key, result)
 //aes256_encrypt() -> iv + key + plaintext = ciphertext + tag
 
 //rsa_encrypt()
-
+#ifndef ENCRYPTOR_H
+#define ENCRYPTOR_H
 
 // NOTE: for now just use openssl headers for encryption
 
@@ -128,28 +129,33 @@ int rsa_encrypt(EVP_PKEY *public_key,
 	return ciphertext_len;
 }
 
+#include <memory>
 
 
-class Encrypter
+class Encryptor
 {
 public:
 	// constructor
 	// deconstructor
-	virtual ~Encrypter() = default; // TODO: what does default do?
+	virtual ~Encryptor() = default; // TODO: what does default do?
 	virtual void encrypt();
 	virtual void decrypt();
 private:
 };
 
-class AesEncrypter : public Encrypter
+typedef std::unique_ptr<Encryptor> EncryptorUniquePtr;
+
+class AesEncryptor : public Encryptor
 {
 public:
 private:
 };
 
 
-class XorEncrypter : public Encrypter
+class XorEncryptor : public Encryptor
 {
 public:
 private:
 };
+
+#endif

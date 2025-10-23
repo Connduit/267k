@@ -1,5 +1,6 @@
 /* recon.h */
 /* recon.h anything related to information gathering */
+#include <windef.h>
 
 // NOTE: identifier for the victim machine
 // generateId() 
