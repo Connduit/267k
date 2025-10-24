@@ -4,6 +4,7 @@
 
 #include "C2Profile.h"
 #include <vector>
+#include <cstdint>
 
 
 class MessageHandler
@@ -15,7 +16,9 @@ public:
     bool sendMessage(); // overload this function?
     bool recvMessage(); // overload this function?
 	//bool receiveMessages(uint8_t* buffer, size_t bytes_received, C2Profile& config);
+	bool processMessage(InternalMessage* msg, Config* config); 
 	bool receiveMessages(uint8_t* buffer, size_t bytes_received);
+	bool handleTCP();
 private:
 	//C2Profile& config_;
 	// Connections connection_ // MessageHandler should own/control socket/connections?

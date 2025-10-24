@@ -2,6 +2,7 @@
 #ifndef C2_PROFILE_H
 #define C2_PROFILE_H
 
+#include <cstdint>
 #include <stdint.h>
 #include <memory>
 

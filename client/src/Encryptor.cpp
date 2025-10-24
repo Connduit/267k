@@ -79,7 +79,7 @@ int rsa_encrypt(EVP_PKEY *public_key,
 	}
 
 	/* Allocate ciphertext buffer */
-	*ciphertext = malloc(ciphertext_len);
+	*ciphertext = (unsigned char*)malloc(ciphertext_len);
 	if (!*ciphertext) {
 		EVP_PKEY_CTX_free(ctx);
 		return -1;

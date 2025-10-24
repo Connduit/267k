@@ -1,4 +1,5 @@
 /* Compressor.h */
+#include <memory>
 
 class Compressor
 {

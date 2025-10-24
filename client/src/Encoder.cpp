@@ -13,6 +13,7 @@
 // encrypting the table, or mathematically generating the characters for the table?
 // https://github.com/Adaptix-Framework/AdaptixC2/blob/main/Extenders/agent_beacon/src_beacon/beacon/Encoders.cpp
 
+#include <Encoder.h>
 // base64 or hex encoding
 #include <stdio.h>
 #include <stdint.h>
@@ -25,7 +26,7 @@ const char b64_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01
 char* b64_encode(const unsigned char* data, size_t input_len) 
 {
 	size_t output_len = 4 * ((input_len + 2) / 3);
-	char* encoded = malloc(output_len + 1);
+	char* encoded = (char *)malloc(output_len + 1);
 	if (!encoded)
 	{
 		return NULL;
@@ -75,7 +76,7 @@ char* b64_encode(const unsigned char* data, size_t input_len)
 #include <stdint.h>
 
 // Simple LUT as a string (very obvious in binary)
-const char b64_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"; // default_table
+//const char b64_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"; // default_table
 
 // TODO: pretty code water way of encoding
 int base64_decode(const char *in, uint8_t *out) {

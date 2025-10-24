@@ -1,6 +1,7 @@
 /* Encoder.h */
 #ifndef ENCODER_H
 #define ENCODER_H
+#include <cstring>
 #include <memory>
 
 class Encoder

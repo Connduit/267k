@@ -1,5 +1,7 @@
 /* MessageTypes.h */
 // TODO: reorganize order of data types in this file so they're easier to find?
+#ifndef MESSAGE_TYPES_H
+#define MESSAGE_TYPES_H
 
 
 
@@ -71,7 +73,7 @@ typedef struct
 {
 	MessageHeader header; // the header... always use custom header? no need for tlv... MessageType enum should be defined in header
 	//MessageData payload; // the actual payload
-	BYTE payload[4096]; // TODO: shouldn't be fixed size?
+	uint8_t payload[4096]; // TODO: shouldn't be fixed size?
 } InternalMessage;
 
 /*
@@ -112,4 +114,4 @@ typedef struct
 
 
 
-
+#endif
