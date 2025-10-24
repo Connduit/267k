@@ -3,6 +3,13 @@
 - it's the "monolithic" second stage
 - it acts as a module manager enabling true modular loading thereafter? (it should have all of the module logic precompiled inside of it?)
 - make stuff multi-threaded
+- Folder hierarchy refactor:
+  - client
+        - src
+        - test
+        - data (where config files live)
+        - docs
+        - tools (maybe stuff to help with testing? or just misc stuff)
 
 ### Core
 - Beacon/check-in with server
