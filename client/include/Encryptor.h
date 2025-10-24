@@ -59,7 +59,7 @@ public:
 		int plaintext_len, 
 		const unsigned char* key, 
 		const unsigned char* iv, 
-		encrypted_message* output) override;
+		encrypted_message* output); // override;
 
 	bool decrypt(
 		const unsigned char* ciphertext, 
