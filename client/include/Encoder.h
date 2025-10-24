@@ -1,14 +1,17 @@
 /* Encoder.h */
 #ifndef ENCODER_H
 #define ENCODER_H
+
 #include <cstring>
+#include <cstdint>
 #include <memory>
 
 class Encoder
 {
 public:
-	virtual bool encode() = 0;
-	virtual bool decode() = 0;
+	//TODO: match function signature
+	//virtual bool encode() = 0;
+	//virtual bool decode() = 0;
 private:
 };
 
@@ -22,6 +25,7 @@ public:
 private:
 };
 
+//class HexEncoder : public Encoder
 
 typedef std::unique_ptr<Encoder> EncoderUniquePtr;
 #endif

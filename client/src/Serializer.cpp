@@ -2,12 +2,23 @@
 
 #include "Serializer.h"
 
+bool BinarySerializer::serialize(const InternalMessage& msg, std::vector<uint8_t>& outMsg)
+{
+	outMsg.clear();
+	outMsg.reserve(sizeof(msg.header) + msg.data.size());
+
+
+	const uint8_t* headerBytes = reinterpret_cast<const uint8_t*>(&msg.header);
+	outMsg.insert(outMsg.end(), headerBytes, headerBytes + sizeof(msg.header));
+
+	outMsg.insert(outMsg.end(), msg.data.begin(), msg.data.end());
+
+	return false;
+}
+
+
 /*
 
-int serialize(InternalMessage* msg, uint8_t* buf, SerializationType serializationType) 
-{
-
-}
 
 int serializeReconMessage(const ReconMessage* msg, BYTE* buffer) {
 	BYTE* ptr = buffer; // uint8_t*

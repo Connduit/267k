@@ -17,23 +17,32 @@
 class Client
 {
 public:
-	Client() {};
-    Client(C2ProfileUniquePtr config); // TODO: eventually config should be a uniquePtr?
-    //Client(C2Profile config); // TODO: eventually config should be a uniquePtr?
+	//Client() {};
+    //Client(C2ProfileUniquePtr config); // TODO: eventually config should be a uniquePtr?
+    //Client(Compressor& compressor, Encryptor& encryptor, Encoder& encoder, Serializer& serializer, C2Profile& config);
+    Client(Encryptor& encryptor, Encoder& encoder, Serializer& serializer, C2Profile& config);
 	bool run(const char* host, const char* port);// TODO: change to private... when done debugging
 private:
-    CompressorUniquePtr compressorPtr_;
-    EncryptorUniquePtr encryptorPtr_;
-    EncoderUniquePtr encoderPtr_;
-    SerializerUniquePtr serializerPtr_;
-	MessageConsumerPtr messageConsumerPtr_;
-	MessagePublisherPtr messagePublisherPtr_;
+    //CompressorUniquePtr compressorPtr_;
+    //EncryptorUniquePtr encryptorPtr_;
+    //EncoderUniquePtr encoderPtr_;
+    //SerializerUniquePtr serializerPtr_;
+	//MessageConsumerPtr messageConsumerPtr_;
+	//MessagePublisherPtr messagePublisherPtr_;
+
+    //Compressor& compressor_;
+    Encryptor& encryptor_;
+    Encoder& encoder_;
+    Serializer& serializer_;
+	//MessageConsumer messageConsumer_;
+	//MessagePublisher messagePublisher_;
 
     //MessageConsumer messageConsumer_;
     //MessagePublisher messagePublisher_;
-    MessageHandler messageHandlerPtr_; 
-    // C2ProfileUniquePtr configPtr_; // TODO: eventually have 
-	C2ProfileUniquePtr config_;
+	//C2ProfileUniquePtr configPtr_;
+	//
+    //MessageHandler messageHandler_; 
+    C2Profile& config_; // TODO: eventually have 
 
 };
 

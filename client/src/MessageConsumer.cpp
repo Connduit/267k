@@ -21,4 +21,6 @@ MessageConsumer::MessageConsumer(
 
 
 bool MessageConsumer::recvMessage(std::vector<uint8_t> msg)
-{}
+{
+	return true;
+}

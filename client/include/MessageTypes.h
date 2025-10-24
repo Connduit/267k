@@ -3,6 +3,7 @@
 #ifndef MESSAGE_TYPES_H
 #define MESSAGE_TYPES_H
 
+#include <vector>
 #include <cstdint>
 
 //#include <stdint.h>
@@ -43,6 +44,7 @@ typedef struct {
 // TODO: messagetype and their structs should be in their own file called MessageType/s.h?
 typedef enum
 {
+	DEFAULT, 			// default/null/none msg
 	HANDSHAKE,          // Initial connection
 	HEARTBEAT,          // Regular check-in
 	SYS_INFO,        // Victim system data
@@ -54,8 +56,14 @@ typedef enum
 } MessageType;
 
 #pragma pack(push, 1)
-typedef struct
+typedef struct MessageHeader
 {
+	MessageHeader() :
+		messageType(MessageType::DEFAULT),
+		dataSize(0),
+		messageId(0)
+	{}
+
 	MessageType messageType;
 	uint32_t dataSize;     // Size of following data // size of payload?
 	uint32_t messageId;    // Unique ID for tracking
@@ -69,11 +77,16 @@ typedef struct
 // NOTE: InternalMessage will have to serialize,encrypt,enocde,...etc both the header and payload separately? then combine them together into one array?
 // ex: serialize(InternalMessage) wont work, need to do serialize(InternalMessage.header) + serialize(InternalMessage.payload)
 // NOTE: this stuct will be easier to detect (struct containing structs), instead of just having the raw fields listed out
-typedef struct
+typedef struct InternalMessage
 {
+	InternalMessage() :
+		header(),
+		data()
+	{}
+
 	MessageHeader header; // the header... always use custom header? no need for tlv... MessageType enum should be defined in header
 	//MessageData payload; // the actual payload
-	uint8_t* payload; // TODO: shouldn't be fixed size?
+	std::vector<uint8_t> data; // TODO: shouldn't be fixed size?
 } InternalMessage;
 
 /*

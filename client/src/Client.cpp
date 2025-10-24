@@ -21,6 +21,7 @@
 
 
 
+/*
 //Client::Client(C2Profile config) : 
 Client::Client(C2ProfileUniquePtr config) : 
 	encryptorPtr_(std::make_unique<Encryptor>()), // TODO: have to choose child encryptor
@@ -51,10 +52,28 @@ Client::Client(C2ProfileUniquePtr config) :
 	//messageHandlerPtr_ = std::make_unique<MessageHandler>(*config);
 
 }
+*/
+
+Client::Client(
+		//Compressor& compressor, 
+		Encryptor& encryptor, 
+		Encoder& encoder, 
+		Serializer& serializer, 
+		C2Profile& config)
+		:
+		//compressor_(compressor),
+		encryptor_(encryptor),
+		encoder_(encoder),
+		serializer_(serializer),
+		config_(config)
+{
+
+}
 
 bool Client::run(const char* host, const char* port)
 {
 
+	return true;
 	//Config* config = loadConfig();
 	//Config config = loadConfig();
 

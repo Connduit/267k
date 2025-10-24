@@ -25,7 +25,7 @@ typedef enum
 class C2Profile
 {
 public:
-	C2Profile();
+	//C2Profile(); // TODO:
 	//C2Profile(uint8_t* key);
 
 	//bool getEncryptionAlgorithm(); // TODO: change return type

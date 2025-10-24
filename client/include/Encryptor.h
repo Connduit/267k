@@ -43,14 +43,16 @@ class Encryptor
 public:
 	// constructor
 	// deconstructor
-	virtual bool encrypt() = 0;
-	virtual bool decrypt() = 0;
-	virtual ~Encryptor() = default; // TODO: what does default do?
+	// TODO: child classes need to take in the same parameters
+	//virtual bool encrypt() = 0;
+	//virtual bool decrypt() = 0;
+	//virtual ~Encryptor() = default; // TODO: what does default do?
 private:
 };
 
 typedef std::unique_ptr<Encryptor> EncryptorUniquePtr;
 
+/*
 class AesEncryptor : public Encryptor
 {
 public:
@@ -79,7 +81,7 @@ public:
 		const unsigned char* ciphertext, int ciphertext_len,
 		unsigned char** plaintext);
 private:
-};
+};*/
 
 class XorEncryptor : public Encryptor
 {
