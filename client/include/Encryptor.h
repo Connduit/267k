@@ -25,6 +25,8 @@ int aes128_encrypt(data, key, result)
 #include <openssl/rsa.h> // RSA
 #include <openssl/pem.h> // RSA
 
+#include <vector>
+
 // TODO: move this struct somewhere else?
 typedef struct {
 	unsigned char ciphertext[1024];
@@ -41,9 +43,9 @@ class Encryptor
 public:
 	// constructor
 	// deconstructor
+	virtual bool encrypt() = 0;
+	virtual bool decrypt() = 0;
 	virtual ~Encryptor() = default; // TODO: what does default do?
-	virtual void encrypt();
-	virtual void decrypt();
 private:
 };
 
@@ -52,13 +54,38 @@ typedef std::unique_ptr<Encryptor> EncryptorUniquePtr;
 class AesEncryptor : public Encryptor
 {
 public:
+	bool encrypt (
+		const unsigned char* plaintext, 
+		int plaintext_len, 
+		const unsigned char* key, 
+		const unsigned char* iv, 
+		encrypted_message* output) override;
+
+	bool decrypt(
+		const unsigned char* ciphertext, 
+		int ciphertext_len, 
+		const unsigned char* key, 
+		const unsigned char* iv, 
+		const unsigned char* tag, 
+		unsigned char* plaintext);
 private:
 };
 
+class RsaEncryptor : public Encryptor
+{
+public:
+	bool encrypt(EVP_PKEY* public_key, const unsigned char* plaintext, int plaintext_len, unsigned char** ciphertext);
+	bool decrypt(EVP_PKEY* private_key,
+		const unsigned char* ciphertext, int ciphertext_len,
+		unsigned char** plaintext);
+private:
+};
 
 class XorEncryptor : public Encryptor
 {
 public:
+	bool encrypt(const std::vector<uint8_t>& data, const std::vector<uint8_t>& key, std::vector<uint8_t>& cipher);
+	bool decrypt(const std::vector<uint8_t>& cipher, const std::vector<uint8_t>& key, std::vector<uint8_t>& data);
 private:
 };
 

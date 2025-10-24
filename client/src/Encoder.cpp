@@ -23,7 +23,7 @@ const char b64_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01
 
 // if i want to rewrite this with the input length unknown, will have to use strlen... 
 // hopefully by then ill have my own strlen func written
-char* b64_encode(const unsigned char* data, size_t input_len) 
+char* B64Encoder::encode(const unsigned char* data, size_t input_len)
 {
 	size_t output_len = 4 * ((input_len + 2) / 3);
 	char* encoded = (char *)malloc(output_len + 1);
@@ -79,7 +79,7 @@ char* b64_encode(const unsigned char* data, size_t input_len)
 //const char b64_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"; // default_table
 
 // TODO: pretty code water way of encoding
-int base64_decode(const char *in, uint8_t *out) {
+int B64Encoder::decode(const char *in, uint8_t *out) {
 	int i = 0, j = 0;
 	uint8_t v[4];
 

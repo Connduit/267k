@@ -29,7 +29,7 @@ public:
 	//C2Profile(uint8_t* key);
 
 	//bool getEncryptionAlgorithm(); // TODO: change return type
-private:
+//private: TODO:
     // === NETWORK CONFIG ===
     char server_host[256];      // C2 server IP/domain
     uint16_t server_port;       // C2 server port

@@ -2,43 +2,124 @@
 
 #include "Encryptor.h"
 
-int encrypt_aes_256_gcm(const unsigned char *plaintext, int plaintext_len,
+bool AesEncryptor::encrypt(const unsigned char *plaintext, int plaintext_len,
 		const unsigned char *key, const unsigned char *iv,
 		encrypted_message *output) {
 	EVP_CIPHER_CTX *ctx;
 	int len;
 
 	if(!(ctx = EVP_CIPHER_CTX_new()))
-		return -1;
+		return true;
 
 	// Initialize encryption
 	if(1 != EVP_EncryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, NULL, NULL))
-		return -1;
+		return true;
 
 	// Set IV length
 	if(1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, 12, NULL))
-		return -1;
+		return true;
 
 	// Initialize key and IV
 	if(1 != EVP_EncryptInit_ex(ctx, NULL, NULL, key, iv))
-		return -1;
+		return true;
 
 	// Encrypt
 	if(1 != EVP_EncryptUpdate(ctx, output->ciphertext, &len, plaintext, plaintext_len))
-		return -1;
+		return true;
 	output->ciphertext_len = len;
 
 	// Finalize
 	if(1 != EVP_EncryptFinal_ex(ctx, output->ciphertext + len, &len))
-		return -1;
+		return true;
 	output->ciphertext_len += len;
 
 	// Get authentication tag
 	if(1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, 16, output->tag))
-		return -1;
+		return true;
 
 	EVP_CIPHER_CTX_free(ctx);
-	return 0;
+	return false;
+
+}
+
+bool AesEncryptor::decrypt(const unsigned char* ciphertext, int ciphertext_len,
+	const unsigned char* key, const unsigned char* iv,
+	const unsigned char* tag, unsigned char* plaintext)
+{
+
+	EVP_CIPHER_CTX* ctx;
+	int len;
+	int plaintext_len;
+	int ret;
+
+	/* Create and initialize context */
+	if (!(ctx = EVP_CIPHER_CTX_new()))
+	{
+		// TODO: throw error
+	}
+
+	/* Initialize decryption operation */
+	if (!EVP_DecryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, NULL, NULL))
+	{
+		EVP_CIPHER_CTX_free(ctx);
+		return true;
+
+	}
+
+	/* Set IV length */
+	if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, 12, NULL))
+	{
+		EVP_CIPHER_CTX_free(ctx);
+		return true;
+
+	}
+
+	/* Initialize key and IV */
+	if (!EVP_DecryptInit_ex(ctx, NULL, NULL, key, iv))
+	{
+		EVP_CIPHER_CTX_free(ctx);
+		return true;
+
+	}
+
+	/* Provide the ciphertext to be decrypted */
+	if (!EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, ciphertext_len))
+	{
+		EVP_CIPHER_CTX_free(ctx);
+		return true;
+
+	}
+	plaintext_len = len;
+
+	/* Set expected authentication tag before finalizing */
+	if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, 16, (void*)tag))
+	{
+		EVP_CIPHER_CTX_free(ctx);
+		return true;
+
+	}
+
+	/*
+	 * Finalize decryption.
+	 * This will return 0 if the tag verification fails
+	 */
+	ret = EVP_DecryptFinal_ex(ctx, plaintext + len, &len);
+	EVP_CIPHER_CTX_free(ctx);
+
+	if (ret > 0)
+	{
+		/* Success - tag verified */
+		plaintext_len += len;
+		return false;
+		//return plaintext_len;
+
+	}
+	else
+	{
+		/* Authentication failed - message was tampered with */
+		return true;
+
+	}
 
 }
 
@@ -46,7 +127,7 @@ int encrypt_aes_256_gcm(const unsigned char *plaintext, int plaintext_len,
 /*
  * Encrypt data using RSA public key
  */
-int rsa_encrypt(EVP_PKEY *public_key, 
+bool RsaEncryptor::encrypt(EVP_PKEY *public_key,
 		const unsigned char *plaintext, int plaintext_len,
 		unsigned char **ciphertext) 
 {
@@ -55,26 +136,26 @@ int rsa_encrypt(EVP_PKEY *public_key,
 
 	/* Create context */
 	ctx = EVP_PKEY_CTX_new(public_key, NULL);
-	if (!ctx) return -1;
+	if (!ctx) return true;
 
 	/* Initialize encryption */
 	if (EVP_PKEY_encrypt_init(ctx) <= 0) {
 		EVP_PKEY_CTX_free(ctx);
-		return -1;
+		return true;
 
 	}
 
 	/* Set padding (OAEP recommended) */
 	if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING) <= 0) {
 		EVP_PKEY_CTX_free(ctx);
-		return -1;
+		return true;
 
 	}
 
 	/* Determine buffer size */
 	if (EVP_PKEY_encrypt(ctx, NULL, &ciphertext_len, plaintext, plaintext_len) <= 0) {
 		EVP_PKEY_CTX_free(ctx);
-		return -1;
+		return true;
 
 	}
 
@@ -82,7 +163,7 @@ int rsa_encrypt(EVP_PKEY *public_key,
 	*ciphertext = (unsigned char*)malloc(ciphertext_len);
 	if (!*ciphertext) {
 		EVP_PKEY_CTX_free(ctx);
-		return -1;
+		return true;
 
 	}
 
@@ -91,10 +172,84 @@ int rsa_encrypt(EVP_PKEY *public_key,
 				plaintext, plaintext_len) <= 0) {
 		free(*ciphertext);
 		EVP_PKEY_CTX_free(ctx);
-		return -1;
+		return true;
 
 	}
 
 	EVP_PKEY_CTX_free(ctx);
-	return ciphertext_len;
+	return false;
+	//return ciphertext_len;
+}
+
+bool RsaEncryptor::decrypt(EVP_PKEY* private_key,
+	const unsigned char* ciphertext, int ciphertext_len,
+	unsigned char** plaintext)
+{
+	EVP_PKEY_CTX* ctx;
+	size_t plaintext_len;
+
+	ctx = EVP_PKEY_CTX_new(private_key, NULL);
+	if (!ctx) return true;
+
+	if (EVP_PKEY_decrypt_init(ctx) <= 0)
+	{
+		EVP_PKEY_CTX_free(ctx);
+		return true;
+
+	}
+
+	if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING) <= 0)
+	{
+		EVP_PKEY_CTX_free(ctx);
+		return true;
+
+	}
+
+	/* Determine buffer size */
+	if (EVP_PKEY_decrypt(ctx, NULL, &plaintext_len, ciphertext, ciphertext_len) <= 0)
+	{
+		EVP_PKEY_CTX_free(ctx);
+		return true;
+
+	}
+
+	*plaintext = (unsigned char *)malloc(plaintext_len);
+	if (!*plaintext)
+	{
+		EVP_PKEY_CTX_free(ctx);
+		return true;
+
+	}
+
+	/* Perform decryption */
+	if (EVP_PKEY_decrypt(ctx, *plaintext, &plaintext_len,
+		ciphertext, ciphertext_len) <= 0)
+	{
+		free(*plaintext);
+		EVP_PKEY_CTX_free(ctx);
+		return true;
+
+	}
+
+	EVP_PKEY_CTX_free(ctx);
+	return false;
+	//return plaintext_len;
+
+}
+
+
+
+bool XorEncryptor::encrypt(const std::vector<uint8_t>& data, const std::vector<uint8_t>& key, std::vector<uint8_t>& cipher)
+{
+	for (int i = 0; i < data.size(); ++i)
+	{
+		cipher[i] = data[i] ^ key[i % key.size()];
+	}
+	return false;
+}
+
+bool XorEncryptor::decrypt(const std::vector<uint8_t>& cipher, const std::vector<uint8_t>& key, std::vector<uint8_t>& data)
+{
+	encrypt(cipher, key, data);
+	return false;
 }

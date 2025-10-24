@@ -1,6 +1,12 @@
 /* recon.h */
 /* recon.h anything related to information gathering */
-#include <windef.h>
+
+#ifndef RECON_H
+#define RECON_H
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+//#include <windef.h>
 
 // NOTE: identifier for the victim machine
 // generateId() 
@@ -75,3 +81,6 @@ typedef struct
  * */
 
 int generateReconMessage(ReconMessage* msg);
+
+
+#endif

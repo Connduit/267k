@@ -1,7 +1,6 @@
-#include "recon.h"
+#include "Recon.h"
 
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+
 
 //int getClientInfo()
 //{
@@ -14,6 +13,7 @@ int generateReconMessage(ReconMessage* msg) // TODO: should return message
 	ZeroMemory(msg, sizeof(ReconMessage));
 
 	// OS Version Info
+	/*
 	OSVERSIONINFOEX osInfo;
 	osInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
 	if (GetVersionEx((OSVERSIONINFO*)&osInfo)) {
@@ -22,6 +22,7 @@ int generateReconMessage(ReconMessage* msg) // TODO: should return message
 		msg->dwBuildNumber = osInfo.dwBuildNumber;
 		msg->wProductType = osInfo.wProductType;
 	}
+	*/
 
 	// RAM Info
 	MEMORYSTATUSEX memoryStatus;

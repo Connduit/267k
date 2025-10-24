@@ -23,9 +23,9 @@
 
 //Client::Client(C2Profile config) : 
 Client::Client(C2ProfileUniquePtr config) : 
-	encryptorPtr_(std::make_unique<Encryptor>()),
-	encoderPtr_(std::make_unique<Encoder>()),
-	serializerPtr_(std::make_unique<Serializer>()),
+	encryptorPtr_(std::make_unique<Encryptor>()), // TODO: have to choose child encryptor
+	encoderPtr_(std::make_unique<Encoder>()), // TODO: have to choose child Encoder
+	serializerPtr_(std::make_unique<Serializer>()), // TODO: have to choose child Serializer
 	messageConsumerPtr_(nullptr), // TODO: should have to be a usingPtr
 	messagePublisherPtr_(nullptr)//, // TODO: should have to be a usingPtr
 	//messageHandlerPtr_(nullptr) // TODO: should have to be a usingPtr

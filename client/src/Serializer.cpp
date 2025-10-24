@@ -1,5 +1,9 @@
 /* Serializer.cpp */
 
+#include "Serializer.h"
+
+/*
+
 int serialize(InternalMessage* msg, uint8_t* buf, SerializationType serializationType) 
 {
 
@@ -18,3 +22,4 @@ int serializeReconMessage(const ReconMessage* msg, BYTE* buffer) {
 }
 
 // int deserialize() {}
+*/

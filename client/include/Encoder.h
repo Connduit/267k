@@ -7,10 +7,21 @@
 class Encoder
 {
 public:
-	virtual void encode();
-	virtual void decode();
+	virtual bool encode() = 0;
+	virtual bool decode() = 0;
 private:
 };
+
+
+class B64Encoder : public Encoder
+{
+public:
+	char* encode(const unsigned char* data, size_t input_len);
+	int decode(const char* in, uint8_t* out);
+	//bool decode();
+private:
+};
+
 
 typedef std::unique_ptr<Encoder> EncoderUniquePtr;
 #endif
