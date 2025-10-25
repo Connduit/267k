@@ -17,9 +17,6 @@
 
 
 
-	
-
-
 
 /*
 //Client::Client(C2Profile config) : 
