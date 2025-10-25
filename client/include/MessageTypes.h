@@ -77,6 +77,7 @@ typedef struct MessageHeader
 // NOTE: InternalMessage will have to serialize,encrypt,enocde,...etc both the header and payload separately? then combine them together into one array?
 // ex: serialize(InternalMessage) wont work, need to do serialize(InternalMessage.header) + serialize(InternalMessage.payload)
 // NOTE: this stuct will be easier to detect (struct containing structs), instead of just having the raw fields listed out
+#pragma pack(push, 1)
 typedef struct InternalMessage
 {
 	InternalMessage() :
@@ -88,6 +89,7 @@ typedef struct InternalMessage
 	//MessageData payload; // the actual payload
 	std::vector<uint8_t> data; // TODO: shouldn't be fixed size?
 } InternalMessage;
+#pragma pack(pop)
 
 /*
 //Message types
