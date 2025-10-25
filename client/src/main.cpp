@@ -1,4 +1,4 @@
-
+#include "Client.h"
 
 int main()
 {
@@ -9,6 +9,9 @@ int main()
 	//Client client;
 	//
 	//Compressor compressor; 
+
+	Client client;
+	client.run();
 	
 
 

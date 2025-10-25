@@ -87,7 +87,7 @@ private:
 class XorEncryptor : public Encryptor
 {
 public:
-	//XorEncryptor();
+	XorEncryptor() : XorEncryptor("DEFAULT_KEY") {}
 	XorEncryptor(const std::vector<uint8_t>& key) : key_(key) {} // TODO: is const needed?
 	XorEncryptor(const std::string& key) : key_(key.begin(), key.end()) {}
 	//bool encrypt(std::vector<uint8_t>& data, std::vector<uint8_t>& cipher);
@@ -95,6 +95,8 @@ public:
 	std::vector<uint8_t> encrypt(std::vector<uint8_t>& msg);
 	std::vector<uint8_t> decrypt(std::vector<uint8_t>& cipher);
 private:
+	// void initializeDefaultKey();
+
 	//const std::vector<uint8_t> key_; // change to reference?
 	const std::vector<uint8_t> key_; // change to reference?
 };

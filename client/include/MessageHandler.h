@@ -17,7 +17,7 @@ class MessageHandler
 {
 public:
 	//MessageHandler(C2Profile& config) {}; // TODO:
-	MessageHandler();
+	//MessageHandler();
     
     bool sendMessage(); // overload this function?
     bool recvMessage(); // overload this function?
@@ -30,6 +30,9 @@ public:
 private:
 	//C2Profile& config_;
 	// Connections connection_ // MessageHandler should own/control socket/connections?
+
+	//std::queue<InternalMessage> outgoing_queue;
+	//std::mutex queue_mutex; // TODO: add thread logic too?
 
 };
 
