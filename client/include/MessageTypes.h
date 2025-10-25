@@ -65,8 +65,8 @@ typedef struct MessageHeader
 	{}
 
 	MessageType messageType;
-	uint32_t dataSize;     // Size of following data // size of payload?
-	uint32_t messageId;    // Unique ID for tracking
+	uint32_t dataSize;     // Size of following data // size of payload?  // TODO: doesn't have to big as big as a uint32_t
+	uint32_t messageId;    // Unique ID for tracking // // TODO: doesn't have to big as big as a uint32_t
 	//ULONG messageId; ?
 	//ULONG payloadSize; // MessageDataSize
 	//ULONG checksum; ?

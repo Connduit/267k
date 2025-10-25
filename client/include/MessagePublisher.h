@@ -115,6 +115,8 @@ EVP_PKEY* load_private_key(const char* filename) {
 // NOTE: we wrap message into json to make it more stealthy and look like a legit api / web traffic... TODO: do this once everything is working
 // MessageData -> serialize into bytes -> encrypt bytes -> create InternalMessage (using header and bytes we encrypted) -> encode if needed: if raw, send direct binary bytes, but if http, then base64+json wrap -> send
 
+
+// TODO: MessagePublisher is probably not needed if Transporter class exists
 #include "MessageTypes.h"
 #include "Encryptor.h"
 #include "Encoder.h"

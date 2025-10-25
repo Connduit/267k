@@ -9,15 +9,20 @@
 
 #include "MessageTypes.h"
 
+#include <string>
+
 class ClientTest
 {
 public:
 	bool testSerializer(InternalMessage& inMsg, std::vector<uint8_t>& outMsg, BinarySerializer& serializer);
+	bool testEncoder(std::vector<uint8_t>& inMsg, std::vector<uint8_t>& outMsg, B64Encoder& encoder);
 	bool testEncrypter(std::vector<uint8_t>& inMsg, std::vector<uint8_t>& outMsg, XorEncryptor& encryptor);
-	bool testEncoder(std::vector<uint8_t>& inMsg, std::string& outMsg , B64Encoder& encoder);
 	bool testAll();
 
-	// void printRawData(std::vector<uint8_t>& msg);
+	std::vector<uint8_t> string2byte(const std::string inMsg);
+	std::string byte2string(const std::vector<uint8_t> inMsg);
+	void printVector(const std::vector<uint8_t>& vec);
+
 private:
 	// Client class object
 };

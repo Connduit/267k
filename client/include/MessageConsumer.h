@@ -10,7 +10,7 @@
 #include "MessageHandler.h"
 
 
-
+// TODO: MessageConsumer is probably not needed if Transporter class exists
 class MessageConsumer
 {
 public:

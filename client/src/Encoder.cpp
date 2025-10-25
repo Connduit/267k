@@ -22,37 +22,42 @@
 //#include <iostream>
 
 //const char b64_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"; // default_table
-const char base64_chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"; // default_table
+
 
 // if i want to rewrite this with the input length unknown, will have to use strlen... 
 // hopefully by then ill have my own strlen func written
 //char* B64Encoder::encode(const unsigned char* data, size_t input_len)
-bool B64Encoder::encode(std::vector<uint8_t>& inMsg, std::string& outMsg)
+std::vector<uint8_t> B64Encoder::encode(std::vector<uint8_t>& msg)
 {
-	outMsg.clear();
-	int val = 0, valb = -6;
-	for (uint8_t c : inMsg) 
+
+
+	std::vector<uint8_t> encoded;
+	size_t i = 0;
+
+	while (i < msg.size())
 	{
-		val = (val << 8) + c;
-		valb += 8;
-		while (valb >= 0) 
+		uint32_t octet_a = i < msg.size() ? msg[i++] : 0;
+		uint32_t octet_b = i < msg.size() ? msg[i++] : 0;
+		uint32_t octet_c = i < msg.size() ? msg[i++] : 0;
+
+		uint32_t triple = (octet_a << 0x10) + (octet_b << 0x08) + octet_c;
+
+		encoded.push_back(base64_chars[(triple >> 3 * 6) & 0x3F]);
+		encoded.push_back(base64_chars[(triple >> 2 * 6) & 0x3F]);
+		encoded.push_back(base64_chars[(triple >> 1 * 6) & 0x3F]);
+		encoded.push_back(base64_chars[(triple >> 0 * 6) & 0x3F]);
+	}
+
+	// Add padding
+	size_t pad_count = msg.size() % 3;
+	if (pad_count > 0)
+	{
+		for (size_t j = 0; j < 3 - pad_count; j++)
 		{
-			outMsg.push_back(base64_chars[(val >> valb) & 0x3F]);
-			valb -= 6;
+			encoded[encoded.size() - 1 - j] = '=';
 		}
-
 	}
-
-	if (valb > -6) 
-	{
-		outMsg.push_back(base64_chars[((val << 8) >> (valb + 8)) & 0x3F]);
-	}
-
-	while (outMsg.size() % 4) 
-	{
-		outMsg.push_back('=');
-	}
-	return false;
+	return encoded;
 }
 
 
@@ -71,27 +76,37 @@ bool B64Encoder::encode(std::vector<uint8_t>& inMsg, std::string& outMsg)
 //const char b64_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"; // default_table
 
 // TODO: pretty code water way of encoding
-bool B64Encoder::decode(std::string& inMsg, std::vector<uint8_t>& outMsg)
+std::vector<uint8_t> B64Encoder::decode(std::vector<uint8_t>& msg)
 {
-	outMsg.clear();
-	std::vector<int> T(256, -1);
-	for (int i = 0; i < 64; i++) T[base64_chars[i]] = i;
+	std::vector<uint8_t> decoded;
+	size_t i = 0;
 
-	int val = 0, valb = -8;
-	for (unsigned char c : inMsg) {
-		if (T[c] == -1) {
-			if (c == '=') break;
-			//throw std::invalid_argument("Invalid Base64 character");
-			// TODO:
-
-		}
-		val = (val << 6) + T[c];
-		valb += 6;
-		if (valb >= 0) {
-			outMsg.push_back((val >> valb) & 0xFF);
-			valb -= 8;
-
-		}
-
+	// Build reverse lookup table
+	uint8_t base64_lookup[256] = { 0 };
+	for (uint8_t j = 0; j < 64; j++)
+	{
+		base64_lookup[base64_chars[j]] = j;
 	}
+
+	while (i < msg.size() && msg[i] != '=')
+	{
+		uint8_t char1 = msg[i++];
+		uint8_t char2 = i < msg.size() ? msg[i++] : 'A';
+		uint8_t char3 = i < msg.size() ? msg[i++] : 'A';
+		uint8_t char4 = i < msg.size() ? msg[i++] : 'A';
+
+		if (char1 == '=' || char2 == '=') break;
+
+		uint32_t triple = (base64_lookup[char1] << 18) +
+			(base64_lookup[char2] << 12) +
+			(base64_lookup[char3] << 6) +
+			base64_lookup[char4];
+
+		decoded.push_back((triple >> 16) & 0xFF);
+		if (char3 != '=') decoded.push_back((triple >> 8) & 0xFF);
+		if (char4 != '=') decoded.push_back(triple & 0xFF);
+	}
+
+	return decoded;
 }
+

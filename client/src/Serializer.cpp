@@ -2,19 +2,51 @@
 
 #include "Serializer.h"
 
-bool BinarySerializer::serialize(const InternalMessage& msg, std::vector<uint8_t>& outMsg)
+
+std::vector<uint8_t> BinarySerializer::serialize(const InternalMessage& msg)
 {
-	outMsg.clear();
-	outMsg.reserve(sizeof(msg.header) + msg.data.size());
+	std::vector<uint8_t> serialized;
+	//serialized.clear();
 
+	// Serialize header (fixed size due to #pragma pack(1))
+	const uint8_t* header_bytes = reinterpret_cast<const uint8_t*>(&msg.header);
+	serialized.insert(serialized.end(), header_bytes, header_bytes + sizeof(MessageHeader));
 
-	const uint8_t* headerBytes = reinterpret_cast<const uint8_t*>(&msg.header);
-	outMsg.insert(outMsg.end(), headerBytes, headerBytes + sizeof(msg.header));
+	// Serialize payload data
+	serialized.insert(serialized.end(), msg.data.begin(), msg.data.end());
 
-	outMsg.insert(outMsg.end(), msg.data.begin(), msg.data.end());
+	return serialized;
 
-	return false;
 }
+
+InternalMessage BinarySerializer::deserialize(const std::vector<uint8_t>& data)
+{
+	if (data.size() < sizeof(MessageHeader))
+	{
+		//throw std::runtime_error("Data too small for header");
+	}
+
+	InternalMessage msg;
+
+	// Deserialize header
+	memcpy(&msg.header, data.data(), sizeof(MessageHeader));
+
+	// Deserialize payload (if any)
+	size_t payload_size = data.size() - sizeof(MessageHeader);
+	if (payload_size > 0)
+	{
+		msg.data.assign(data.begin() + sizeof(MessageHeader), data.end());
+	}
+
+	// Verify data size matches header
+	if (msg.header.dataSize != msg.data.size())
+	{
+		//throw std::runtime_error("Data size mismatch");
+	}
+
+	return msg;
+}
+
 
 
 /*
@@ -34,3 +66,5 @@ int serializeReconMessage(const ReconMessage* msg, BYTE* buffer) {
 
 // int deserialize() {}
 */
+
+

@@ -10,6 +10,26 @@
         - data (where config files live)
         - docs
         - tools (maybe stuff to help with testing? or just misc stuff)
+- add "const" to functions and vars that need it
+- change function signature to return by parameter instead of return by value
+- switch from child classes to config file? config needs to be evaulated beforing compiling tho
+
+### Class and Ownership Hierarchy
+		
+		MalwareApp (TOP OWNER)
+		│
+		├── MessageHandler (OWNS execution + outgoing queue)
+		│   ├── CommandExecutor
+		│   ├── FileManager  
+		│   └── DataHarvester
+		│
+		└── C2Manager (OWNS multiple C2 connections)
+			└── std::vector<Transporter> (each OWNS one server)
+				├── ConnectionManager
+				├── Serializer
+				├── Encoder
+				└── Encryptor
+
 
 ### Core
 - Beacon/check-in with server

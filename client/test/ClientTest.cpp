@@ -18,28 +18,57 @@ bool ClientTest::testAll()
 
 	// InternalMessage
 	InternalMessage inMsg;
-	MessageHeader header;
-	header.messageType = MessageType::SYS_INFO;
-	header.dataSize = 32;
-	header.messageId = 99;
 	inMsg.data = internalMessageData;
+	MessageHeader header;
+	header.messageType = MessageType::ERROR_REPORT;
+	header.dataSize = inMsg.data.size();
+	header.messageId = 9999;
+	inMsg.header = header;
+
+
+	/*
+	printVector(inMsg.data);
+	std::cout << inMsg.header.messageId << std::endl;
+	std::cout << inMsg.header.messageType << std::endl;
+	std::cout << inMsg.header.dataSize << std::endl;
+	*/
 
 	// TODO: Validate?
 
 	// Serialize
 	std::vector<uint8_t> serializerOutMsg;
 	testSerializer(inMsg, serializerOutMsg, serializer);
+	//std::cout << "Serializer" << std::endl;
+	printVector(serializerOutMsg);
+	//std::cout << std::endl;
+
+	/*
+	InternalMessage outMsg = serializer.deserialize(serializerOutMsg);
+	printVector(outMsg.data);
+	std::cout << outMsg.header.messageId << std::endl;
+	std::cout << outMsg.header.messageType << std::endl;
+	std::cout << outMsg.header.dataSize << std::endl;
+	std::cout << std::endl;
+	*/
 
 	// Encode
-	//std::vector<uint8_t> encoderOutMsg;
-	std::string encoderOutMsg;
+	std::vector<uint8_t> encoderOutMsg;
 	testEncoder(serializerOutMsg, encoderOutMsg, encoder);
+	/*
+	std::cout << "Encoder" << std::endl;
+	printVector(encoderOutMsg);
+	std::cout << std::endl;
+	*/
 
 	// TODO: Compress? 
 
-	//std::vector<uint8_t> encryptOutMsg;
-	// TODO: Encrypt
-	//testEncrypter(encoderOutMsg, encryptOutMsg, encryptor);
+	std::vector<uint8_t> encryptOutMsg;
+	testEncrypter(encoderOutMsg, encryptOutMsg, encryptor);
+	/*
+	std::cout << "Encryptor" << std::endl;
+	printVector(encryptOutMsg);
+	*/
+	std::cout << std::endl;
 
 	// TODO: Frame (if needed)
 
@@ -50,39 +79,46 @@ bool ClientTest::testAll()
 	return false;
 }
 
-bool ClientTest::testSerializer(InternalMessage& inMsg, std::vector<uint8_t>& outMsg,BinarySerializer& serializer)
-{
-	serializer.serialize(inMsg, outMsg);
-	for (auto b : outMsg)
-	{
-		std::cout << static_cast<int>(b) << " ";
-	}
-	std::cout << std::endl;
 
+
+
+
+bool ClientTest::testSerializer(InternalMessage& inMsg, std::vector<uint8_t>& outMsg, BinarySerializer& serializer)
+{
+	outMsg = serializer.serialize(inMsg);
 	return false;
 }
 
-//bool ClientTest::testEncoder(std::string& inMsg, std::vector<uint8_t>& outMsg, B64Encoder& encoder)
-bool ClientTest::testEncoder(std::vector<uint8_t>& inMsg, std::string& outMsg , B64Encoder& encoder)
+bool ClientTest::testEncoder(std::vector<uint8_t>& inMsg, std::vector<uint8_t>& outMsg, B64Encoder& encoder)
+//bool ClientTest::testEncoder(std::vector<uint8_t>& inMsg, std::string& outMsg , B64Encoder& encoder)
 {
-	std::cout << "inside testEncoder" << std::endl;
-	encoder.encode(inMsg, outMsg);
-	for (auto b : outMsg)
-	{
-		std::cout << static_cast<int>(b) << " ";
-	}
-	std::cout << std::endl;
+	outMsg = encoder.encode(inMsg);
 	return false;
 }
 
 bool ClientTest::testEncrypter(std::vector<uint8_t>& inMsg, std::vector<uint8_t>& outMsg, XorEncryptor& encryptor)
+//bool ClientTest::testEncrypter(std::string& inMsg, std::vector<uint8_t>& outMsg, XorEncryptor& encryptor)
 {
-	encryptor.encrypt(inMsg, outMsg);
-	for (auto b : outMsg)
+	outMsg = encryptor.encrypt(inMsg);
+	return false;
+
+}
+
+std::vector<uint8_t> ClientTest::string2byte(const std::string inMsg)
+{
+	return std::vector<uint8_t>(inMsg.begin(), inMsg.end());
+}
+
+std::string ClientTest::byte2string(const std::vector<uint8_t> inMsg)
+{
+	return std::string(inMsg.begin(), inMsg.end());
+}
+
+void ClientTest::printVector(const std::vector<uint8_t>& vec)
+{
+	for (auto b : vec)
 	{
 		std::cout << static_cast<int>(b) << " ";
 	}
 	std::cout << std::endl;
-	return false;
-
 }
