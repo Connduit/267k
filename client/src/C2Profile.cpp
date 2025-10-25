@@ -27,7 +27,7 @@ bool C2Profile::loadConfig()
 
 	};*/
 	//config->crypto_key = DEFAULT_CRYPTO_KEY; // this is just for debugging purposes
-	/*
+	/* // this is only required in c not cpp?
 	C2Profile config = {
 		.crypto_key = {
 			0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,

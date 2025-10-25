@@ -2,9 +2,10 @@
 #ifndef ENCODER_H
 #define ENCODER_H
 
-#include <cstring>
+#include <string>
 #include <cstdint>
 #include <memory>
+#include <vector>
 
 class Encoder
 {
@@ -19,9 +20,10 @@ private:
 class B64Encoder : public Encoder
 {
 public:
-	char* encode(const unsigned char* data, size_t input_len);
-	int decode(const char* in, uint8_t* out);
-	//bool decode();
+	//bool encode(const std::vector<uint8_t>& inMsg, std::vector<uint8_t>& outMsg);
+	bool encode(std::vector<uint8_t>& inMsg, std::string& outMsg);
+	//bool decode(const std::vector<uint8_t>& inMsg, std::vector<uint8_t>& outMsg);
+	bool decode(std::string& inMsg, std::vector<uint8_t>& outMsg);
 private:
 };
 

@@ -7,6 +7,7 @@
 
 int main()
 {
+	std::cout << "inside main" << std::endl;
 	ClientTest clientTest;
 	clientTest.testAll();
 

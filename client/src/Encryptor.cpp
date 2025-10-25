@@ -236,17 +236,17 @@ bool RsaEncryptor::decrypt(EVP_PKEY* private_key,
 
 
 
-bool XorEncryptor::encrypt(const std::vector<uint8_t>& data, const std::vector<uint8_t>& key, std::vector<uint8_t>& cipher)
+bool XorEncryptor::encrypt(const std::vector<uint8_t>& data, std::vector<uint8_t>& cipher)
 {
 	for (int i = 0; i < data.size(); ++i)
 	{
-		cipher[i] = data[i] ^ key[i % key.size()];
+		cipher[i] = data[i] ^ key_[i % key_.size()]; // TODO: key size should be passed into constructor or known already?
 	}
 	return false;
 }
 
-bool XorEncryptor::decrypt(const std::vector<uint8_t>& cipher, const std::vector<uint8_t>& key, std::vector<uint8_t>& data)
+bool XorEncryptor::decrypt(const std::vector<uint8_t>& cipher, std::vector<uint8_t>& data)
 {
-	encrypt(cipher, key, data);
+	encrypt(cipher, data);
 	return false;
 }

@@ -26,6 +26,7 @@ int aes128_encrypt(data, key, result)
 #include <openssl/pem.h> // RSA
 
 #include <vector>
+#include <string>
 
 // TODO: move this struct somewhere else?
 typedef struct {
@@ -86,9 +87,14 @@ private:
 class XorEncryptor : public Encryptor
 {
 public:
-	bool encrypt(const std::vector<uint8_t>& data, const std::vector<uint8_t>& key, std::vector<uint8_t>& cipher);
-	bool decrypt(const std::vector<uint8_t>& cipher, const std::vector<uint8_t>& key, std::vector<uint8_t>& data);
+	//XorEncryptor();
+	XorEncryptor(const std::vector<uint8_t>& key) : key_(key) {} // TODO: is const needed?
+	XorEncryptor(const std::string& key) : key_(key.begin(), key.end()) {}
+	bool encrypt(const std::vector<uint8_t>& data, std::vector<uint8_t>& cipher);
+	bool decrypt(const std::vector<uint8_t>& cipher, std::vector<uint8_t>& data);
 private:
+	//const std::vector<uint8_t> key_; // change to reference?
+	const std::vector<uint8_t> key_; // change to reference?
 };
 
 #endif

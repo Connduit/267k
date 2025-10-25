@@ -1,65 +1,63 @@
-ifndef CFG
-CFG := Debug
-endif
+# ================================
+# # Compiler and Flags
+# # ================================
+CXX := g++
+CXXFLAGS := -std=c++17 -Wall -Wextra -O2 -Iinclude -I../common
 
-ifeq (${CFG}, Debug)
-CPPFLAGS += -g -O0 -D_DEBUG -Iinclude -I../utils -Icommon -I/home/connor/docs/lib/libcurl/include \
-	-I/home/connor/docs/lib/libcurl/include/cryptography \
-	-I/home/connor/docs/lib/libcurl/include/encoders
-LDFLAGS += -L/home/connor/docs/lib/libcurl/lib -g -lssl -lcrypto
-else ifeq (${CFG}, Release)
-CPPFLAGS += -DNDEBUG -Iinclude -I../utils -Icommon -I/home/connor/docs/lib/libcurl/include \
-	-I/home/connor/docs/lib/libcurl/include/cryptography \
-	-I/home/connor/docs/lib/libcurl/include/encoders
-LDFLAGS += -L/home/connor/docs/lib/libcurl/lib -lssl -lcrypto
-else
-$(error Invalid CFG specified: ${CFG})
-endif
-$(info Using CFG: ${CFG})
-
-# Compile with GCC v6.1.0
-# COMPILER_GCC_610 := /ray/links/apps/gcc/versions/6.1.0/g++
-# COMPILER_GCC_610 := /usr/local/gcc-6.1.0/bin/g++
-CXX := x86_64-w64-mingw32-g++
-# LD_LIBRARY_PATH := /usr/local/gcc-6.1.0/lib64:${LD_LIBRARY_PATH}
-
-###############################################################################
-DSTDIR := ${CFG}
-
-#CXXFLAGS += -Wall
-
-.PHONY: default all clean cleanall
-
-default: all
-
-# This contains all the paths and executables we want to build?
-all: ${DSTDIR} ${DSTDIR}/client
-
-clean:
-	${RM} -r ${DSTDIR}
-
-cleanall: clean
-	${RM} *~ testFile.dat
-	${RM} -r rpt
-
-${DSTDIR}/%.o: %.cpp
-	mkdir -p $(dir $@)
-	${CXX} ${CXXFLAGS} ${CPPFLAGS} -c $< -o $@
-
-# Get list of all CPPs in current directory
+# ================================
+# Directories
+# ================================
 SRC_DIR := src
-CPPS := $(wildcard $(SRC_DIR)/**/*.cpp $(SRC_DIR)/*.cpp)
-$(info CPPS: ${CPPS})
-# Compute the list of OBJS from the list of CPPS
-OBJS := $(patsubst %.cpp, ${DSTDIR}/%.o, ${CPPS})
-$(info OBJS: ${OBJS})
+TEST_DIR := test
+OBJ_DIR := obj
+BIN_DIR := bin
 
-# Hello is some executable... make multiple of these if there's multiple executatbles?
-${DSTDIR}/client : ${OBJS}
-	$(CXX) $(LDFLAGS) $^ $(LOADLIBES) $(LDLIBS) -o $@
+# ================================
+# Source Files
+# ================================
+SRC_FILES := $(filter-out $(SRC_DIR)/main.cpp, $(wildcard $(SRC_DIR)/*.cpp))
+TEST_FILES := $(wildcard $(TEST_DIR)/*.cpp)
 
-${DSTDIR} :
-	mkdir $@
+SRC_OBJS := $(SRC_FILES:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/src/%.o)
+MAIN_OBJ := $(OBJ_DIR)/src/main.o
+TEST_OBJS := $(TEST_FILES:$(TEST_DIR)/%.cpp=$(OBJ_DIR)/test/%.o)
 
+# ================================
+# Targets
+# ================================
+.PHONY: all clean client test
 
+all: client test
+
+client: $(BIN_DIR)/client.exe
+test: $(BIN_DIR)/test.exe
+
+# --- client.exe (includes main.cpp) ---
+$(BIN_DIR)/client.exe: $(SRC_OBJS) $(MAIN_OBJ) | $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) $^ -o $@
+
+# --- test.exe (excludes main.cpp) ---
+$(BIN_DIR)/test.exe: $(SRC_OBJS) $(TEST_OBJS) | $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) $^ -o $@
+
+# ================================
+# Compilation Rules
+# ================================
+$(OBJ_DIR)/src/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)/src
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJ_DIR)/test/%.o: $(TEST_DIR)/%.cpp | $(OBJ_DIR)/test
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# ================================
+# Directory Creation
+# ================================
+$(OBJ_DIR)/src $(OBJ_DIR)/test $(BIN_DIR):
+	mkdir -p $@
+
+# ================================
+# Clean
+# ================================
+clean:
+	rm -rf $(OBJ_DIR) $(BIN_DIR)
 

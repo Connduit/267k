@@ -19,48 +19,40 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-const char b64_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"; // default_table
+//#include <iostream>
+
+//const char b64_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"; // default_table
+const char base64_chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"; // default_table
 
 // if i want to rewrite this with the input length unknown, will have to use strlen... 
 // hopefully by then ill have my own strlen func written
-char* B64Encoder::encode(const unsigned char* data, size_t input_len)
+//char* B64Encoder::encode(const unsigned char* data, size_t input_len)
+bool B64Encoder::encode(std::vector<uint8_t>& inMsg, std::string& outMsg)
 {
-	size_t output_len = 4 * ((input_len + 2) / 3);
-	char* encoded = (char *)malloc(output_len + 1);
-	if (!encoded)
+	outMsg.clear();
+	int val = 0, valb = -6;
+	for (uint8_t c : inMsg) 
 	{
-		return NULL;
-	}	
+		val = (val << 8) + c;
+		valb += 8;
+		while (valb >= 0) 
+		{
+			outMsg.push_back(base64_chars[(val >> valb) & 0x3F]);
+			valb -= 6;
+		}
 
-	for (size_t i = 0, j = 0; i < input_len;) {
-		// Get three bytes
-		uint32_t octet_a = i < input_len ? data[i++] : 0;
-		uint32_t octet_b = i < input_len ? data[i++] : 0;
-		uint32_t octet_c = i < input_len ? data[i++] : 0;
-
-		// Combine into 24-bit number
-		uint32_t triple = (octet_a << 16) | (octet_b << 8) | octet_c;
-
-		// Split into four 6-bit indices
-		encoded[j++] = b64_table[(triple >> 18) & 0x3F];
-		encoded[j++] = b64_table[(triple >> 12) & 0x3F];
-		encoded[j++] = b64_table[(triple >> 6) & 0x3F];
-		encoded[j++] = b64_table[triple & 0x3F];
 	}
 
-	// Add padding for incomplete triplets
-	if (input_len % 3 == 1) 
+	if (valb > -6) 
 	{
-		encoded[output_len - 1] = '=';
-		encoded[output_len - 2] = '=';
-	} 
-	else if (input_len % 3 == 2) 
-	{
-		encoded[output_len - 1] = '=';
+		outMsg.push_back(base64_chars[((val << 8) >> (valb + 8)) & 0x3F]);
 	}
 
-	encoded[output_len] = '\0';
-	return encoded;
+	while (outMsg.size() % 4) 
+	{
+		outMsg.push_back('=');
+	}
+	return false;
 }
 
 
@@ -73,31 +65,33 @@ char* B64Encoder::encode(const unsigned char* data, size_t input_len)
 
 // https://github.com/Adaptix-Framework/AdaptixC2/blob/main/Extenders/agent_beacon/src_beacon/beacon/Encoders.cpp
 
-#include <stdint.h>
+//#include <stdint.h>
 
 // Simple LUT as a string (very obvious in binary)
 //const char b64_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"; // default_table
 
 // TODO: pretty code water way of encoding
-int B64Encoder::decode(const char *in, uint8_t *out) {
-	int i = 0, j = 0;
-	uint8_t v[4];
+bool B64Encoder::decode(std::string& inMsg, std::vector<uint8_t>& outMsg)
+{
+	outMsg.clear();
+	std::vector<int> T(256, -1);
+	for (int i = 0; i < 64; i++) T[base64_chars[i]] = i;
 
-	while (in[i] && in[i+1] && in[i+2] && in[i+3]) 
-	{
-		// Convert chars to values
-		for (int k = 0; k < 4; k++) 
-		{
-			const char *pos = strchr(b64_table, in[i+k]);
-			v[k] = pos ? (pos - b64_table) : 0;
+	int val = 0, valb = -8;
+	for (unsigned char c : inMsg) {
+		if (T[c] == -1) {
+			if (c == '=') break;
+			//throw std::invalid_argument("Invalid Base64 character");
+			// TODO:
+
+		}
+		val = (val << 6) + T[c];
+		valb += 6;
+		if (valb >= 0) {
+			outMsg.push_back((val >> valb) & 0xFF);
+			valb -= 8;
+
 		}
 
-		// Reconstruct bytes
-		out[j++] = (v[0] << 2) | (v[1] >> 4);
-		out[j++] = (v[1] << 4) | (v[2] >> 2);
-		out[j++] = (v[2] << 6) | v[3];
-
-		i += 4;
 	}
-	return j;
 }
