@@ -2,6 +2,9 @@
 #include "ClientTest.h"
 #include "Client.h"
 
+#include "MessageHandler.h"
+#include "Transporter.h"
+
 
 #include <cassert>
 #include <iostream>
@@ -14,15 +17,16 @@ bool ClientTest::testAll()
 	C2Profile config;
 
 	//Client client(compressor, encryptor, encoder, serializer, config);
-	Client client(encryptor, encoder, serializer, config);
+	//Client client(encryptor, encoder, serializer, config);
+	Client client;
 
 	// InternalMessage
 	InternalMessage inMsg;
 	inMsg.data = internalMessageData;
 	MessageHeader header;
-	header.messageType = MessageType::ERROR_REPORT;
+	header.messageType = MessageType::EXECUTE_COMMAND;
 	header.dataSize = inMsg.data.size();
-	header.messageId = 9999;
+	header.messageId = 69;
 	inMsg.header = header;
 
 
