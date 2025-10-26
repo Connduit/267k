@@ -92,8 +92,13 @@ bool Client::run()
 
 	while (true)
 	{
-		transporter_.connect();    // Try to connect (handles if already connected)
-		transporter_.beacon();     // Send heartbeat + check commands
+		if (!transporter_.isConnected())
+		{
+			transporter_.connect();    // Try to connect (handles if already connected)
+		}
+		transporter_.beacon();     // Send heartbeat + check commands... also receive() is called inside beacon
+		//transporter_.receive();
+		//transporter_.sendMessage();
 		Sleep(5000);            // Wait 1 minute
 	}
 	return false;

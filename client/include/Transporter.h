@@ -28,7 +28,7 @@ class Transporter
 {
 public:
 	// constructor
-	explicit Transporter(MessageHandler* handler) : handler_(handler) {}
+	explicit Transporter(MessageHandler* handler) : messageHandler_(handler) {}
 	// deconstructor
 	virtual ~Transporter() = default; // TODO: what does default do?
 	virtual bool connect() = 0;
@@ -42,7 +42,7 @@ public:
 	void beacon();
 protected:
 	// default subsystems
-	MessageHandler* handler_;
+	MessageHandler* messageHandler_;
 	BinarySerializer serializer_;
 	B64Encoder encoder_;
 	XorEncryptor encryptor_;
@@ -55,7 +55,7 @@ private:
 	*/
 	InternalMessage createHeartbeat();
 
-	void handleIncomingMessage(const InternalMessage& msg);
+	void handleIncomingMessage(InternalMessage& msg); // TODO: change msg to const at some point?
 
 	uint32_t generateId();
 
@@ -73,7 +73,7 @@ public:
 	bool send(const std::vector<uint8_t>& data);
 	bool connect();
 	std::vector<uint8_t> receive();
-	bool isConnected() { return connected_; }
+	bool isConnected() { return connected_; } // TODO: is this even needed?
 	
 private:
 	bool initializeWinsock();
@@ -85,7 +85,7 @@ private:
 	SOCKET socket_ = INVALID_SOCKET;
 	bool connected_ = false;
 
-	MessageHandler* messageHandler_;
+	//MessageHandler* messageHandler_;
 
 	// objects that this class owns
 

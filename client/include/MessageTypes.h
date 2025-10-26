@@ -47,10 +47,15 @@ typedef enum
 	DEFAULT, 			// default/null/none msg
 	HANDSHAKE,          // Initial connection
 	HEARTBEAT,          // Regular check-in
-	SYS_INFO,        // Victim system data
-	COMMAND_RESULT,     // Output from executed command
+	SYS_INFO,			// Victim system data (RECON)
+	COMMAND_RESULT,     // Output from executed command // TODO: is this needed? maybe just for outbound messages
 	DATA_EXFIL,         // Stolen data
-	FILE_UPLOAD,        // File transfer
+	UPLOAD_FILE,        // File transfer (client to server)
+	EXECUTE_COMMAND,	// CMD command?
+	EXECUTE_SHELL_CODE, // shell code
+	DOWNLOAD_FILE,		// file transfer (server to client)
+	CONFIG_UPDATE,
+
 	ERROR_REPORT        // Error information
 
 } MessageType;
