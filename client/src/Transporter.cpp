@@ -10,16 +10,20 @@
 
 inline bool Transporter::sendMessage(const InternalMessage& msg)
 {
-    auto serialized = serializer_.serialize(msg);
-    auto encoded = encoder_.encode(serialized);
-    auto encrypted = encryptor_.encrypt(encoded);
-    return send(encrypted);
+    //auto serialized = serializer_.serialize(msg);
+    //auto encoded = encoder_.encode(serialized);
+    //auto encrypted = encryptor_.encrypt(encoded);
+    //return send(encrypted);
+	return serializer_.serialize(msg);
 }
 
 InternalMessage Transporter::receiveMessage()
 {
     auto data = receive();
-    if (data.empty()) return InternalMessage();
+    if (data.empty()) 
+	{
+		return InternalMessage();
+	}
 
     //auto decrypted = encryptor_.decrypt(data);
     //auto decoded = encoder_.decode(decrypted);

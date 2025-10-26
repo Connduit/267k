@@ -69,8 +69,7 @@ class TCPTransporter : public Transporter
 {
 public:
 	//TCPTransporter(const std::string& server, uint16_t port) : server_(server), port_(port) {}
-	TCPTransporter(MessageHandler* hdlr, const std::string& server, uint16_t port);
-	//TCPTransporter(MessageHandler* hdlr, const std::string& server, std::string port);
+	TCPTransporter(MessageHandler* messageHandler, const std::string& server, uint16_t port);
 	bool send(const std::vector<uint8_t>& data);
 	bool connect();
 	std::vector<uint8_t> receive();

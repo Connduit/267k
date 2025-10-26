@@ -6,39 +6,8 @@
 #include <vector>
 #include <cstdint>
 
-//#include <stdint.h>
 
-/*
-STRUCT C2Message:
-message_id: String = GENERATE_UUID()
-victim_id: String
-timestamp: Long
-message_type: Enum = [
-	HANDSHAKE,           Initial connection
-	HEARTBEAT,          // Regular check-in
-	SYS_INFO,        // Victim system data
-	COMMAND_RESULT,     // Output from executed command
-	DATA_EXFIL,         // Stolen data
-	FILE_UPLOAD,        // File transfer
-	ERROR_REPORT        // Error information
 
-]
-payload: EncryptedData
-compression: Boolean
-priority: Integer
-END STRUCT
-*/
-
-/*
-typedef struct {
-	bool use_compression;
-	SerializationType serialization_type;
-	ProtocolType protocol;
-	CryptoKey crypto_key;
-	Endpoint server_endpoint;
-
-} Config;
-*/
 
 
 // TODO: messagetype and their structs should be in their own file called MessageType/s.h?
@@ -60,6 +29,18 @@ typedef enum
 
 } MessageType;
 
+/*
+// TODO: does this belong in the MessageHeader? or should these already be established before compile time?
+typedef struct {
+	bool use_compression;
+	SerializationType serialization_type;
+	ProtocolType protocol;
+	CryptoKey crypto_key;
+	Endpoint server_endpoint;
+
+} Config;
+*/
+
 #pragma pack(push, 1)
 typedef struct MessageHeader
 {
@@ -75,6 +56,12 @@ typedef struct MessageHeader
 	//ULONG messageId; ?
 	//ULONG payloadSize; // MessageDataSize
 	//ULONG checksum; ?
+
+	//message_id: String = GENERATE_UUID()
+	//victim_id: String
+	//timestamp: Long
+	//compression: Boolean
+	//priority: Integer
 
 } MessageHeader;
 #pragma pack(pop)
@@ -92,10 +79,13 @@ typedef struct InternalMessage
 
 	MessageHeader header; // the header... always use custom header? no need for tlv... MessageType enum should be defined in header
 	//MessageData payload; // the actual payload
-	std::vector<uint8_t> data; // TODO: shouldn't be fixed size?
+	std::vector<uint8_t> data; 
 } InternalMessage;
 #pragma pack(pop)
 
+
+
+// TODO: are sub-message types needed?
 /*
 //Message types
 typedef enum {
