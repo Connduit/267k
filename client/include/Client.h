@@ -28,21 +28,11 @@ public:
 private:
 
     //Transporter transporter_;
-    TCPTransporter transporter_; // NOTE: hardcode transport type?
+    TCPTransporter transporter_; // NOTE: hardcode transport type?, TODO: eventually turn this into a "ConnectionManager" that can own multiple transporters
     MessageHandler messageHandler_;
+	// ApiResolver apiResolver_;
 
-    //Compressor& compressor_;
-    //Encryptor& encryptor_;
-    //Encoder& encoder_;
-    //Serializer& serializer_;
-	//MessageConsumer messageConsumer_;
-	//MessagePublisher messagePublisher_;
 
-    //MessageConsumer messageConsumer_;
-    //MessagePublisher messagePublisher_;
-	//C2ProfileUniquePtr configPtr_;
-	//
-    //MessageHandler messageHandler_; 
     //C2Profile& config_; // TODO: eventually have 
 
 };
