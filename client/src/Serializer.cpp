@@ -1,7 +1,7 @@
 /* Serializer.cpp */
 
 #include "Serializer.h"
-
+#include <iostream>
 
 std::vector<uint8_t> BinarySerializer::serialize(const InternalMessage& msg)
 {
@@ -42,6 +42,7 @@ InternalMessage BinarySerializer::deserialize(const std::vector<uint8_t>& data)
 	if (msg.header.dataSize != msg.data.size())
 	{
 		//throw std::runtime_error("Data size mismatch");
+		std::cout << "data size doesn't match header" << std::endl;
 	}
 
 	return msg;

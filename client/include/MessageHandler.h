@@ -7,6 +7,7 @@
 #include "C2Profile.h"
 #include "MessageTypes.h"
 
+#include <string>
 #include <vector>
 #include <cstdint>
 
@@ -36,8 +37,8 @@ public:
 
 	//bool handleTCP(uint8_t* rawData, size_t rawDataLength, InternalMessage* resultMsg);
 private:
-	//std::vector<uint8_t> string2byte(std::string& inMsg);
-	//std::string byte2string(std::vector<uint8_t>& inMsg);
+	std::vector<uint8_t> string2byte(std::string& inMsg);
+	std::string byte2string(std::vector<uint8_t>& inMsg);
 
 	//C2Profile& config_;
 	// Connections connection_ // MessageHandler should own/control socket/connections?

