@@ -9,6 +9,17 @@
 #include <cassert>
 #include <iostream>
 
+
+void ClientTest::ClientTest()
+{
+	client_ = new Client();
+}
+
+void ClientTest::~ClientTest()
+{
+	delete client_;
+}
+
 bool ClientTest::testAll()
 {
 	XorEncryptor encryptor("testKey");
