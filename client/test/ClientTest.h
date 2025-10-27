@@ -25,7 +25,7 @@ public:
 
 	void setup();
 private:
-	// Client class object
+	Client* client_;
 };
 
 #endif
