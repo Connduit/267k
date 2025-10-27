@@ -10,10 +10,9 @@
 //#include "stager.h"
 
 
-#include "MessageConsumer.h"
 #include "Client.h"
 
-#include "../common/logging.h"
+
 
 
 
@@ -70,6 +69,18 @@ Client::Client(
 
 
 
+
+Client::Client() : 
+	transporter_(messageHandler_, "10.0.0.48", "4444") // Default server address
+{
+	messageHandler_.setTransporter(transporter_);
+}
+
+Client::Client(TCPTransporter transporter, std::string server, std::string port) :
+	transporter_(messageHandler_, server, port)
+{
+	messageHandler_.setTransporter(transporter_);
+}
 
 bool Client::run()
 {	

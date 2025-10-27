@@ -1,4 +1,12 @@
-/* MessageHandler.h */
+/* 
+ * MessageHandler.h 
+ *
+ * Purpose: Responsible for handling internal messages (InternalMessage)
+ *
+ *
+ *
+ */
+
 /*  (OWNS execution components) */
 
 #ifndef MESSAGE_HANDLER_H
@@ -6,24 +14,24 @@
 
 #include "C2Profile.h"
 #include "MessageTypes.h"
+#include "Transporter.h"
 
 #include <string>
 #include <vector>
 #include <cstdint>
 
 
-
+class Transporter;
 
 class MessageHandler
 {
 public:
 	//MessageHandler(C2Profile& config) {}; // TODO:
-	//MessageHandler();
+	MessageHandler() : transporter_(nullptr) {}
     
     bool sendMessage(); // overload this function?
     bool recvMessage(); // overload this function?
 
-	bool processMessage(InternalMessage* msg);
 	//bool receiveMessages(uint8_t* buffer, size_t bytes_received);
 
 	bool executeCommand(std::vector<uint8_t>& data);
@@ -33,6 +41,15 @@ public:
 	bool uploadFile(std::vector<uint8_t>& data);
 	bool updateConfig(std::vector<uint8_t>& data);
 	bool handleServerError(std::vector<uint8_t>& data);
+
+	// Processes an InternalMessage and use the messageHandler_ based on the InternalMessage's messageType
+	void processMessage(InternalMessage& msg);
+
+
+	// Iterate through all messages in the queue and send to the server
+	void sendQueuedMessages();
+
+	void setTransporter(Transporter& transporter);
 
 
 	//bool handleTCP(uint8_t* rawData, size_t rawDataLength, InternalMessage* resultMsg);
@@ -45,6 +62,10 @@ private:
 
 	//std::queue<InternalMessage> outgoing_queue;
 	//std::mutex queue_mutex; // TODO: add thread logic too?
+
+	// TODO: MessageHandler should have references to all transporters? 
+	// std::vector<Transporter*> transporters_;
+	Transporter* transporter_; // NOTE: pointer is being used instead of a reference because references require immediate initialization
 
 
 };

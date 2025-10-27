@@ -5,6 +5,8 @@
 #include "MessageTypes.h"
 #include "MessagePublisher.h"
 #include "Recon.h"
+#include "Transporter.h"
+
 #include <iostream>
 
 #include <cstdlib> // NOTE: needed to execute shell cmd
@@ -12,12 +14,18 @@
 
 
 
+
 bool MessageHandler::executeCommand(std::vector<uint8_t>& data)
 {
 	std::cout << "executeCommand: " << byte2string(data).c_str() << std::endl;
-	return std::system(byte2string(data).c_str()); // returns non-zero on error
 
-	/* TODO: 
+
+
+	// TODO: instead add result into the queue, and have transporter send them all when ready?
+	// TODO: if the original (identified by the messageId) incoming internalMessage was marked as high priority, 
+	//		 then skip the queue and send the message immediately 
+
+	
 
 	std::string command = byte2string(data).c_str();
 	std::string result;
@@ -39,7 +47,20 @@ bool MessageHandler::executeCommand(std::vector<uint8_t>& data)
 	}
 
 	//queueResponse(COMMAND_RESULT, result, msg_id); // TODO: need to pass all of InternalMessage if i want ID
-	*/
+	std::cout << result << std::endl;
+
+	// TODO: props should make a separate function for InternalMessage generation
+	InternalMessage outMsg;
+	outMsg.data = string2byte(result);
+	MessageHeader header;
+	header.messageType = MessageType::COMMAND_RESULT;
+	header.messageId = 105; // TODO: 
+	header.dataSize = outMsg.data.size();
+
+	outMsg.header = header;
+
+	return transporter_->sendMessage(outMsg);
+
 }
 
 bool MessageHandler::downloadFile(std::vector<uint8_t>& data)
@@ -66,6 +87,45 @@ bool MessageHandler::handleServerError(std::vector<uint8_t>& data)
 	return false;
 }
 
+void MessageHandler::processMessage(InternalMessage& msg)
+{
+	switch (msg.header.messageType)
+	{
+	case MessageType::EXECUTE_COMMAND:
+		executeCommand(msg.data);
+		break;
+
+	case UPLOAD_FILE:
+		uploadFile(msg.data);
+		break;
+
+	case DOWNLOAD_FILE:
+		downloadFile(msg.data);
+		break;
+
+	case CONFIG_UPDATE:
+		updateConfig(msg.data);
+		break;
+
+	case ERROR_REPORT:
+		// Server sent an error, handle it
+		handleServerError(msg.data);
+		break;
+	default:
+		std::cout << "default case, MessageType = " << msg.header.messageType << std::endl;
+	}
+}
+
+
+void MessageHandler::sendQueuedMessages()
+{
+	std::cout << "sendQueuedMessages... not implemented" << std::endl;
+}
+
+void MessageHandler::setTransporter(Transporter& transporter)
+{
+	transporter_ = &transporter;
+}
 
 std::vector<uint8_t> MessageHandler::string2byte(std::string& inMsg)
 {

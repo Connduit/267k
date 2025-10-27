@@ -1,4 +1,12 @@
-﻿
+﻿/*
+ * Transporter.h
+ *
+ * Purpose: Responsible for handling external messages
+ *
+ *
+ *
+ */
+
 /*
 ├── Transporter (OWNS connection + processing)
 │   ├── ConnectionManager (OWNS socket/network)
@@ -20,16 +28,18 @@
 
 
 #include <string>
-//#include <WinSock2.h>
 #include <winsock2.h>
 
 //#include <ws2tcpip.h>
+
+class MessageHandler;
 
 class Transporter
 {
 public:
 	// constructor
-	explicit Transporter(MessageHandler* handler) : messageHandler_(handler) {}
+	//explicit Transporter(MessageHandler* handler) : messageHandler_(handler) {}
+	explicit Transporter(MessageHandler& handler) : messageHandler_(handler) {}
 	// deconstructor
 	virtual ~Transporter() = default; // TODO: what does default do?
 	virtual bool connect() = 0;
@@ -38,12 +48,17 @@ public:
 	virtual bool isConnected() = 0;
 	//virtual void disconnect() = 0;
 
+	// Process InternalMessage and convert it into raw bytes beforing sending it to the server
 	bool sendMessage(const InternalMessage& msg);
+
+	// Process raw bytes from server and convert them into an InternalMessage
 	InternalMessage receiveMessage();
+
 	void beacon();
 protected:
 	// default subsystems
-	MessageHandler* messageHandler_;
+	//MessageHandler* messageHandler_;
+	MessageHandler& messageHandler_;
 	BinarySerializer serializer_;
 	B64Encoder encoder_;
 	XorEncryptor encryptor_;
@@ -56,11 +71,9 @@ private:
 	*/
 	InternalMessage createHeartbeat();
 
-	void handleIncomingMessage(InternalMessage& msg); // TODO: change msg to const at some point?
-
+	// TODO: delete?
 	uint32_t generateId();
 
-	//std::string parseFilename(const std::vector<uint8_t>& data); return std::string(data.begin(), data.end());
 };
 
 
@@ -69,25 +82,35 @@ class TCPTransporter : public Transporter
 {
 public:
 	//TCPTransporter(const std::string& server, uint16_t port) : server_(server), port_(port) {}
-	TCPTransporter(MessageHandler* messageHandler, const std::string& server, uint16_t port);
+	//TCPTransporter(MessageHandler* messageHandler, const std::string& server, uint16_t port);
+	TCPTransporter(MessageHandler& messageHandler, const std::string& server, std::string port);
+
+	// Attemps to send a std::vector<uint8_t> as a raw buffer to server
 	bool send(const std::vector<uint8_t>& data);
+
+	// Creates socket and attempts to connect to it
+	// Returns true on success
 	bool connect();
+
+	// Receives raw buffer from server
+	// Returns raw buffer as a std::vector<uint8_t>
 	std::vector<uint8_t> receive();
-	bool isConnected() { return connected_; } // TODO: is this even needed?
+
+	// Getter to see if we've connected to the server
+	bool isConnected() { return connected_; }
 	
 private:
+	// Initializes WSADATA by being called through the constructor 
 	bool initializeWinsock();
 
 
 	std::string server_;
-	uint16_t port_;
+	std::string port_;
+	//uint16_t port_;
 	//std::string port_;
 	SOCKET socket_ = INVALID_SOCKET;
 	bool connected_ = false;
 
-	//MessageHandler* messageHandler_;
-
-	// objects that this class owns
 
 };
 

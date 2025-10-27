@@ -2,25 +2,19 @@
 #define CLIENT_H
 
 
-#include "Compressor.h"
 #include "C2Profile.h"
-#include "Encoder.h"
-#include "Encryptor.h"
-#include "Serializer.h"
-//#include "MessagePublisher.h"
-//#include "MessageConsumer.h"
 #include "MessageHandler.h"
 #include "Transporter.h"
-
+#include "../common/logging.h"
 
 #include <memory>
 
 
 class Client
-{//10.0.0.48, 172.18.245.234
+{
 public:
-    Client() : transporter_(&messageHandler_, "10.0.0.48", 4444) {}
-    Client(TCPTransporter transporter, std::string server, uint8_t port) : transporter_(&messageHandler_, server, port) {}
+    Client();
+    Client(TCPTransporter transporter, std::string server, std::string port); 
 
     //Client(Encryptor& encryptor, Encoder& encoder, Serializer& serializer, C2Profile& config);
 	//bool run(const char* host, const char* port);// TODO: change to private... when done debugging
@@ -34,6 +28,10 @@ private:
 
 
     //C2Profile& config_; // TODO: eventually have 
+
+    // TODO: Eventually have multiple transporters if i need to connect to multiple servers.
+    //       This allows us to act as both cnc and p2p?
+    // std::vector<std::unique_ptr<Transporter>> transporters_;
 
 };
 

