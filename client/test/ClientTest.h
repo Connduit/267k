@@ -23,6 +23,7 @@ public:
 	std::string byte2string(const std::vector<uint8_t> inMsg);
 	void printVector(const std::vector<uint8_t>& vec);
 
+	void setup();
 private:
 	// Client class object
 };
