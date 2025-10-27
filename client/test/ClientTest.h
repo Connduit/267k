@@ -14,6 +14,8 @@
 class ClientTest
 {
 public:
+	~ClientTest();
+
 	bool testSerializer(InternalMessage& inMsg, std::vector<uint8_t>& outMsg, BinarySerializer& serializer);
 	bool testEncoder(std::vector<uint8_t>& inMsg, std::vector<uint8_t>& outMsg, B64Encoder& encoder);
 	bool testEncrypter(std::vector<uint8_t>& inMsg, std::vector<uint8_t>& outMsg, XorEncryptor& encryptor);
