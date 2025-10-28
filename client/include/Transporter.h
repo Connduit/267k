@@ -1,4 +1,5 @@
-﻿/*
+﻿// TODO: rename to ExternalMessage something?
+/*
  * Transporter.h
  *
  * Purpose: Responsible for handling external messages
