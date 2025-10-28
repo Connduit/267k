@@ -1,6 +1,9 @@
 
 /* ComponentFactory.h */
 
+// TODO: factory should take in a config file? either from C2Profile
+// or maybe even directly from a provided json file? 
+
 
 #ifndef COMPONENT_FACTORY_H
 #define COMPONENT_FACTORY_H
