@@ -17,8 +17,7 @@ typedef enum
 typedef enum
 {
     BASE64,
-    JSON, // JSON??
-    NONE
+    JSON
 
 } SerializationType;
 

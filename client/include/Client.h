@@ -14,10 +14,9 @@ class Client
 {
 public:
     Client();
+    //Client(std::string server, std::string port); 
     Client(TCPTransporter transporter, std::string server, std::string port); 
 
-    //Client(Encryptor& encryptor, Encoder& encoder, Serializer& serializer, C2Profile& config);
-	//bool run(const char* host, const char* port);// TODO: change to private... when done debugging
     bool run();
 private:
 

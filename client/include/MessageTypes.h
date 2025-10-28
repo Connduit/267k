@@ -13,6 +13,7 @@
 // TODO: messagetype and their structs should be in their own file called MessageType/s.h?
 typedef enum
 {
+	NONE, 			// default/null/none msg
 	DEFAULT, 			// default/null/none msg
 	HANDSHAKE,          // Initial connection
 	HEARTBEAT,          // Regular check-in
@@ -45,7 +46,7 @@ typedef struct {
 typedef struct MessageHeader
 {
 	MessageHeader() :
-		messageType(MessageType::DEFAULT),
+		messageType(MessageType::NONE),
 		dataSize(0),
 		messageId(0)
 	{}

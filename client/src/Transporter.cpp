@@ -65,6 +65,20 @@ TCPTransporter::TCPTransporter(MessageHandler& messageHandler, const std::string
     initializeWinsock();
 }
 
+TCPTransporter::~TCPTransporter()
+{
+	/*
+    if (connected_ == false) // TODO: maybe check if (socket_ != INVALID_SOCKET)
+    {
+        // TODO: if 5 attempted connects in a row fail, exit, otherwise keep trying
+        closesocket(socket_);
+        socket_ = INVALID_SOCKET;
+    }
+	*/
+    WSACleanup();
+}
+
+
 bool TCPTransporter::initializeWinsock()
 {
     // TODO: check if winsock is already initialized somehow?

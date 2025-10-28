@@ -7,6 +7,7 @@
 #include "Encryptor.h"
 #include "Serializer.h"
 
+#include "Client.h"
 #include "MessageTypes.h"
 
 #include <string>

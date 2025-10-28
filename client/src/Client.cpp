@@ -76,7 +76,7 @@ Client::Client() :
 	messageHandler_.setTransporter(transporter_);
 }
 
-Client::Client(TCPTransporter transporter, std::string server, std::string port) :
+Client::Client(TCPTransporter transporter, std::string server, std::string port) : // TODO: transporter parameter isn't used 
 	transporter_(messageHandler_, server, port)
 {
 	messageHandler_.setTransporter(transporter_);

@@ -10,12 +10,12 @@
 #include <iostream>
 
 
-void ClientTest::ClientTest()
+ClientTest::ClientTest()
 {
 	client_ = new Client();
 }
 
-void ClientTest::~ClientTest()
+ClientTest::~ClientTest()
 {
 	delete client_;
 }

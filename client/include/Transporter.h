@@ -84,6 +84,7 @@ public:
 	//TCPTransporter(const std::string& server, uint16_t port) : server_(server), port_(port) {}
 	//TCPTransporter(MessageHandler* messageHandler, const std::string& server, uint16_t port);
 	TCPTransporter(MessageHandler& messageHandler, const std::string& server, std::string port);
+	~TCPTransporter();
 
 	// Attemps to send a std::vector<uint8_t> as a raw buffer to server
 	bool send(const std::vector<uint8_t>& data);
