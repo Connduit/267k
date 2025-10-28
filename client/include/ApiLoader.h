@@ -24,10 +24,18 @@ private:
 		return reinterpret_cast<FuncType>(address);  // Ready to call!
 	}
 
-	HMODULE GetModuleHandleManualHash(DWORD moduleHash);
-	FARPROC GetProcAddressManualM(PVOID pModule, LPCSTR lpProcName);
-	FARPROC GetProcAddressManual(LPCSTR lpModuleName, LPCSTR lpProcName);
-	FARPROC GetProcAddressManualHash(HMODULE hModule, DWORD procHash);
+	// HMODULE GetModuleHandleManualHashO(DWORD moduleHash); // using offsets
+	// GetModuleHandle by literal name
+	HMODULE GetModuleHandleManual(LPCWSTR lpModuleName);
+	// GetModuleHandle by hash
+	HMODULE GetModuleHandleManual(DWORD moduleHash);
+	
+	// FARPROC GetProcAddressManual(LPCSTR lpModuleName, LPCSTR lpProcName); remove version? it does GetModuleHandle inside of it
+	// GetProcAddress by literal name
+	FARPROC GetProcAddressManual(PVOID pModule, LPCSTR lpProcName);
+	// GetProcAddress by hash
+	FARPROC GetProcAddressManual(HMODULE hModule, DWORD procHash);
+
 
 
 
