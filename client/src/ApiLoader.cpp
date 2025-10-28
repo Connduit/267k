@@ -1,6 +1,7 @@
 
 #include "ApiLoader.h"
 
+/*
 
 HMODULE ApiLoader::GetModuleHandleManual(LPCWSTR lpModuleName)
 {
@@ -20,4 +21,4 @@ FARPROC ApiLoader::GetProcAddressManual(PVOID pModule, LPCSTR lpProcName)
 FARPROC ApiLoader::GetProcAddressManual(HMODULE hModule, DWORD procHash)
 {
     
-}
+}*/

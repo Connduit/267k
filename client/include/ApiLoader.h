@@ -15,6 +15,7 @@ private:
 	// define and set their associated FARPROC to nullptr? 
 	//std::unordered_map<uint32_t, FARPROC> (OWNS API address cache)... maps api to resolved version?
 
+	/*
 	//
 	// 1. RESOLVE phase (finding)
 	FARPROC resolveAddress(const string& function_name);
@@ -44,6 +45,7 @@ private:
 	CHAR HideChar(CHAR c) { return c; }
 	WCHAR HideChar(WCHAR c) { return c; }
 
+	*/
 
 
 
