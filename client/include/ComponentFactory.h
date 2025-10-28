@@ -8,6 +8,14 @@
 #ifndef COMPONENT_FACTORY_H
 #define COMPONENT_FACTORY_H
 
+
+//#include "Compressor.h"
+#include "Encoder.h"
+#include "Encryptor.h"
+#include "Serializer.h"
+
+
+
 #include <memory>
 
 class ComponentFactory
@@ -52,8 +60,31 @@ public:
 					);
 	}
 };
+*/
 
 
+class EncryptorFactory
+{
+public:
+private:
+};
+class EncoderFactory
+{
+public:
+private:
+};
+class SerializerFactory
+{
+public:
+private:
+};
+/*
+class CompressorFactory
+{   
+};
+class TransportFactory
+{   
+};
 */
 
 
