@@ -7,7 +7,7 @@
 #include <cstdint>
 
 
-
+typedef std::vector<uint8_t> RawByteBuffer; // TODO: change to ByteBuffer? 
 
 
 // TODO: messagetype and their structs should be in their own file called MessageType/s.h?
