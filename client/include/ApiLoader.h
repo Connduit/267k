@@ -36,6 +36,10 @@ private:
 	// GetProcAddress by hash
 	FARPROC GetProcAddressManual(HMODULE hModule, DWORD procHash);
 
+	// TODO: move these outside of class?
+	CHAR HideChar(CHAR c) { return c; }
+	WCHAR HideChar(WCHAR c) { return c; }
+
 
 
 
