@@ -10,7 +10,11 @@ public:
 private:
 	//PebWalker (OWNS PEB traversal logic)
 	//HashManager (OWNS API hashing algorithms)... hashes should be predefined?
+
+	// TODO: uint32_t should be the hash? initialize the unorder map with all hashes i want to 
+	// define and set their associated FARPROC to nullptr? 
 	//std::unordered_map<uint32_t, FARPROC> (OWNS API address cache)... maps api to resolved version?
+
 	//
 	// 1. RESOLVE phase (finding)
 	FARPROC resolveAddress(const string& function_name);
