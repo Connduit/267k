@@ -35,6 +35,7 @@
 
 class MessageHandler;
 
+// TODO: rename to TransportLayer
 class Transporter
 {
 public:
