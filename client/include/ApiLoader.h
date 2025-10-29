@@ -119,7 +119,7 @@ private:
 
 	//
 	// 1. RESOLVE phase (finding)
-	FARPROC resolveAddress(const std::string& function_name);
+		//FARPROC resolveAddress(const std::string& function_name);
 	// Walk PEB, find module, parse exports, get address
 
 	// 2. LOAD phase (preparing)  
@@ -133,15 +133,15 @@ private:
 
 	// HMODULE GetModuleHandleManualHashO(DWORD moduleHash); // using offsets
 	// GetModuleHandle by literal name
-	HMODULE GetModuleHandleManual(LPCWSTR lpModuleName);
+		//HMODULE GetModuleHandleManual(LPCWSTR lpModuleName);
 	// GetModuleHandle by hash
-	HMODULE GetModuleHandleManual(DWORD moduleHash);
+		//HMODULE GetModuleHandleManual(DWORD moduleHash);
 	
 	// FARPROC GetProcAddressManual(LPCSTR lpModuleName, LPCSTR lpProcName); remove version? it does GetModuleHandle inside of it
 	// GetProcAddress by literal name
-	FARPROC GetProcAddressManual(PVOID pModule, LPCSTR lpProcName);
+		//FARPROC GetProcAddressManual(PVOID pModule, LPCSTR lpProcName);
 	// GetProcAddress by hash
-	FARPROC GetProcAddressManual(HMODULE hModule, DWORD procHash);
+		//FARPROC GetProcAddressManual(HMODULE hModule, DWORD procHash);
 
 	// TODO: move these outside of class?
 	CHAR HideChar(CHAR c) { return c; }

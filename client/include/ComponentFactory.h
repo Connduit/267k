@@ -13,7 +13,8 @@
 #include "Encoder.h"
 #include "Encryptor.h"
 #include "Serializer.h"
-
+#include "TransportLayer.h"
+#include "TransportLayerTypes.h"
 
 
 #include <memory>
@@ -23,6 +24,15 @@ class ComponentFactory
 public:
 private:
 };
+
+/*
+class TransportLayerFactory
+{
+public:
+	static TransportLayerUniquePtr create(MessageHandler& messageHandler, const std::string& host, const std::string& port, TransportLayerType type);
+private:
+};
+*/
 
 
 
@@ -61,7 +71,6 @@ public:
 	}
 };
 */
-
 
 class EncryptorFactory
 {
