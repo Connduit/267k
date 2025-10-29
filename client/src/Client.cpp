@@ -16,60 +16,6 @@
 
 
 
-
-/*
-//Client::Client(C2Profile config) : 
-Client::Client(C2ProfileUniquePtr config) : 
-	encryptorPtr_(std::make_unique<Encryptor>()), // TODO: have to choose child encryptor
-	encoderPtr_(std::make_unique<Encoder>()), // TODO: have to choose child Encoder
-	serializerPtr_(std::make_unique<Serializer>()), // TODO: have to choose child Serializer
-	messageConsumerPtr_(nullptr), // TODO: should have to be a usingPtr
-	messagePublisherPtr_(nullptr)//, // TODO: should have to be a usingPtr
-	//messageHandlerPtr_(nullptr) // TODO: should have to be a usingPtr
-
-	//messageHandler_(nullptr)
-	//configPtr_(std::make_unique<C2Profile>()),
-	//config_(config),
-{
-	//TODO:
-	//encryptorPtr_->setKey(config.getCryptoKey());
-	//encryptorPtr_->setAlgorithm(config.getEncryptionAlgorithm());
-	//encoderPtr_->setKey(config.getCryptoKey());
-	//encoderPtr_->setAlgorithm(config.getEncryptionAlgorithm());
-	//serializerPtr_->setKey(config.getCryptoKey());
-	//serializerPtr_->setAlgorithm(config.getEncryptionAlgorithm());
-
-	//messageConsumer_ = MessageConsumer(*encryptorPtr_, *encoderPtr_, *serializerPtr_);
-	//messagePublisher_ = MessagePublisher(*encryptorPtr_, *encoderPtr_, *serializerPtr_);
-	//messageHandler_ = MessageHandler(config); // config?
-
-	messageConsumerPtr_ = std::make_unique<MessageConsumer>(*encryptorPtr_, *encoderPtr_, *serializerPtr_);
-	messagePublisherPtr_ = std::make_unique<MessagePublisher>(*encryptorPtr_, *encoderPtr_, *serializerPtr_);
-	//messageHandlerPtr_ = std::make_unique<MessageHandler>(*config);
-
-}
-*/
-/*
-Client::Client(
-		//Compressor& compressor, 
-		Encryptor& encryptor, 
-		Encoder& encoder, 
-		Serializer& serializer, 
-		C2Profile& config)
-		:
-		//compressor_(compressor),
-		encryptor_(encryptor),
-		encoder_(encoder),
-		serializer_(serializer),
-		config_(config)
-{
-
-}
-*/
-
-
-
-
 Client::Client() : 
 	transporter_(messageHandler_, "10.0.0.48", "4444") // Default server address
 {

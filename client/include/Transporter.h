@@ -106,6 +106,7 @@ private:
 	bool initializeWinsock();
 
 
+	// TODO: move this to abstract class?
 	std::string server_;
 	std::string port_;
 	//uint16_t port_;
