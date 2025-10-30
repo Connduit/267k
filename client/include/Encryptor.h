@@ -51,7 +51,6 @@ public:
 private:
 };
 
-typedef std::unique_ptr<Encryptor> EncryptorUniquePtr;
 
 /*
 class AesEncryptor : public Encryptor
@@ -101,4 +100,5 @@ private:
 	const std::vector<uint8_t> key_; // change to reference?
 };
 
+typedef std::unique_ptr<Encryptor> EncryptorUniquePtr;
 #endif

@@ -14,7 +14,7 @@ bool TransportLayer::sendMessage(const InternalMessage& msg)
     //auto encoded = encoder_.encode(serialized);
     //auto encrypted = encryptor_.encrypt(encoded);
     //return send(encrypted);
-    return send(serializer_.serialize(msg));
+    return send(serializer_->serialize(msg));
 }
 
 InternalMessage TransportLayer::receiveMessage()
@@ -28,7 +28,7 @@ InternalMessage TransportLayer::receiveMessage()
     //auto decrypted = encryptor_.decrypt(data);
     //auto decoded = encoder_.decode(decrypted);
     //return serializer_.deserialize(decoded);
-    return serializer_.deserialize(data);
+    return serializer_->deserialize(data);
 }
 
 void TransportLayer::beacon()
@@ -39,7 +39,7 @@ void TransportLayer::beacon()
     auto incoming = receiveMessage();
     if (incoming.header.messageType != DEFAULT)
     {
-        messageHandler_.processMessage(incoming);
+        messageHandler_.processMessage(incoming); // change to not use ptr?
     }
 }
 

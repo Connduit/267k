@@ -59,11 +59,11 @@ public:
 	void beacon();
 protected:
 	// default subsystems
-	//MessageHandler* messageHandler_;
 	MessageHandler& messageHandler_;
-	BinarySerializer serializer_;
-	B64Encoder encoder_;
-	XorEncryptor encryptor_;
+	//MessageHandler& messageHandler_;
+	SerializerUniquePtr serializer_;
+	EncoderUniquePtr encoder_;
+	EncryptorUniquePtr encryptor_;
 private:
 	/*
 	std::string server;

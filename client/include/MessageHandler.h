@@ -22,13 +22,13 @@
 // #include <memory> // included by C2Profile
 
 
-class Transporter;
+class TransportLayer;
 
 class MessageHandler
 {
 public:
 	//MessageHandler(C2Profile& config) {}; // TODO:
-	MessageHandler() : transporter_(nullptr) {}
+	MessageHandler() : transportLayer_(nullptr) {}
     
     bool sendMessage(); // overload this function?
     bool recvMessage(); // overload this function?
@@ -68,7 +68,7 @@ private:
 
 	// TODO: MessageHandler should have references to all transporters? 
 	// std::vector<Transporter*> transporters_;
-	Transporter* transporter_; // NOTE: pointer is being used instead of a reference because references require immediate initialization
+	TransportLayer* transportLayer_; // NOTE: pointer is being used instead of a reference because references require immediate initialization
 
 
 };

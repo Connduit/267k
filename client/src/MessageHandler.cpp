@@ -59,7 +59,7 @@ bool MessageHandler::executeCommand(std::vector<uint8_t>& data)
 
 	outMsg.header = header;
 
-	return transporter_->sendMessage(outMsg);
+	return transportLayer_->sendMessage(outMsg);
 
 }
 
@@ -172,10 +172,11 @@ void MessageHandler::sendQueuedMessages()
 	std::cout << "sendQueuedMessages... not implemented" << std::endl;
 }
 
+/*
 void MessageHandler::setTransporter(Transporter& transporter)
 {
 	transporter_ = &transporter;
-}
+}*/
 
 std::vector<uint8_t> MessageHandler::string2byte(std::string& inMsg)
 {
