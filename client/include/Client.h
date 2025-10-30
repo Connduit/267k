@@ -2,6 +2,7 @@
 #define CLIENT_H
 
 
+#include "TransportLayerTypes.h"
 #include "C2Profile.h"
 #include "MessageHandler.h"
 #include "TransportLayer.h"
@@ -15,13 +16,15 @@ class Client
 public:
     Client();
     //Client(std::string server, std::string port); 
-    Client(TCPTransporter transporter, std::string server, std::string port); 
+    //Client(TCPTransportLayer transportLayer, std::string server, std::string port); 
+    Client(TransportLayerType transportType, const std::string& server, const std::string& port); 
+    Client(TransportLayerUniquePtr transportLayer);
 
     bool run();
 private:
 
-    //Transporter transporter_;
-    TCPTransporter transporter_; // NOTE: hardcode transport type?, TODO: eventually turn this into a "ConnectionManager" that can own multiple transporters
+    TransportLayerUniquePtr transportLayer_; 
+    //TCPTransportLayer transportLayer_; // NOTE: hardcode transport type?, TODO: eventually turn this into a "ConnectionManager" that can own multiple transporters
     MessageHandler messageHandler_;
 	// ApiResolver apiResolver_;
 

@@ -1,6 +1,6 @@
 ﻿// TODO: rename to ExternalMessage something?
 /*
- * Transporter.h
+ * TransportLayer.h
  *
  * Purpose: Responsible for handling external messages
  *
@@ -9,15 +9,15 @@
  */
 
 /*
-├── Transporter (OWNS connection + processing)
+├── TransportLayer (OWNS connection + processing)
 │   ├── ConnectionManager (OWNS socket/network)
 │   ├── BinarySerializer
 │   ├── Base64Encoder
 │   └── XOREncryptor
 */
 
-#ifndef TRANSPORTER_H
-#define TRANSPORTER_H
+#ifndef TRANSPORT_LAYER_H
+#define TRANSPORT_LAYER_H
 
 #include "MessageHandler.h"
 #include "Serializer.h"
@@ -36,14 +36,14 @@
 class MessageHandler;
 
 // TODO: rename to TransportLayer
-class Transporter
+class TransportLayer
 {
 public:
 	// constructor
-	//explicit Transporter(MessageHandler* handler) : messageHandler_(handler) {}
-	explicit Transporter(MessageHandler& handler) : messageHandler_(handler) {}
+	//explicit TransportLayer(MessageHandler* handler) : messageHandler_(handler) {}
+	explicit TransportLayer(MessageHandler& handler) : messageHandler_(handler) {}
 	// deconstructor
-	virtual ~Transporter() = default; // TODO: what does default do?
+	virtual ~TransportLayer() = default; // TODO: what does default do?
 	virtual bool connect() = 0;
 	virtual bool send(const std::vector<uint8_t>& data) = 0;
 	virtual std::vector<uint8_t> receive() = 0;
@@ -80,13 +80,13 @@ private:
 
 
 
-class TCPTransporter : public Transporter
+class TCPTransportLayer : public TransportLayer
 {
 public:
 	//TCPTransporter(const std::string& server, uint16_t port) : server_(server), port_(port) {}
 	//TCPTransporter(MessageHandler* messageHandler, const std::string& server, uint16_t port);
-	TCPTransporter(MessageHandler& messageHandler, const std::string& server, std::string port);
-	~TCPTransporter();
+	TCPTransportLayer(MessageHandler& messageHandler, const std::string& server, std::string port);
+	~TCPTransportLayer();
 
 	// Attemps to send a std::vector<uint8_t> as a raw buffer to server
 	bool send(const std::vector<uint8_t>& data);
@@ -119,7 +119,7 @@ private:
 };
 
 // Handles HTTPS headers, TLS, cookies, etc.
-class HTTPSTransport : public Transporter
+class HTTPSTransportLayer : public TransportLayer
 {
 
 public:
@@ -127,13 +127,13 @@ private:
 };
 
 // Handles DNS queries/responses, tunneling
-class DNSTransport : public Transporter
+class DNSTransportLayer : public TransportLayer
 {
 
 public:
 private:
 };
 
-typedef std::unique_ptr<Transporter> TransporterUniquePtr;
+typedef std::unique_ptr<TransportLayer> TransportLayerUniquePtr;
 
 #endif

@@ -2,7 +2,6 @@
 
 
 
-/*
 static TransportLayerUniquePtr TransportLayerFactory::create(
 		MessageHandler& messageHandler, 
 		const std::string& host, 
@@ -11,10 +10,11 @@ static TransportLayerUniquePtr TransportLayerFactory::create(
 {
 	switch (type)
 	{
-		case NONE:
-			break;
+		//case NONE:
+			//break;
 		case TCP:
 			return std::make_unique<TCPTransportLayer>(messageHandler, host, port);
+			/*
 		case UDP:
 			return std::make_unique<UDPTransportLayer>(messageHandler, host, port);
 		case HTTP:
@@ -23,5 +23,8 @@ static TransportLayerUniquePtr TransportLayerFactory::create(
 			return std::make_unique<HTTPSTransportLayer>(messageHandler, host, port);
 		case DNS:
 			return std::make_unique<DNSTransportLayer>(messageHandler, host, port);
+			*/
+		default:
+			// throw error
+			break;
 }
-*/

@@ -25,14 +25,16 @@ public:
 private:
 };
 
-/*
 class TransportLayerFactory
 {
 public:
-	static TransportLayerUniquePtr create(MessageHandler& messageHandler, const std::string& host, const std::string& port, TransportLayerType type);
+	static TransportLayerUniquePtr create(
+			MessageHandler& messageHandler, 
+			const std::string& host, 
+			const std::string& port, 
+			TransportLayerType type);
 private:
 };
-*/
 
 
 

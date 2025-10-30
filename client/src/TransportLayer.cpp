@@ -8,7 +8,7 @@
 #include <iostream>
 #pragma comment(lib, "ws2_32.lib")
 
-bool Transporter::sendMessage(const InternalMessage& msg)
+bool TransportLayer::sendMessage(const InternalMessage& msg)
 {
     //auto serialized = serializer_.serialize(msg);
     //auto encoded = encoder_.encode(serialized);
@@ -17,7 +17,7 @@ bool Transporter::sendMessage(const InternalMessage& msg)
     return send(serializer_.serialize(msg));
 }
 
-InternalMessage Transporter::receiveMessage()
+InternalMessage TransportLayer::receiveMessage()
 {
     auto data = receive();
     if (data.empty()) 
@@ -31,7 +31,7 @@ InternalMessage Transporter::receiveMessage()
     return serializer_.deserialize(data);
 }
 
-void Transporter::beacon()
+void TransportLayer::beacon()
 {
     //auto heartbeat = createHeartbeat();
     //sendMessage(heartbeat);
@@ -43,7 +43,7 @@ void Transporter::beacon()
     }
 }
 
-InternalMessage Transporter::createHeartbeat()
+InternalMessage TransportLayer::createHeartbeat()
 {
     InternalMessage msg;
     msg.header.messageType = MessageType::HEARTBEAT;
@@ -52,20 +52,20 @@ InternalMessage Transporter::createHeartbeat()
     return msg;
 }
 
-uint32_t Transporter::generateId()
+uint32_t TransportLayer::generateId()
 {
     return rand();
 }
 
 
-//TCPTransporter::TCPTransporter(MessageHandler* hdlr, const std::string& server, uint16_t port)
-TCPTransporter::TCPTransporter(MessageHandler& messageHandler, const std::string& server, std::string port)
-    : Transporter(messageHandler), server_(server), port_(port)
+//TCPTransportLayer::TCPTransportLayer(MessageHandler* hdlr, const std::string& server, uint16_t port)
+TCPTransportLayer::TCPTransportLayer(MessageHandler& messageHandler, const std::string& server, std::string port)
+    : TransportLayer(messageHandler), server_(server), port_(port)
 {
     initializeWinsock();
 }
 
-TCPTransporter::~TCPTransporter()
+TCPTransportLayer::~TCPTransportLayer()
 {
 	/*
     if (connected_ == false) // TODO: maybe check if (socket_ != INVALID_SOCKET)
@@ -79,7 +79,7 @@ TCPTransporter::~TCPTransporter()
 }
 
 
-bool TCPTransporter::initializeWinsock()
+bool TCPTransportLayer::initializeWinsock()
 {
     // TODO: check if winsock is already initialized somehow?
     WSADATA wsaData;
@@ -96,7 +96,7 @@ bool TCPTransporter::initializeWinsock()
 
 
 
-bool TCPTransporter::send(const std::vector<uint8_t>& data)
+bool TCPTransportLayer::send(const std::vector<uint8_t>& data)
 {
     if (!connected_ && !connect()) return false;
     
@@ -104,7 +104,7 @@ bool TCPTransporter::send(const std::vector<uint8_t>& data)
 
 }
 
-bool TCPTransporter::connect()
+bool TCPTransportLayer::connect()
 {
     socket_ = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (socket_ == INVALID_SOCKET)
@@ -160,7 +160,7 @@ bool TCPTransporter::connect()
     return true;
 }
 
-std::vector<uint8_t> TCPTransporter::receive()
+std::vector<uint8_t> TCPTransportLayer::receive()
 {
     if (!connected_) return {};
 

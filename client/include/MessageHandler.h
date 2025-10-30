@@ -52,7 +52,7 @@ public:
 	// Iterate through all messages in the queue and send to the server
 	void sendQueuedMessages();
 
-	void setTransporter(Transporter& transporter);
+	void setTransportLayer(TransportLayer& transportLayer);
 
 
 	//bool handleTCP(uint8_t* rawData, size_t rawDataLength, InternalMessage* resultMsg);

