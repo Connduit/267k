@@ -14,7 +14,7 @@
 
 #include "C2Profile.h"
 #include "MessageTypes.h"
-#include "Transporter.h"
+#include "TransportLayer.h"
 
 #include <string>
 #include <vector>
